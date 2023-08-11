@@ -2,7 +2,7 @@ import React from "react";
 import { Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Badge } from "react-native-paper";
+import { Badge, Avatar } from "react-native-paper";
 import Home from "../screens/Home";
 import Scores from "../screens/Scores";
 import Profiles from "../screens/Profile";
@@ -100,11 +100,30 @@ function TabGroup() {
             const iconColor = focused ? "#2193F0" : "gray";
             return (
               <>
-                <Badge style={{ position: "absolute", top: 0, right: 0 }} />
-                <Image
+                <Badge
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 42,
+                    backgroundColor: "#2193F0",
+                  }}
+                >
+                  3
+                </Badge>
+                <Avatar.Image
+                  style={{
+                    width: size,
+                    height: size,
+                    tintColor: iconColor,
+                    zIndex: -1,
+                  }}
+                  size={24}
+                  source={require("../Images/batmanAvatar.png")}
+                />
+                {/* <Image
                   style={{ width: size, height: size, tintColor: iconColor }}
                   source={require("../Images/userIcon.png")}
-                />
+                /> */}
               </>
             );
           },
