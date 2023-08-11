@@ -51,7 +51,12 @@ function TabGroup() {
             const iconColor = focused ? "#2193F0" : "gray";
             return (
               <Image
-                style={{ width: size, height: size, tintColor: iconColor }}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: iconColor,
+                  top: 2,
+                }}
                 source={require("../Images/score-boardicon.png")}
               />
             );
@@ -144,8 +149,10 @@ function TabGroup() {
                     tintColor: iconColor,
                     zIndex: -1,
                     backgroundColor: "transparent",
+                    top: 1,
+                    right: 2,
                   }}
-                  size={24}
+                  size={30}
                   source={require("../Images/batmanAvatar.png")}
                 />
                 {/* <Image
