@@ -2,6 +2,7 @@ import React from "react";
 import { Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Badge } from "react-native-paper";
 import Home from "../screens/Home";
 import Scores from "../screens/Scores";
 import Profiles from "../screens/Profile";
@@ -57,6 +58,7 @@ function TabGroup() {
           },
         }}
       />
+
       <Tab.Screen
         name="Profile"
         component={Profiles}
@@ -97,10 +99,13 @@ function TabGroup() {
           tabBarIcon: ({ size, focused }) => {
             const iconColor = focused ? "#2193F0" : "gray";
             return (
-              <Image
-                style={{ width: size, height: size, tintColor: iconColor }}
-                source={require("../Images/userIcon.png")}
-              />
+              <>
+                <Badge style={{ position: "absolute", top: 0, right: 0 }} />
+                <Image
+                  style={{ width: size, height: size, tintColor: iconColor }}
+                  source={require("../Images/userIcon.png")}
+                />
+              </>
             );
           },
         }}

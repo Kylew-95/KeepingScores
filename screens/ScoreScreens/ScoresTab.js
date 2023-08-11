@@ -6,7 +6,7 @@ import { data } from "../../DummyScoresData";
 
 export default function ScoresTab() {
   const renderItem = ({ item }) => (
-    <Card style={{ marginTop: 20 }}>
+    <Card style={{ marginTop: 20, marginBottom: 4 }}>
       <Card.Title title={item.Location} />
       <Card.Content>
         <Text>

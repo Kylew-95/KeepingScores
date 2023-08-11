@@ -12,7 +12,11 @@ export function TopNavScoreBar() {
 function TabGroup() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="My Scores" component={ScoresTab} />
+      <Tab.Screen
+        options={{ tabBarInactiveTintColor: "grey" }}
+        name="My Scores"
+        component={ScoresTab}
+      />
       <Tab.Screen name="Add Scores" component={AddScoresTab} />
     </Tab.Navigator>
   );
