@@ -27,6 +27,7 @@ export default function Profiles() {
           zIndex: 100,
           position: "absolute",
           top: 10,
+          backgroundColor: "transparent",
         }}
       />
     </SafeAreaView>

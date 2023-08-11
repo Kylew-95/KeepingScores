@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Badge, Avatar } from "react-native-paper";
@@ -92,6 +92,7 @@ function TabGroup() {
                     top: -50,
                     marginLeft: -20,
                     zIndex: -10,
+                    backgroundColor: "transparent",
                   }}
                   source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
                 ></Image>
@@ -101,9 +102,23 @@ function TabGroup() {
                     zIndex: 10,
                     top: 10,
                     left: 350,
+                    color: "white",
+                    backgroundColor: "transparent",
                   }}
                   size={35}
-                  source={require("../Images/batmanAvatar.png")}
+                  source={require("../Images/burgermenu.png")}
+                />
+                <Image
+                  style={{
+                    position: "absolute",
+                    height: 40,
+                    width: 40,
+                    zIndex: 11,
+                    top: 10,
+                    left: -2,
+                    backgroundColor: "transparent",
+                  }}
+                  source={require("../Images/comment-chat-icon.png")}
                 />
               </>
             </>
@@ -128,6 +143,7 @@ function TabGroup() {
                     height: size,
                     tintColor: iconColor,
                     zIndex: -1,
+                    backgroundColor: "transparent",
                   }}
                   size={24}
                   source={require("../Images/batmanAvatar.png")}
