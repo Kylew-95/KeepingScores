@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Text } from "react-native";
+import { Image, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Badge, Avatar } from "react-native-paper";
@@ -82,18 +82,30 @@ function TabGroup() {
               >
                 Hello User
               </Text>
-              <Image
-                style={{
-                  position: "absolute",
-                  resizeMode: "cover",
-                  width: 500,
-                  height: 250,
-                  top: -50,
-                  marginLeft: -20,
-                  zIndex: -1,
-                }}
-                source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
-              />
+              <>
+                <Image
+                  style={{
+                    position: "absolute",
+                    resizeMode: "cover",
+                    width: 500,
+                    height: 250,
+                    top: -50,
+                    marginLeft: -20,
+                    zIndex: -10,
+                  }}
+                  source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
+                ></Image>
+                <Avatar.Image
+                  style={{
+                    position: "absolute",
+                    zIndex: 10,
+                    top: 10,
+                    left: 350,
+                  }}
+                  size={35}
+                  source={require("../Images/batmanAvatar.png")}
+                />
+              </>
             </>
           ),
           tabBarIcon: ({ size, focused }) => {
@@ -108,7 +120,7 @@ function TabGroup() {
                     backgroundColor: "#2193F0",
                   }}
                 >
-                  3
+                  4
                 </Badge>
                 <Avatar.Image
                   style={{
