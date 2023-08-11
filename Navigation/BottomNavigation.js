@@ -2,12 +2,12 @@ import React from "react";
 import { Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Home from "./screens/Home";
-import Scores from "./screens/Scores";
-import Profiles from "./screens/Profile";
+import Home from "../screens/Home";
+import Scores from "../screens/Scores";
+import Profiles from "../screens/Profile";
 
 const Tab = createBottomTabNavigator();
-export default function Navigation() {
+export default function BottomNavigation() {
   return (
     <NavigationContainer>
       <TabGroup />
@@ -31,7 +31,7 @@ function TabGroup() {
             return (
               <Image
                 style={{ width: size, height: size, tintColor: iconColor }}
-                source={require("./Images/locationIcon.png")}
+                source={require("../Images/locationIcon.png")}
               />
             );
           },
@@ -51,7 +51,7 @@ function TabGroup() {
             return (
               <Image
                 style={{ width: size, height: size, tintColor: iconColor }}
-                source={require("./Images/score-boardicon.png")}
+                source={require("../Images/score-boardicon.png")}
               />
             );
           },
@@ -90,7 +90,7 @@ function TabGroup() {
                   marginLeft: -20,
                   zIndex: -1,
                 }}
-                source={require("./Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
+                source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
               />
             </>
           ),
@@ -99,7 +99,7 @@ function TabGroup() {
             return (
               <Image
                 style={{ width: size, height: size, tintColor: iconColor }}
-                source={require("./Images/userIcon.png")}
+                source={require("../Images/userIcon.png")}
               />
             );
           },
