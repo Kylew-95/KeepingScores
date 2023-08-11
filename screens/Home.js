@@ -3,7 +3,7 @@ import React from "react";
 
 export default function Home() {
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ height: "100%", backgroundColor: "white" }}>
       <Text>This is the HomePage</Text>
     </SafeAreaView>
   );

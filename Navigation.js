@@ -1,5 +1,5 @@
 import React from "react";
-import { Image } from "react-native";
+import { Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Home from "./screens/Home";
@@ -63,19 +63,36 @@ function TabGroup() {
         options={{
           title: "Profile",
           headerStyle: {
-            height: 250,
+            height: 240,
           },
-          headerTitle: () => (
-            <Image
-              style={{
-                width: 400,
-                height: 200,
-                objectFit: "cover",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              source={require("./Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
-            />
+          headerTitle: (props) => (
+            <>
+              <Text
+                style={{
+                  fontSize: 40,
+                  color: "white",
+                  marginTop: 120,
+                  textAlign: "center",
+                  flex: 1,
+                  justifyContent: "center",
+                  marginLeft: 100,
+                }}
+              >
+                Hello User
+              </Text>
+              <Image
+                style={{
+                  position: "absolute",
+                  resizeMode: "cover",
+                  width: 500,
+                  height: 250,
+                  top: -50,
+                  marginLeft: -20,
+                  zIndex: -1,
+                }}
+                source={require("./Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
+              />
+            </>
           ),
           tabBarIcon: ({ size, focused }) => {
             const iconColor = focused ? "#2193F0" : "gray";
