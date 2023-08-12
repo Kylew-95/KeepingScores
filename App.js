@@ -1,11 +1,22 @@
+import React, { useState } from "react";
 import Login from "./Onboarding/Login";
 import Navigation from "./Navigation/BottomNavigation";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+
+const Stack = createStackNavigator();
 
 export default function App() {
+  const [session, setSession] = useState(null);
+
   return (
-    <>
-      {/* <Login /> */}
-      <Navigation />
-    </>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login" headerMode="none">
+        <Stack.Screen name="Login">
+          {(props) => <Login {...props} setSession={setSession} />}
+        </Stack.Screen>
+        <Stack.Screen name="Navigation" component={Navigation} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }

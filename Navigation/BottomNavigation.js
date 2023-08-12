@@ -1,6 +1,5 @@
 import React from "react";
 import { Image, Text } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Badge, Avatar } from "react-native-paper";
 import Home from "../screens/Home";
@@ -9,11 +8,7 @@ import Profiles from "../screens/Profile";
 
 const Tab = createBottomTabNavigator();
 export default function BottomNavigation() {
-  return (
-    <NavigationContainer>
-      <TabGroup />
-    </NavigationContainer>
-  );
+  return <TabGroup />;
 }
 function TabGroup() {
   return (

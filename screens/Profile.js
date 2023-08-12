@@ -1,9 +1,11 @@
 import React from "react";
 import { SafeAreaView } from "react-native";
-import { Avatar } from "react-native-paper";
+import { Avatar, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
-
+import { useNavigation } from "@react-navigation/native";
 export default function Profiles() {
+  const navigation = useNavigation();
+
   async function getProfile() {
     const { data, error } = await supabase
       .from("NewTable")
@@ -13,8 +15,17 @@ export default function Profiles() {
   }
 
   getProfile().then((data) => {
-    console.log("Fetched data:", data);
+    // console.log("Fetched data:", data);
   });
+
+  const SignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log("Error signing out:", error.message);
+    } else {
+      navigation.replace("Login");
+    }
+  };
 
   return (
     <SafeAreaView style={{ height: "100%", backgroundColor: "white" }}>
@@ -30,6 +41,9 @@ export default function Profiles() {
           backgroundColor: "transparent",
         }}
       />
+      <Button mode="contained" style={{ top: 300 }} onPress={SignOut}>
+        Sign Out
+      </Button>
     </SafeAreaView>
   );
 }

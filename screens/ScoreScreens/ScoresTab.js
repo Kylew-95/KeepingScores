@@ -19,7 +19,8 @@ export default function ScoresTab() {
         <Text>
           Activity: {item.activity}, {item.players[0].player1} VS{" "}
           {item.players[1].player2}, GameRound: {item.gameRound},{" "}
-          {item.players[0].scores} - {item.players[1].scores}
+          {item.players[0].scores} - {item.players[1].scores}, {item.date},{" "}
+          {item.time}
         </Text>
       </Card.Content>
     </Card>

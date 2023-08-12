@@ -1,11 +1,11 @@
 import React from "react";
 import { SafeAreaView, Text } from "react-native";
-import SignInAuth from "./SignIn";
+import SignInAuth from "./SignInAuth";
 
-export default function Login() {
+export default function Login({ session, setSession }) {
   return (
     <SafeAreaView style={{ marginTop: 100 }}>
-      <SignInAuth />
+      <SignInAuth session={session} setSession={setSession} />
     </SafeAreaView>
   );
 }
