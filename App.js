@@ -12,9 +12,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" headerMode="none">
-        <Stack.Screen name="Login">
-          {(props) => <Login {...props} setSession={setSession} />}
-        </Stack.Screen>
+        {/* <Stack.Screen name="Login">
+          {() => <Login session={session} setSession={setSession} />}
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation" component={Navigation} />
       </Stack.Navigator>
     </NavigationContainer>

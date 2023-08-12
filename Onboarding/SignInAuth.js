@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { Button, Input } from "react-native-elements";
+import { Button, TextInput, Text } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ setSession }) {
+export default function SignInAuth({ session, setSession }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,15 +73,17 @@ export default function SignInAuth({ setSession }) {
   return (
     <>
       <Button
-        title="Google"
+        mode="outlined"
         disabled={loading}
         onPress={() => signinWithGmail()}
+        style={{ backgroundColor: "white", borderRadius: 8 }}
       >
-        Sign in With Google
+        <Text style={{ color: "black" }}>Sign in With Google</Text>
       </Button>
       <View style={styles.container}>
         <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Input
+          <TextInput
+            mode="outlined"
             label="Email"
             leftIcon={{ type: "font-awesome", name: "envelope" }}
             onChangeText={(text) => setEmail(text)}
@@ -91,7 +93,8 @@ export default function SignInAuth({ setSession }) {
           />
         </View>
         <View style={styles.verticallySpaced}>
-          <Input
+          <TextInput
+            mode="outlined"
             label="Password"
             leftIcon={{ type: "font-awesome", name: "lock" }}
             onChangeText={(text) => setPassword(text)}
@@ -103,10 +106,14 @@ export default function SignInAuth({ setSession }) {
         </View>
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <Button
+            mode="contained"
             title="Sign in"
             disabled={loading}
             onPress={() => signInWithEmail()}
-          />
+            style={{ borderRadius: 8, backgroundColor: "#2193f0" }}
+          >
+            Sign in
+          </Button>
         </View>
       </View>
     </>

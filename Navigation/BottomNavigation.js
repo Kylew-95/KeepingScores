@@ -137,6 +137,7 @@ function TabGroup() {
                 >
                   4
                 </Badge>
+                {/* Need to turn badge into a component so I can reuse it because ill need to use it on the live chat icon */}
                 <Avatar.Image
                   style={{
                     width: size,
