@@ -6,24 +6,12 @@ import { useNavigation } from "@react-navigation/native";
 export default function Profiles() {
   const navigation = useNavigation();
 
-  async function getProfile() {
-    const { data, error } = await supabase
-      .from("NewTable")
-      .select("*")
-      .single();
-    return data;
-  }
-
-  getProfile().then((data) => {
-    // console.log("Fetched data:", data);
-  });
-
   const SignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.log("Error signing out:", error.message);
     } else {
-      // navigation.replace("Login");
+      navigation.replace("Login");
     }
   };
 

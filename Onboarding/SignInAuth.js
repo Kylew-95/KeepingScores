@@ -1,43 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { Button, TextInput, Text } from "react-native-paper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ session, setSession }) {
+export default function SignInAuth({ session, setSession, userId, setUserId }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigation = useNavigation();
 
-  useEffect(() => {
-    async function loadSession() {
-      try {
-        const savedSession = await AsyncStorage.getItem("supabaseSession");
-        if (savedSession) {
-          const parsedSession = JSON.parse(savedSession);
-
-          // Check if the saved session is still valid
-          if (parsedSession.expires_at > Date.now()) {
-            // Reauthenticate the user with the saved session
-            supabase.auth.signIn({ session: parsedSession });
-          } else {
-            // Session has expired, you might want to prompt the user to log in again
-          }
-
-          setSession(parsedSession);
-        }
-      } catch (error) {
-        console.error("Error loading session:", error);
-      }
-    }
-
-    loadSession();
-  }, []);
-
-  async function signinWithGmail() {
+  const signinWithGmail = async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -49,9 +23,9 @@ export default function SignInAuth({ session, setSession }) {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function signInWithEmail() {
+  const signInWithEmail = async () => {
     try {
       setLoading(true);
       const { user, error } = await supabase.auth.signInWithPassword({
@@ -62,21 +36,20 @@ export default function SignInAuth({ session, setSession }) {
       if (error) {
         console.error("Email sign-in error:", error.message);
       } else {
-        // Sign-in successful, navigate to the next screen
         navigation.navigate("Navigation");
       }
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <>
       <Button
         mode="outlined"
         disabled={loading}
-        onPress={() => signinWithGmail()}
-        style={{ backgroundColor: "white", borderRadius: 8 }}
+        onPress={signinWithGmail}
+        style={{ backgroundColor: "white", borderRadius: 8, top: 30 }}
       >
         <Text style={{ color: "black" }}>Sign in With Google</Text>
       </Button>
@@ -89,7 +62,7 @@ export default function SignInAuth({ session, setSession }) {
             onChangeText={(text) => setEmail(text)}
             value={email}
             placeholder="email@address.com"
-            autoCapitalize={"none"}
+            autoCapitalize="none"
           />
         </View>
         <View style={styles.verticallySpaced}>
@@ -99,9 +72,9 @@ export default function SignInAuth({ session, setSession }) {
             leftIcon={{ type: "font-awesome", name: "lock" }}
             onChangeText={(text) => setPassword(text)}
             value={password}
-            secureTextEntry={true}
+            secureTextEntry
             placeholder="Password"
-            autoCapitalize={"none"}
+            autoCapitalize="none"
           />
         </View>
         <View style={[styles.verticallySpaced, styles.mt20]}>
@@ -109,7 +82,7 @@ export default function SignInAuth({ session, setSession }) {
             mode="contained"
             title="Sign in"
             disabled={loading}
-            onPress={() => signInWithEmail()}
+            onPress={signInWithEmail}
             style={{ borderRadius: 8, backgroundColor: "#2193f0" }}
           >
             Sign in
