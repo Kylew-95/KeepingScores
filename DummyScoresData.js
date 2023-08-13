@@ -8,6 +8,8 @@ export const data = [
       { player1: "John", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
   {
     id: 2,
@@ -18,6 +20,8 @@ export const data = [
       { player1: "Harry", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
   {
     id: 3,
@@ -28,6 +32,8 @@ export const data = [
       { player1: "John", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
   {
     id: 4,
@@ -38,6 +44,8 @@ export const data = [
       { player1: "John", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
   {
     id: 5,
@@ -48,6 +56,8 @@ export const data = [
       { player1: "John", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
   {
     id: 6,
@@ -58,15 +68,7 @@ export const data = [
       { player1: "John", scores: 6 },
       { player2: "Sarah", scores: 6 },
     ],
-  },
-  {
-    id: 7,
-    Location: "London",
-    activity: "Basketball",
-    gameRound: 2,
-    players: [
-      { player1: "John", scores: 6 },
-      { player2: "Sarah", scores: 6 },
-    ],
+    date: "Wednesday, 9 August 2023",
+    time: "10:00",
   },
 ];
