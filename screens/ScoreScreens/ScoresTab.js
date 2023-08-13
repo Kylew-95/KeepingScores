@@ -68,12 +68,15 @@ export default function ScoresTab() {
             position: "absolute",
             fontSize: 13.1,
             fontWeight: 300,
-            top: 30,
+            top: 20,
             right: 270,
             alignSelf: "center",
           }}
         >
-          GameRound: {item.gameRound}
+          GameRound:{" "}
+          <Text style={{ fontSize: 14, fontWeight: 800, color: "#2193F0" }}>
+            {item.gameRound}
+          </Text>
         </Text>
         <Text
           style={{
