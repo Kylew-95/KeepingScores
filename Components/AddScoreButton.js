@@ -2,6 +2,8 @@ import { SafeAreaView, TouchableOpacity, Image } from "react-native";
 import React, { useState } from "react";
 
 export default function AddScoreButton() {
+
+  
   const handlePress = () => {
     console.log("Pressed");
   };

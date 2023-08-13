@@ -23,7 +23,7 @@ export default function Profiles() {
     if (error) {
       console.log("Error signing out:", error.message);
     } else {
-      navigation.replace("Login");
+      // navigation.replace("Login");
     }
   };
 

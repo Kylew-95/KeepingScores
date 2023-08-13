@@ -7,7 +7,13 @@ export default function AddScoresTab() {
   return (
     <SafeAreaView style={{ height: "100%", backgroundColor: "white" }}>
       <Card
-        style={{ margin: 20, padding: 30, width: 350, alignSelf: "center" }}
+        style={{
+          margin: 20,
+          padding: 30,
+          width: 350,
+          alignSelf: "center",
+          top: 20,
+        }}
       >
         <View>
           <Text style={{ fontSize: 20, fontWeight: "300", left: 20 }}>
