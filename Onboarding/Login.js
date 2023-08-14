@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView, Text, View, Image } from "react-native";
 import SignInAuth from "./SignInAuth";
+import SignUpAuth from "./SignUpAuth";
 
 export default function Login({ session, setSession, userId, setUserId }) {
+  const [shown, setShown] = useState(false);
+
+  function ChangeAuthState() {
+    setShown(!shown);
+  }
+
   return (
     <View style={{ height: "100%", backgroundColor: "white" }}>
-      <View style={{ height: "50%" }}>
+      <View style={{ height: "40%" }}>
         <Image
           source={require("../Images/vecteezy_badminton-sport-equipments-on-green-floor-shuttlecocks_7800858_291.jpg")}
           style={{
@@ -28,31 +35,19 @@ export default function Login({ session, setSession, userId, setUserId }) {
         }}
       >
         <SafeAreaView
-          style={{
-            flex: 1,
-            justifyContent: "flex-end",
-            top: -40,
-            alignSelf: "center",
-            width: 300,
-          }}
+        // style={{
+        //   flex: 1,
+        //   justifyContent: "flex-end",
+        //   top: -40,
+        //   alignSelf: "center",
+        //   width: 300,
+        // }}
         >
-          <Text
-            style={{
-              marginBottom: 20,
-              textAlign: "center",
-              fontSize: 30,
-              fontWeight: 600,
-              color: "#2193f0",
-            }}
-          >
-            Sign In
-          </Text>
-          <SignInAuth
-            session={session}
-            setSession={setSession}
-            userId={userId}
-            setUserId={setUserId}
-          />
+          {!shown ? (
+            <SignInAuth ChangeAuthState={ChangeAuthState} />
+          ) : (
+            <SignUpAuth userId={userId} ChangeAuthState={ChangeAuthState} />
+          )}
         </SafeAreaView>
       </View>
     </View>

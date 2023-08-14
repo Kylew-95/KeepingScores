@@ -7,11 +7,11 @@ export default function Profiles() {
   const navigation = useNavigation();
 
   const SignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ redirectTo: "Login" }).then;
     if (error) {
-      console.log("Error signing out:", error.message);
+      console.log(error);
     } else {
-      navigation.replace("Login");
+      navigation.navigate("Login");
     }
   };
 

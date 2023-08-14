@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Image, SafeAreaView } from "react-native";
 import { Button, TextInput, Text } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ session, setSession, userId, setUserId }) {
+export default function SignInAuth({ ChangeAuthState }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,17 +12,10 @@ export default function SignInAuth({ session, setSession, userId, setUserId }) {
   const navigation = useNavigation();
 
   const signinWithGmail = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-      });
-      if (error) {
-        console.error("Google sign-in error:", error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
+    // setLoading(true);
+    const { session, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
   };
 
   const signInWithEmail = async () => {
@@ -45,49 +38,91 @@ export default function SignInAuth({ session, setSession, userId, setUserId }) {
 
   return (
     <>
-      <Button
-        mode="outlined"
-        disabled={loading}
-        onPress={signinWithGmail}
-        style={{ backgroundColor: "white", borderRadius: 8, top: 30 }}
+      <View
+        style={{
+          height: "60%",
+          justifyContent: "flex-end",
+          backgroundColor: "white",
+          zIndex: 1,
+          borderRadius: 20,
+          shadowColor: "#000",
+        }}
       >
-        <Text style={{ color: "black" }}>Sign in With Google</Text>
-      </Button>
-      <View style={styles.container}>
-        <View style={[styles.verticallySpaced, styles.mt20]}>
-          <TextInput
-            mode="outlined"
-            label="Email"
-            leftIcon={{ type: "font-awesome", name: "envelope" }}
-            onChangeText={(text) => setEmail(text)}
-            value={email}
-            placeholder="email@address.com"
-            autoCapitalize="none"
-          />
-        </View>
-        <View style={styles.verticallySpaced}>
-          <TextInput
-            mode="outlined"
-            label="Password"
-            leftIcon={{ type: "font-awesome", name: "lock" }}
-            onChangeText={(text) => setPassword(text)}
-            value={password}
-            secureTextEntry
-            placeholder="Password"
-            autoCapitalize="none"
-          />
-        </View>
-        <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Button
-            mode="contained"
-            title="Sign in"
-            disabled={loading}
-            onPress={signInWithEmail}
-            style={{ borderRadius: 8, backgroundColor: "#2193f0" }}
+        <SafeAreaView
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            top: 70,
+            alignSelf: "center",
+            width: 300,
+          }}
+        >
+          <Text
+            style={{
+              marginBottom: 20,
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: 600,
+              color: "#2193f0",
+            }}
           >
-            Sign in
+            Sign In
+          </Text>
+          <Button
+            mode="outlined"
+            disabled={loading}
+            onPress={signinWithGmail}
+            style={{
+              backgroundColor: "white",
+              borderRadius: 8,
+              top: 30,
+              alignContent: "center",
+            }}
+          >
+            <Image
+              source={require("../Images/googleicon.png")}
+              style={{ width: 18, height: 18, top: 6, marginLeft: 10 }}
+            />
+            <Text style={{ color: "black" }}>Sign in With Google</Text>
           </Button>
-        </View>
+          <View style={styles.container}>
+            <View style={[styles.verticallySpaced, styles.mt20]}>
+              <TextInput
+                mode="outlined"
+                label="Email"
+                leftIcon={{ type: "font-awesome", name: "envelope" }}
+                onChangeText={(text) => setEmail(text)}
+                value={email}
+                placeholder="email@address.com"
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={styles.verticallySpaced}>
+              <TextInput
+                mode="outlined"
+                label="Password"
+                leftIcon={{ type: "font-awesome", name: "lock" }}
+                onChangeText={(text) => setPassword(text)}
+                value={password}
+                secureTextEntry
+                placeholder="Password"
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={[styles.verticallySpaced, styles.mt20]}>
+              <Button
+                mode="contained"
+                title="Sign in"
+                disabled={loading}
+                onPress={signInWithEmail}
+                style={{ borderRadius: 8, backgroundColor: "#2193f0" }}
+              >
+                Sign in
+              </Button>
+            </View>
+          </View>
+          <Text onPress={ChangeAuthState}> Dont have an Account? Sign up </Text>
+        </SafeAreaView>
       </View>
     </>
   );

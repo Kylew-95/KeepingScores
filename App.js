@@ -21,6 +21,7 @@ export default function App() {
 
   useEffect(() => {
     getUser();
+    console.log(userId);
   }, []);
 
   return (
