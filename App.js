@@ -48,7 +48,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        {/* <Stack.Screen name="Login">
+        <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -59,7 +59,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen> */}
+        </Stack.Screen>
         <Stack.Screen name="Navigation">
           {() => (
             <Navigation

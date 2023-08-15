@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView, ScrollView, RefreshControl } from "react-native";
-import { Avatar, Button, Text } from "react-native-paper";
+import { Avatar, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -14,17 +14,15 @@ export default function Profiles({
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
-  console.log("profileData", profileData);
-
   async function changeProfilePicture() {
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
       });
 
       if (!result.cancelled) {
-        const imagePath = `${profileData.UserProfile_id}/avatar ${profileData.id}.png`;
+        const imagePath = `${profileData.UserProfile_id}/avatar5.png`;
 
         const { data, error } = await supabase.storage
           .from("avatar-images")
@@ -46,6 +44,10 @@ export default function Profiles({
             console.log("Error updating profile data:", updateError.message);
           } else {
             console.log("Profile data updated successfully:", updateData);
+            setProfileData({
+              ...profileData,
+              avatar_image_url: result.assets[0].uri,
+            });
           }
         }
       }
@@ -79,7 +81,7 @@ export default function Profiles({
         </Button>
         <Avatar.Image
           size={200}
-          source={require("../Images/batmanAvatar.png")}
+          source={{ uri: profileData.avatar_image_url }}
           style={{
             alignSelf: "center",
             marginTop: -10,
