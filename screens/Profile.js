@@ -34,6 +34,17 @@ export default function Profiles({
         } else {
           console.log("Image uploaded successfully:", data);
 
+          // Update the avatar_image_url directly in the local profileData object
+          const updatedProfileData = {
+            ...profileData,
+            avatar_image_url: result.assets[0].uri,
+          };
+          console.log("Updated Profile Data:", updatedProfileData);
+
+          // Update the profileData state with the new avatar_image_url
+          setProfileData(updatedProfileData);
+
+          // Update the profile data in the database
           const { data: updateData, error: updateError } = await supabase
             .from("UserProfileData")
             .update({
@@ -45,10 +56,6 @@ export default function Profiles({
             console.log("Error updating profile data:", updateError.message);
           } else {
             console.log("Profile data updated successfully:", updateData);
-            setProfileData({
-              ...profileData,
-              avatar_image_url: result.assets[0].uri,
-            });
           }
         }
       }
