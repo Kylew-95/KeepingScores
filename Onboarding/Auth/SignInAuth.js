@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Image, SafeAreaView } from "react-native";
 import { Button, TextInput, Text } from "react-native-paper";
-import { supabase } from "../SupabaseConfig/SupabaseClient";
+import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ ChangeAuthState }) {
+export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const navigation = useNavigation();
 
@@ -80,7 +79,7 @@ export default function SignInAuth({ ChangeAuthState }) {
             }}
           >
             <Image
-              source={require("../Images/googleicon.png")}
+              source={require("../../Images/googleicon.png")}
               style={{ width: 18, height: 18, top: 6, marginLeft: 10 }}
             />
             <Text style={{ color: "black" }}>Sign in With Google</Text>
@@ -88,6 +87,7 @@ export default function SignInAuth({ ChangeAuthState }) {
           <View style={styles.container}>
             <View style={[styles.verticallySpaced, styles.mt20]}>
               <TextInput
+                style={{ backgroundColor: "white" }}
                 mode="outlined"
                 label="Email"
                 leftIcon={{ type: "font-awesome", name: "envelope" }}
@@ -99,6 +99,7 @@ export default function SignInAuth({ ChangeAuthState }) {
             </View>
             <View style={styles.verticallySpaced}>
               <TextInput
+                style={{ backgroundColor: "white" }}
                 mode="outlined"
                 label="Password"
                 leftIcon={{ type: "font-awesome", name: "lock" }}
@@ -121,7 +122,12 @@ export default function SignInAuth({ ChangeAuthState }) {
               </Button>
             </View>
           </View>
-          <Text onPress={ChangeAuthState}> Dont have an Account? Sign up </Text>
+          <Text
+            style={{ textDecorationLine: "underline" }}
+            onPress={ChangeAuthState}
+          >
+            Dont have an account? Sign up
+          </Text>
         </SafeAreaView>
       </View>
     </>

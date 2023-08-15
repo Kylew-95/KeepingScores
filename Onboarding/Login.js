@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { SafeAreaView, Text, View, Image } from "react-native";
-import SignInAuth from "./SignInAuth";
-import SignUpAuth from "./SignUpAuth";
+import SignInAuth from "./Auth/SignInAuth";
+import SignUpAuth from "./Auth/SignUpAuth";
 
-export default function Login({ session, setSession, userId, setUserId }) {
+export default function Login({ loading, setLoading, userId }) {
   const [shown, setShown] = useState(false);
 
   function ChangeAuthState() {
@@ -44,9 +44,18 @@ export default function Login({ session, setSession, userId, setUserId }) {
         // }}
         >
           {!shown ? (
-            <SignInAuth ChangeAuthState={ChangeAuthState} />
+            <SignInAuth
+              loading={loading}
+              setLoading={setLoading}
+              ChangeAuthState={ChangeAuthState}
+            />
           ) : (
-            <SignUpAuth userId={userId} ChangeAuthState={ChangeAuthState} />
+            <SignUpAuth
+              loading={loading}
+              setLoading={setLoading}
+              userId={userId}
+              ChangeAuthState={ChangeAuthState}
+            />
           )}
         </SafeAreaView>
       </View>
