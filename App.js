@@ -9,21 +9,21 @@ import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 const Stack = createStackNavigator();
 
 export default function App() {
-  const [userId, setUserId] = useState(null);
+  const [users, setUsers] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function getUser() {
     const user = await supabase.auth.getUser();
     if (user) {
-      setUserId(user.data.user.id);
+      setUsers(user.data.user);
       setSession(user);
     }
   }
 
   useEffect(() => {
     getUser();
-    console.log(userId);
+    console.log(users);
   }, []);
 
   return (
@@ -39,13 +39,13 @@ export default function App() {
               setLoading={setLoading}
               session={session}
               setSession={setSession}
-              userId={userId}
-              setUserId={setUserId}
+              users={users}
+              setUsers={setUsers}
             />
           )}
         </Stack.Screen>
         <Stack.Screen name="Navigation">
-          {() => <Navigation userId={userId} setUserId={setUserId} />}
+          {() => <Navigation users={users} setUsers={setUsers} />}
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
           {() => <ProfileSetUp userId={userId} />}

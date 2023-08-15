@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { SafeAreaView } from "react-native";
 import { Avatar, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
 export default function Profiles() {
-  const [email, setEmail] = useState("");
   const navigation = useNavigation();
 
   const SignOut = async () => {
