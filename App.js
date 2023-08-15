@@ -18,7 +18,6 @@ export default function App() {
     if (user) {
       setUserId(user.data.user.id);
       setSession(user);
-      console.log(user.data.user.id);
     }
   }
 
@@ -49,7 +48,7 @@ export default function App() {
           {() => <Navigation userId={userId} setUserId={setUserId} />}
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
-          {() => <ProfileSetUp userId={userId}  />}
+          {() => <ProfileSetUp userId={userId} />}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
