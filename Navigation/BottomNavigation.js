@@ -92,7 +92,10 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                   marginLeft: 100,
                 }}
               >
-                Hello {!profileData && profileData.first_name ? "User": profileData.first_name }
+                Hello{" "}
+                {!profileData && profileData.first_name
+                  ? "User"
+                  : profileData.first_name}
               </Text>
               <>
                 <Image
@@ -161,7 +164,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                     right: 2,
                   }}
                   size={30}
-                  source={require("../Images/batmanAvatar.png")}
+                  source={{ uri: profileData.avatar_image_url }}
                 />
                 {/* <Image
                   style={{ width: size, height: size, tintColor: iconColor }}

@@ -22,7 +22,8 @@ export default function Profiles({
       });
 
       if (!result.cancelled) {
-        const imagePath = `${profileData.UserProfile_id}/avatar5.png`;
+        const timestamp = new Date().getTime(); // Get a unique timestamp
+        const imagePath = `${profileData.UserProfile_id}/avatar_${timestamp}.png`;
 
         const { data, error } = await supabase.storage
           .from("avatar-images")
