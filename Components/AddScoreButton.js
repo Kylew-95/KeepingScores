@@ -1,9 +1,10 @@
 import { SafeAreaView, TouchableOpacity, Image } from "react-native";
 import React, { useState } from "react";
 
-export default function AddScoreButton() {
+export default function AddScoreButton({ dataTable }) {
   const handlePress = () => {
-    console.log("Pressed");
+    console.log("dataTable:", dataTable);
+    dataTable();
   };
 
   return (

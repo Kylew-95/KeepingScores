@@ -1,30 +1,38 @@
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native";
 import { Avatar, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
+
 export default function Profiles() {
+  const [email, setEmail] = useState("");
   const navigation = useNavigation();
 
-  async function getProfile() {
-    const { data, error } = await supabase
-      .from("NewTable")
-      .select("*")
-      .single();
-    return data;
-  }
-
-  getProfile().then((data) => {
-    // console.log("Fetched data:", data);
-  });
-
   const SignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ redirectTo: "Login" }).then;
     if (error) {
-      console.log("Error signing out:", error.message);
+      console.log(error);
     } else {
-      navigation.replace("Login");
+      navigation.navigate("Login");
     }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+    const { data, error: uploadError } = await supabase.storage
+      .from("avatar-images")
+      .upload(`${userId}/avatar-image.jpg`, image, {
+        cacheControl: "3600",
+      });
   };
 
   return (

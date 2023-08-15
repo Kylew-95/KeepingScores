@@ -7,10 +7,10 @@ import Scores from "../screens/Scores";
 import Profiles from "../screens/Profile";
 
 const Tab = createBottomTabNavigator();
-export default function BottomNavigation() {
-  return <TabGroup />;
+export default function BottomNavigation({ userId }) {
+  return <TabGroup userId={userId} />;
 }
-function TabGroup() {
+function TabGroup({ userId }) {
   return (
     <Tab.Navigator>
       <Tab.Screen
@@ -35,7 +35,6 @@ function TabGroup() {
       />
       <Tab.Screen
         name="Scores"
-        component={Scores}
         options={{
           title: "Scores",
           headerStyle: {
@@ -57,8 +56,9 @@ function TabGroup() {
             );
           },
         }}
-      />
-
+      >
+        {() => <Scores userId={userId} />}
+      </Tab.Screen>
       <Tab.Screen
         name="Profile"
         component={Profiles}
