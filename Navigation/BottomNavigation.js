@@ -7,10 +7,22 @@ import Scores from "../screens/Scores";
 import Profiles from "../screens/Profile";
 
 const Tab = createBottomTabNavigator();
-export default function BottomNavigation({ users, setUsers }) {
-  return <TabGroup users={users} setUsers={setUsers} />;
+export default function BottomNavigation({
+  users,
+  setUsers,
+  profileData,
+  setProfileData,
+}) {
+  return (
+    <TabGroup
+      users={users}
+      setUsers={setUsers}
+      profileData={profileData}
+      setProfileData={setProfileData}
+    />
+  );
 }
-function TabGroup({ users, setUsers }) {
+function TabGroup({ users, setUsers, profileData, setProfileData }) {
   return (
     <Tab.Navigator>
       <Tab.Screen
@@ -61,13 +73,13 @@ function TabGroup({ users, setUsers }) {
       </Tab.Screen>
       <Tab.Screen
         name="Profile"
-        component={Profiles}
         options={{
           title: "Profile",
           headerStyle: {
             height: 240,
           },
-          headerTitle: (props) => (
+          headerTitle: () => (
+            // Remove the profileData parameter
             <>
               <Text
                 style={{
@@ -80,7 +92,7 @@ function TabGroup({ users, setUsers }) {
                   marginLeft: 100,
                 }}
               >
-                Hello User
+                Hello {!profileData && profileData.first_name ? "User": profileData.first_name }
               </Text>
               <>
                 <Image
@@ -159,7 +171,16 @@ function TabGroup({ users, setUsers }) {
             );
           },
         }}
-      />
+      >
+        {() => (
+          <Profiles
+            users={users}
+            setUsers={setUsers}
+            profileData={profileData}
+            setProfileData={setProfileData}
+          />
+        )}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }

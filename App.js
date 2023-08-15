@@ -10,6 +10,7 @@ const Stack = createStackNavigator();
 
 export default function App() {
   const [users, setUsers] = useState(null);
+  const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,11 +21,26 @@ export default function App() {
       setSession(user);
     }
   }
-
   useEffect(() => {
     getUser();
-    console.log(users);
   }, []);
+
+  async function UsersData() {
+    const { data, error } = await supabase
+      .from("UserProfileData")
+      .select("*")
+      .eq("UserProfile_id", session.data.user.id)
+      .single();
+    if (error) {
+      console.log(error);
+    } else {
+      setProfileData(data);
+    }
+  }
+
+  useEffect(() => {
+    UsersData();
+  }, [session]);
 
   return (
     <NavigationContainer>
@@ -32,7 +48,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Login">
+        {/* <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -43,12 +59,19 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen>
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation">
-          {() => <Navigation users={users} setUsers={setUsers} />}
+          {() => (
+            <Navigation
+              users={users}
+              setUsers={setUsers}
+              profileData={profileData}
+              setProfileData={setProfileData}
+            />
+          )}
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
-          {() => <ProfileSetUp userId={userId} />}
+          {() => <ProfileSetUp />}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>

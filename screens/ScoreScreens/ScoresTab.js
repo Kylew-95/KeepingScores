@@ -18,7 +18,7 @@ export default function ScoresTab({}) {
     } catch (error) {
       console.error("Error fetching data:", error.message);
     } finally {
-      setTimeout(() => setLoading(false), 3000);
+      setTimeout(() => setLoading(false), 2000);
     }
   }
 
@@ -123,6 +123,7 @@ export default function ScoresTab({}) {
                 fontWeight: 300,
                 top: 45,
                 left: 302,
+                color: "#2193F0",
               }}
             >
               {item.activity}
@@ -151,7 +152,7 @@ export default function ScoresTab({}) {
           <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
             Loading...
           </Text>
-          <ActivityIndicator size={"large"} animating={true} color="blue" />
+          <ActivityIndicator size={"large"} animating={true} color="#2193F0" />
         </View>
       ) : (
         <FlatList
