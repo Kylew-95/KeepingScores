@@ -8,7 +8,7 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
   const [formData, setFormData] = useState({
     location: "",
     nameofActivity: "",
-    gameRound: null,
+    gameRound: "",
     player1: "",
     player2: "",
     player1scores: "",
@@ -16,6 +16,20 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
   });
 
   async function insertDataToTable() {
+    if (
+      !formData.location ||
+      !formData.nameofActivity ||
+      !formData.gameRound ||
+      !formData.player1 ||
+      !formData.player2 ||
+      !formData.player1scores ||
+      !formData.player2scores
+    ) {
+      console.log("All fields are required");
+      alert("All fields are required");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("ScoresData")
       .upsert({
@@ -34,6 +48,7 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
     if (error) {
       console.log("error", error);
     } else {
+      // console.log("data", data);
       scoresData.push(data);
       setScoresData([...scoresData]);
     }
@@ -180,7 +195,7 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
           ></TextInput>
         </View>
       </Card>
-      <AddScoreButton dataTable={insertDataToTable} />
+      <AddScoreButton dataTable={insertDataToTable} setFormData={setFormData} />
     </SafeAreaView>
   );
 }

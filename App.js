@@ -9,23 +9,38 @@ import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 const Stack = createStackNavigator();
 
 export default function App() {
-  const [userId, setUserId] = useState(null);
+  const [users, setUsers] = useState(null);
+  const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function getUser() {
     const user = await supabase.auth.getUser();
     if (user) {
-      setUserId(user.data.user.id);
+      setUsers(user.data.user);
       setSession(user);
-      console.log(user.data.user.id);
+    }
+  }
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  async function UsersData() {
+    const { data, error } = await supabase
+      .from("UserProfileData")
+      .select("*")
+      .eq("UserProfile_id", session.data.user.id)
+      .single();
+    if (error) {
+      console.log(error);
+    } else {
+      setProfileData(data);
     }
   }
 
   useEffect(() => {
-    getUser();
-    console.log(userId);
-  }, []);
+    UsersData();
+  }, [session]);
 
   return (
     <NavigationContainer>
@@ -40,16 +55,23 @@ export default function App() {
               setLoading={setLoading}
               session={session}
               setSession={setSession}
-              userId={userId}
-              setUserId={setUserId}
+              users={users}
+              setUsers={setUsers}
             />
           )}
         </Stack.Screen>
         <Stack.Screen name="Navigation">
-          {() => <Navigation userId={userId} setUserId={setUserId} />}
+          {() => (
+            <Navigation
+              users={users}
+              setUsers={setUsers}
+              profileData={profileData}
+              setProfileData={setProfileData}
+            />
+          )}
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
-          {() => <ProfileSetUp userId={userId}  />}
+          {() => <ProfileSetUp />}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>

@@ -1,9 +1,19 @@
 import { SafeAreaView, TouchableOpacity, Image } from "react-native";
 import React, { useState } from "react";
 
-export default function AddScoreButton({ dataTable }) {
+export default function AddScoreButton({ dataTable, setFormData }) {
   const handlePress = () => {
-    console.log("dataTable:", dataTable);
+    setFormData({
+      ...setFormData,
+      location: "",
+      nameofActivity: "",
+      gameRound: "",
+      player1: "",
+      player2: "",
+      player1scores: "",
+      player2scores: "",
+    });
+
     dataTable();
   };
 
