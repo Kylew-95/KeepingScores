@@ -87,6 +87,7 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
               backgroundColor: "white",
               display: "flex",
               alignSelf: "center",
+              
             }}
           ></TextInput>
         </View>

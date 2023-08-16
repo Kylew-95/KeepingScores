@@ -4,56 +4,69 @@ import { TextInput, Button } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ProfileSetUp({ userId }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [image, setImage] = useState(null);
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      setImage(result.uri);
-    }
-  };
-
-  console.log(userId);
-
-  const setUp = async () => {
-    const { data, error: uploadError } = await supabase.storage
-      .from("avatar-images")
-      .upload(`${userId}/avatar-image.jpg`, image, {
-        cacheControl: "3600",
+  async function changeProfilePicture() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
       });
 
-    if (!uploadError) {
-      // Update user profile with name and image URL
-      const { data: profileData, error: profileError } = await supabase
-        .from("UserProfileData")
-        .upsert([
-          {
-            id: userId,
-            first_name: firstName,
-            last_name: lastName,
-            avatar_image_url: data.Key,
-          },
-        ]);
+      if (!result.cancelled) {
+        const timestamp = new Date().getTime(); // Get a unique timestamp
+        const imagePath = `${profileData.UserProfile_id}/avatar_${timestamp}.png`;
 
-      if (!profileError) {
-        // Success
-      } else {
-        console.error("Error updating user profile:", profileError.message);
+        const { data, error } = await supabase.storage
+          .from("avatar-images")
+          .upload(imagePath, result.assets[0].uri, { cacheControl: "3600" });
+
+        if (error) {
+          console.log("Error uploading image:", error.message);
+        } else {
+          console.log("Image uploaded successfully:", data);
+
+          // Local change
+          const updatedProfileData = {
+            ...profileData,
+            avatar_image_url: result.assets[0].uri,
+          };
+          setProfileData(updatedProfileData);
+          setFirstName(updatedProfileData.first_name);
+          setLastName(updatedProfileData.last_name);
+
+          const { data: updateData, error: updateError } = await supabase
+            .from("UserProfileData")
+            .update({
+              first_name: firstName,
+              last_name: lastName,
+              avatar_image_url: result.assets[0].uri,
+            })
+            .eq("UserProfile_id", profileData.UserProfile_id);
+
+          if (updateError) {
+            console.log("Error updating profile data:", updateError.message);
+          } else {
+            console.log("Profile data updated successfully:", updateData);
+          }
+        }
       }
-    } else {
-      console.error("Error uploading image:", uploadError.message);
+    } catch (error) {
+      console.log("Image picker error:", error);
     }
-  };
+  }
+
+  const navigation = useNavigation();
+
+  async function setUp() {
+    navigation.navigate("Login");
+  }
+
   return (
     <SafeAreaView
       style={{
@@ -72,7 +85,11 @@ export default function ProfileSetUp({ userId }) {
         value={lastName}
         onChangeText={setLastName}
       />
-      <Button mode="contained" title="Pick an image" onPress={pickImage}>
+      <Button
+        mode="contained"
+        title="Pick an image"
+        onPress={changeProfilePicture}
+      >
         Choose an Avatar
       </Button>
       <Button mode="contained" title="Set Up" onPress={setUp}>

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import Login from "./Onboarding/Login";
 import Navigation from "./Navigation/BottomNavigation";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
+import { Avatar, Button, Drawer, IconButton } from "react-native-paper";
 
 const Stack = createStackNavigator();
 
@@ -13,6 +14,13 @@ export default function App() {
   const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+
+  // const navigation = useNavigation();
+
+  const toggleDrawer = () => {
+    setIsDrawerVisible(!isDrawerVisible);
+  };
 
   async function getUser() {
     const user = await supabase.auth.getUser();
@@ -74,6 +82,13 @@ export default function App() {
           {() => <ProfileSetUp />}
         </Stack.Screen>
       </Stack.Navigator>
+      {/* <Drawer.Section>
+        <IconButton
+          icon="menu"
+          onPress={toggleDrawer}
+          style={{ marginLeft: 10, marginTop: 10 }}
+        />
+      </Drawer.Section> */}
     </NavigationContainer>
   );
 }

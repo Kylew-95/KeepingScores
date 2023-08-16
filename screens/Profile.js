@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView, ScrollView, RefreshControl } from "react-native";
-import { Avatar, Button } from "react-native-paper";
+import { Avatar, Button, Drawer, IconButton } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -12,6 +12,7 @@ export default function Profiles({
   setProfileData,
 }) {
   const [refreshing, setRefreshing] = useState(false);
+
   const navigation = useNavigation();
 
   async function changeProfilePicture() {
@@ -34,17 +35,13 @@ export default function Profiles({
         } else {
           console.log("Image uploaded successfully:", data);
 
-          // Update the avatar_image_url directly in the local profileData object
+          // Local change
           const updatedProfileData = {
             ...profileData,
             avatar_image_url: result.assets[0].uri,
           };
-          console.log("Updated Profile Data:", updatedProfileData);
-
-          // Update the profileData state with the new avatar_image_url
           setProfileData(updatedProfileData);
 
-          // Update the profile data in the database
           const { data: updateData, error: updateError } = await supabase
             .from("UserProfileData")
             .update({
@@ -74,32 +71,34 @@ export default function Profiles({
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          backgroundColor: "white",
-        }}
-        refreshControl={<RefreshControl refreshing={refreshing} />}
-      >
-        <Button mode="contained" style={{ top: 1 }} onPress={SignOut}>
-          Sign Out
-        </Button>
-        <Avatar.Image
-          size={200}
-          source={{ uri: profileData.avatar_image_url }}
-          style={{
-            alignSelf: "center",
-            marginTop: -10,
-            position: "absolute",
-            top: 20,
-            backgroundColor: "transparent",
+    <>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            backgroundColor: "white",
           }}
-        />
-        <Button onPress={changeProfilePicture}>Change Image</Button>
-      </ScrollView>
-    </SafeAreaView>
+          refreshControl={<RefreshControl refreshing={refreshing} />}
+        >
+          <Avatar.Image
+            size={200}
+            source={{ uri: profileData?.avatar_image_url }}
+            style={{
+              alignSelf: "center",
+              marginTop: -10,
+              position: "absolute",
+              top: 20,
+              backgroundColor: "transparent",
+            }}
+          />
+          <Button onPress={changeProfilePicture}>Change Image</Button>
+          <Button mode="contained" onPress={SignOut}>
+            SignOut
+          </Button>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }

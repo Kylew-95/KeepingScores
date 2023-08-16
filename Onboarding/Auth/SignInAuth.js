@@ -39,12 +39,12 @@ export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
     <>
       <View
         style={{
-          height: "60%",
-          justifyContent: "flex-end",
-          backgroundColor: "white",
-          zIndex: 1,
-          borderRadius: 20,
-          shadowColor: "#000",
+          position: "absolute",
+          // height: "70%",
+          top: -500,
+          width: "100%",
+          // backgroundColor: "#2193f0",
+          borderBottomLeftRadius: 500,
         }}
       >
         <SafeAreaView
