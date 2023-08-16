@@ -2,7 +2,7 @@ import { View, Text } from "react-native";
 import React, { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 
-export default function initalStart() {
+export default function StartHomePage() {
   const navigation = useNavigation();
 
   function initalStart() {

@@ -7,7 +7,7 @@ import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
-import InitalStart from "./Onboarding/InitalStart";
+import StartHomePage from "./Onboarding/StartHomePage";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -52,10 +52,12 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="InitalStart"
+        initialRouteName="StartHomePage"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="InitalStart">{() => <InitalStart />}</Stack.Screen>
+        <Stack.Screen name="StartHomePage">
+          {() => <StartHomePage />}
+        </Stack.Screen>
         <Stack.Screen name="Login">
           {() => (
             <Login
