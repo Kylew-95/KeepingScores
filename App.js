@@ -6,6 +6,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 import Settings from "./screens/Settings";
+import Account from "./screens/Account";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -81,6 +82,7 @@ export default function App() {
           {() => <ProfileSetUp />}
         </Stack.Screen>
         <Stack.Screen name="Settings">{() => <Settings />}</Stack.Screen>
+        <Stack.Screen name="Account">{() => <Account />}</Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

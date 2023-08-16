@@ -61,7 +61,7 @@ export default function Settings() {
             <List.Item
               key={item.id}
               titleStyle={item.colour === "red" ? { color: "red" } : null}
-              onPress={() => navigation.navigate({ item })}
+              onPress={() => navigation.navigate(item.title)}
               title={item.title}
               left={() => (
                 <List.Icon
