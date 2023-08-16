@@ -4,6 +4,7 @@ import { Avatar, Button, Drawer, IconButton } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import * as SecureStore from "expo-secure-store";
 
 export default function Profiles({
   users,
@@ -60,9 +61,17 @@ export default function Profiles({
       console.log("Image picker error:", error);
     }
   }
+  async function TestButton() {
+    console.log(
+      "users",
+      (await supabase.auth.getSession()).data.session.access_token
+    );
+  }
 
   const SignOut = async () => {
     try {
+      await SecureStore.deleteItemAsync("supabase.auth.token");
+
       await supabase.auth.signOut({ redirectTo: "Login" });
       navigation.replace("Login");
     } catch (error) {
@@ -97,6 +106,7 @@ export default function Profiles({
           <Button mode="contained" onPress={SignOut}>
             SignOut
           </Button>
+          <Button onPress={TestButton}>Test</Button>
         </ScrollView>
       </SafeAreaView>
     </>

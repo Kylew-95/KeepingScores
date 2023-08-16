@@ -21,7 +21,7 @@ export default function SignUpAuth({
       password: password,
     });
     if (error) {
-      alert("Please Wait");
+      console.log(error);
       setLoading(false);
       navigation.navigate("Login");
     } else {
