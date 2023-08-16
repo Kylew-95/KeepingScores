@@ -47,7 +47,7 @@ export default function SignInAuth({
         session = _session;
 
         return () => {
-          authListener.unsubscribe();
+          setSession(authListener.unsubscribe());
         };
       }
     );
