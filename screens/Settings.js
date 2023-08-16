@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Appbar, Divider, List, Searchbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
+import { ExpoSecureStoreAdapter } from "../SupabaseConfig/SupabaseClient";
 
 export default function Settings() {
   const navigation = useNavigation();
@@ -36,10 +37,19 @@ export default function Settings() {
     { id: 6, title: "Logout", iconName: "logout", colour: "red" },
   ];
 
-  const SignOut = async () => {
-    console.log("SecureStore cleared successfully");
-    await supabase.auth.signOut({ redirectTo: "Login" });
-    navigation.replace("Login");
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error logging out:", error.message);
+      } else {
+        console.log("Logged out successfully");
+        await ExpoSecureStoreAdapter.removeItem();
+        navigation.navigate("Login");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error.message);
+    }
   };
 
   return (
@@ -69,7 +79,7 @@ export default function Settings() {
               title={item.title}
               onPress={() => {
                 if (item.title === "Logout") {
-                  SignOut();
+                  handleLogout();
                 } else {
                   navigation.navigate(item.title);
                 }

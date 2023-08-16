@@ -42,13 +42,15 @@ export default function SignInAuth({
   };
 
   useEffect(() => {
-    const authListener = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-    });
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, _session) => {
+        session = _session;
 
-    return () => {
-      authListener.unsubscribe();
-    };
+        return () => {
+          authListener.unsubscribe();
+        };
+      }
+    );
   }, []);
 
   return (
