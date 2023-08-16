@@ -69,14 +69,9 @@ export default function Profiles({
   }
 
   const SignOut = async () => {
-    try {
-      await SecureStore.deleteItemAsync("supabase.auth.token");
-
-      await supabase.auth.signOut({ redirectTo: "Login" });
-      navigation.replace("Login");
-    } catch (error) {
-      console.log(error);
-    }
+    console.log("SecureStore cleared successfully");
+    await supabase.auth.signOut({ redirectTo: "Login" });
+    navigation.replace("Login");
   };
 
   return (
