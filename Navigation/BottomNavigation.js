@@ -132,7 +132,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                       source={require("../Images/burgermenu.png")}
                     />
                   </TouchableOpacity>
-                  <Image
+                  {/* <Image
                     style={{
                       position: "absolute",
                       height: 40,
@@ -143,7 +143,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                       backgroundColor: "transparent",
                     }}
                     source={require("../Images/comment-chat-icon.png")}
-                  />
+                  /> */}
                 </>
               </>
             ),
