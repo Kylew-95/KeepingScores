@@ -1,9 +1,8 @@
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Appbar, Divider, List, Searchbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import { FlatList } from "react-native-gesture-handler";
+import { supabase } from "../SupabaseConfig/SupabaseClient";
 
 export default function Settings() {
   const navigation = useNavigation();
@@ -37,6 +36,12 @@ export default function Settings() {
     { id: 6, title: "Logout", iconName: "logout", colour: "red" },
   ];
 
+  const SignOut = async () => {
+    console.log("SecureStore cleared successfully");
+    await supabase.auth.signOut({ redirectTo: "Login" });
+    navigation.replace("Login");
+  };
+
   return (
     <>
       <Appbar.Header style={{ backgroundColor: "#2193F0" }}>
@@ -57,12 +62,18 @@ export default function Settings() {
           iconColor="white"
         />
         {settingsTabs.map((item) => (
-          <List.Section style={{ width: "70%", top: 100 }}>
+          <List.Section key={item.id} style={{ width: "70%", top: 100 }}>
             <List.Item
               key={item.id}
               titleStyle={item.colour === "red" ? { color: "red" } : null}
-              onPress={() => navigation.navigate(item.title)}
               title={item.title}
+              onPress={() => {
+                if (item.title === "Logout") {
+                  SignOut();
+                } else {
+                  navigation.navigate(item.title);
+                }
+              }}
               left={() => (
                 <List.Icon
                   icon={item.iconName}
@@ -117,7 +128,7 @@ styles = StyleSheet.create({
   searchbar: {
     width: "70%",
     backgroundColor: "black",
-    borderRadius: 4,
+    borderRadius: 6,
     height: 45,
   },
 });

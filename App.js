@@ -6,7 +6,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 import Settings from "./screens/Settings";
-import Account from "./screens/Account";
+import Account from "./screens/SettingsScreens/Account";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -15,8 +15,6 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-
-  // const navigation = useNavigation();
 
   const toggleDrawer = () => {
     setIsDrawerVisible(!isDrawerVisible);
@@ -56,7 +54,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        {/* <Stack.Screen name="Login">
+        <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -67,7 +65,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen> */}
+        </Stack.Screen>
         <Stack.Screen name="Navigation">
           {() => (
             <Navigation
@@ -82,7 +80,14 @@ export default function App() {
           {() => <ProfileSetUp />}
         </Stack.Screen>
         <Stack.Screen name="Settings">{() => <Settings />}</Stack.Screen>
-        <Stack.Screen name="Account">{() => <Account />}</Stack.Screen>
+        <Stack.Screen name="Account">
+          {() => (
+            <Account
+              profileData={profileData}
+              setProfileData={setProfileData}
+            />
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
