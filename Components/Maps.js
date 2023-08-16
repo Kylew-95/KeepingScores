@@ -76,7 +76,17 @@ export default function Maps({ profileData }) {
             }}
           />
         )}
-        clearIcon={() => null}
+        clearIcon={() => (
+          <Image
+            source={{ uri: profileData?.avatar_image_url }}
+            style={{
+              width: 30,
+              height: 30,
+              alignSelf: "center",
+              right: 0,
+            }}
+          />
+        )}
       />
     </View>
   );

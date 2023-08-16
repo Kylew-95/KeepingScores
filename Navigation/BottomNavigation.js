@@ -151,7 +151,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
               const iconColor = focused ? "#2193F0" : "gray";
               return (
                 <>
-                  <Badge
+                  {/* <Badge
                     style={{
                       position: "absolute",
                       top: 2,
@@ -160,7 +160,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                     }}
                   >
                     4
-                  </Badge>
+                  </Badge> */}
 
                   {/* Need to turn badge into a component so I can reuse it because ill need to use it on the live chat icon */}
                   <Avatar.Image
