@@ -4,7 +4,13 @@ import { Button, TextInput, Text } from "react-native-paper";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
+export default function SignInAuth({
+  ChangeAuthState,
+  loading,
+  setLoading,
+  session,
+  setSession,
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -34,6 +40,16 @@ export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const authListener = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      authListener.unsubscribe();
+    };
+  }, []);
 
   return (
     <>
@@ -67,7 +83,7 @@ export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
           >
             Sign In
           </Text>
-          <Button
+          {/* <Button
             mode="outlined"
             disabled={loading}
             onPress={signinWithGmail}
@@ -83,7 +99,7 @@ export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
               style={{ width: 18, height: 18, top: 6, marginLeft: 10 }}
             />
             <Text style={{ color: "black" }}>Sign in With Google</Text>
-          </Button>
+          </Button> */}
           <View style={styles.container}>
             <View style={[styles.verticallySpaced, styles.mt20]}>
               <TextInput

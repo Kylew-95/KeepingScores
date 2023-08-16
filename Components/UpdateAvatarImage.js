@@ -12,7 +12,7 @@ export default function UpdateAvatarImage({ profileData, setProfileData }) {
         allowsEditing: true,
       });
 
-      if (!result.cancelled) {
+      if (!result.canceled) {
         const timestamp = new Date().getTime();
         const imagePath = `${profileData.UserProfile_id}/avatar_${timestamp}.png`;
 
