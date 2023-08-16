@@ -15,6 +15,7 @@ export default function AddScoreButton({ dataTable, setFormData }) {
     });
 
     dataTable();
+    alert("Added Successfully");
   };
 
   return (
