@@ -1,7 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { StyleSheet, View, Image } from "react-native";
 import { Searchbar } from "react-native-paper";
+import axios from "axios";
+import { RADAR_API_KEY } from "@env";
 
 export default function Maps({ profileData }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -11,24 +13,25 @@ export default function Maps({ profileData }) {
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   });
-  const [markerCoordinates, setMarkerCoordinates] = useState(null);
+  const [places, setPlaces] = useState([]);
 
   const onChangeSearch = (query) => setSearchQuery(query);
 
-  const handleSearchResult = useCallback(
-    (result) => {
-      if (result && result.geometry && result.geometry.location) {
-        const { location } = result.geometry;
-        setMapRegion({
-          ...mapRegion,
-          latitude: location.lat,
-          longitude: location.lng,
-        });
-        setMarkerCoordinates(location);
-      }
-    },
-    [mapRegion]
-  );
+  const fetchPlaces = async (searchQuery) => {
+    try {
+      const response = await axios.get(
+        `https://api.radar.io/v1/search/places?query=${searchQuery}`,
+        {
+          headers: {
+            Authorization: `Bearer ${RADAR_API_KEY}`,
+          },
+        }
+      );
+      setPlaces(response.data.places);
+    } catch (error) {
+      console.error("Error fetching places:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -37,13 +40,17 @@ export default function Maps({ profileData }) {
         provider={PROVIDER_GOOGLE}
         initialRegion={mapRegion}
       >
-        {markerCoordinates && (
+        {places.map((place) => (
           <Marker
-            coordinate={markerCoordinates}
-            title="Search Result"
-            description="Searched Location"
+            key={place.id}
+            coordinate={{
+              latitude: place.location.geometry.coordinates[1],
+              longitude: place.location.geometry.coordinates[0],
+            }}
+            title={place.name}
+            description={place.categories.join(", ")}
           />
-        )}
+        ))}
       </MapView>
       <Searchbar
         style={styles.searchbar}
@@ -55,17 +62,7 @@ export default function Maps({ profileData }) {
         onChangeText={onChangeSearch}
         value={searchQuery}
         onEndEditing={() => {
-          // You might use a geocoding API to get location details based on searchQuery
-          // For now, we'll simulate a search result
-          const simulatedSearchResult = {
-            geometry: {
-              location: {
-                lat: 51.5072,
-                lng: -0.1276,
-              },
-            },
-          };
-          handleSearchResult(simulatedSearchResult);
+          fetchPlaces(searchQuery);
         }}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
         icon={() => (
@@ -79,16 +76,7 @@ export default function Maps({ profileData }) {
             }}
           />
         )}
-        clearIcon={() => (
-          <Image
-            source={{ uri: profileData?.avatar_image_url }}
-            style={{
-              width: 40,
-              height: 40,
-              alignSelf: "center",
-            }}
-          />
-        )}
+        clearIcon={() => null}
       />
     </View>
   );
