@@ -3,7 +3,6 @@ import { SafeAreaView, View } from "react-native";
 import { Card, Text, TextInput } from "react-native-paper";
 import AddScoreButton from "../../Components/AddScoreButton";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
-import { ScrollView } from "react-native-gesture-handler";
 
 export default function AddScoresTab({ scoresData, setScoresData, userId }) {
   const [formData, setFormData] = useState({
@@ -29,6 +28,8 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
       console.log("All fields are required");
       alert("All fields are required");
       return;
+    } else {
+      alert("Added Successfully");
     }
 
     const { data, error } = await supabase

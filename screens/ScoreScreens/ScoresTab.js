@@ -13,7 +13,7 @@ export default function ScoresTab({}) {
 
   async function fetchScores() {
     try {
-      let fetchedData = await supabase.from("ScoresData").select("*");
+      let fetchedData = await supabase.from("ScoresData").select("*").order("id", { ascending: false });
       setScoresData(fetchedData.data);
     } catch (error) {
       console.error("Error fetching data:", error.message);

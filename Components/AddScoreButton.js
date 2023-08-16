@@ -13,9 +13,7 @@ export default function AddScoreButton({ dataTable, setFormData }) {
       player1scores: "",
       player2scores: "",
     });
-
     dataTable();
-    alert("Added Successfully");
   };
 
   return (
