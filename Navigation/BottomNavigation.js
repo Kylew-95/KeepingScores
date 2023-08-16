@@ -32,13 +32,8 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
       <Tab.Navigator>
         <Tab.Screen
           name="Home"
-          component={Home}
           options={{
-            title: "Find Your Match",
-            headerStyle: {
-              backgroundColor: "#2193F0",
-            },
-            headerTintColor: "#fff",
+            headerShown: false,
             tabBarIcon: ({ size, focused }) => {
               const iconColor = focused ? "#2193F0" : "gray";
               return (
@@ -49,7 +44,9 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
               );
             },
           }}
-        />
+        >
+          {() => <Home profileData={profileData} />}
+        </Tab.Screen>
         <Tab.Screen
           name="Scores"
           options={{
