@@ -56,7 +56,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Login">
+        {/* <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -67,7 +67,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen>
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation">
           {() => (
             <Navigation
@@ -82,13 +82,6 @@ export default function App() {
           {() => <ProfileSetUp />}
         </Stack.Screen>
       </Stack.Navigator>
-      {/* <Drawer.Section>
-        <IconButton
-          icon="menu"
-          onPress={toggleDrawer}
-          style={{ marginLeft: 10, marginTop: 10 }}
-        />
-      </Drawer.Section> */}
     </NavigationContainer>
   );
 }

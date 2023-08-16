@@ -3,6 +3,7 @@ import { SafeAreaView, View } from "react-native";
 import { Card, Text, TextInput } from "react-native-paper";
 import AddScoreButton from "../../Components/AddScoreButton";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function AddScoresTab({ scoresData, setScoresData, userId }) {
   const [formData, setFormData] = useState({
@@ -87,7 +88,6 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
               backgroundColor: "white",
               display: "flex",
               alignSelf: "center",
-              
             }}
           ></TextInput>
         </View>
@@ -131,7 +131,11 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
           Player Names
         </Text>
         <View
-          style={{ display: "flex", flexDirection: "row", alignSelf: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "center",
+          }}
         >
           <TextInput
             value={formData.player1}
@@ -165,7 +169,11 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
           Scores
         </Text>
         <View
-          style={{ display: "flex", flexDirection: "row", alignSelf: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "center",
+          }}
         >
           <TextInput
             value={formData.player1scores}
