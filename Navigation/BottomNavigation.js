@@ -14,7 +14,6 @@ export default function BottomNavigation({
   profileData,
   setProfileData,
 }) {
-  const navigation = useNavigation();
   return (
     <TabGroup
       users={users}
@@ -113,6 +112,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                     source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
                   ></Image>
                   <TouchableOpacity
+                    onPress={() => navigation.navigate("Settings")}
                     style={{
                       position: "absolute",
                       zIndex: 10,

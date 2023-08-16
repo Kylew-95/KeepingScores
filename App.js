@@ -5,8 +5,7 @@ import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
-import { Avatar, Button, Drawer, IconButton } from "react-native-paper";
-
+import Settings from "./screens/Settings";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -56,7 +55,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Login">
+        {/* <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -67,7 +66,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen>
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation">
           {() => (
             <Navigation
@@ -81,6 +80,7 @@ export default function App() {
         <Stack.Screen name="ProfileSetUp">
           {() => <ProfileSetUp />}
         </Stack.Screen>
+        <Stack.Screen name="Settings">{() => <Settings />}</Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
