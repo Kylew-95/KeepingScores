@@ -4,7 +4,13 @@ import { Button, TextInput, Text } from "react-native-paper";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
 
-export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
+export default function SignInAuth({
+  ChangeAuthState,
+  loading,
+  setLoading,
+  session,
+  setSession,
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -35,16 +41,28 @@ export default function SignInAuth({ ChangeAuthState, loading, setLoading }) {
     }
   };
 
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, _session) => {
+        session = _session;
+
+        return () => {
+          setSession(authListener.unsubscribe());
+        };
+      }
+    );
+  }, []);
+
   return (
     <>
       <View
         style={{
-          height: "60%",
-          justifyContent: "flex-end",
-          backgroundColor: "white",
-          zIndex: 1,
-          borderRadius: 20,
-          shadowColor: "#000",
+          position: "absolute",
+          // height: "70%",
+          top: -500,
+          width: "100%",
+          // backgroundColor: "#2193f0",
+          borderBottomLeftRadius: 500,
         }}
       >
         <SafeAreaView

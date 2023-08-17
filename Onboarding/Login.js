@@ -3,7 +3,13 @@ import { SafeAreaView, Text, View, Image } from "react-native";
 import SignInAuth from "./Auth/SignInAuth";
 import SignUpAuth from "./Auth/SignUpAuth";
 
-export default function Login({ loading, setLoading, userId }) {
+export default function Login({
+  loading,
+  setLoading,
+  userId,
+  session,
+  setSession,
+}) {
   const [shown, setShown] = useState(false);
 
   function ChangeAuthState() {
@@ -45,6 +51,8 @@ export default function Login({ loading, setLoading, userId }) {
         >
           {!shown ? (
             <SignInAuth
+              session={session}
+              setSession={setSession}
               loading={loading}
               setLoading={setLoading}
               ChangeAuthState={ChangeAuthState}

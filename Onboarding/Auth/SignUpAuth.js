@@ -21,7 +21,7 @@ export default function SignUpAuth({
       password: password,
     });
     if (error) {
-      alert("Please Wait");
+      console.log(error);
       setLoading(false);
       navigation.navigate("Login");
     } else {
@@ -84,7 +84,7 @@ export default function SignUpAuth({
             style={{ textDecorationLine: "underline", right: "5%" }}
             onPress={ChangeAuthState}
           >
-            If you already have an account? Sign in{" "}
+            If you already have an account? Sign in
           </Text>
         </View>
       </View>

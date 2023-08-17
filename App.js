@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Login from "./Onboarding/Login";
 import Navigation from "./Navigation/BottomNavigation";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
-
+import Settings from "./screens/Settings";
+import Account from "./screens/SettingsScreens/Account";
+import StartHomePage from "./Onboarding/StartHomePage";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -13,6 +15,11 @@ export default function App() {
   const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+
+  const toggleDrawer = () => {
+    setIsDrawerVisible(!isDrawerVisible);
+  };
 
   async function getUser() {
     const user = await supabase.auth.getUser();
@@ -45,10 +52,13 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName="StartHomePage"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Login">
+        {/* <Stack.Screen name="StartHomePage">
+          {() => <StartHomePage />}
+        </Stack.Screen> */}
+        {/* <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}
@@ -59,7 +69,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen>
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation">
           {() => (
             <Navigation
@@ -72,6 +82,15 @@ export default function App() {
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
           {() => <ProfileSetUp />}
+        </Stack.Screen>
+        <Stack.Screen name="Settings">{() => <Settings />}</Stack.Screen>
+        <Stack.Screen name="Account">
+          {() => (
+            <Account
+              profileData={profileData}
+              setProfileData={setProfileData}
+            />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>

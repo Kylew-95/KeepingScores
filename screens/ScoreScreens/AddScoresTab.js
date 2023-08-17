@@ -28,6 +28,8 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
       console.log("All fields are required");
       alert("All fields are required");
       return;
+    } else {
+      alert("Added Successfully");
     }
 
     const { data, error } = await supabase
@@ -130,7 +132,11 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
           Player Names
         </Text>
         <View
-          style={{ display: "flex", flexDirection: "row", alignSelf: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "center",
+          }}
         >
           <TextInput
             value={formData.player1}
@@ -164,7 +170,11 @@ export default function AddScoresTab({ scoresData, setScoresData, userId }) {
           Scores
         </Text>
         <View
-          style={{ display: "flex", flexDirection: "row", alignSelf: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "center",
+          }}
         >
           <TextInput
             value={formData.player1scores}
