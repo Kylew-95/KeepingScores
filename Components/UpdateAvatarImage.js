@@ -53,7 +53,16 @@ export default function UpdateAvatarImage({ profileData, setProfileData }) {
 
   return (
     <View>
-      <Button mode="outlined" onPress={changeProfilePicture}>
+      <Button
+        style={{
+          width: 200,
+          alignSelf: "center",
+          backgroundColor: "#2193F0",
+          borderRadius: 6,
+        }}
+        mode="contained"
+        onPress={changeProfilePicture}
+      >
         Change Image
       </Button>
     </View>

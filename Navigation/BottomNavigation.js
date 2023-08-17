@@ -49,7 +49,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
         <Tab.Screen
           name="Scores"
           options={{
-            title: "Scores",
+            title: "Keep Score",
             headerStyle: {
               backgroundColor: "#2193F0",
             },
@@ -75,78 +75,8 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
         <Tab.Screen
           name="Profile"
           options={{
+            headerShown: false,
             title: "Profile",
-            headerStyle: {
-              height: 240,
-            },
-            headerTitle: () => (
-              <>
-                <Text
-                  style={{
-                    fontSize: 40,
-                    color: "white",
-                    marginTop: 120,
-                    textAlign: "center",
-                    flex: 1,
-                    justifyContent: "center",
-                    marginLeft: 100,
-                  }}
-                >
-                  Hello{" "}
-                  {!profileData && profileData.first_name
-                    ? "User"
-                    : profileData.first_name}
-                </Text>
-                <>
-                  <Image
-                    style={{
-                      position: "absolute",
-                      resizeMode: "cover",
-                      width: 500,
-                      height: 250,
-                      top: -50,
-                      marginLeft: -20,
-                      zIndex: -10,
-                      backgroundColor: "transparent",
-                    }}
-                    source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
-                  ></Image>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate("Settings")}
-                    style={{
-                      position: "absolute",
-                      zIndex: 10,
-                      top: 10,
-                      backgroundColor: "transparent",
-                    }}
-                  >
-                    <Avatar.Image
-                      style={{
-                        position: "absolute",
-                        zIndex: 10,
-                        left: 350,
-                        color: "white",
-                        backgroundColor: "transparent",
-                      }}
-                      size={35}
-                      source={require("../Images/burgermenu.png")}
-                    />
-                  </TouchableOpacity>
-                  {/* <Image
-                    style={{
-                      position: "absolute",
-                      height: 40,
-                      width: 40,
-                      zIndex: 11,
-                      top: 10,
-                      left: -2,
-                      backgroundColor: "transparent",
-                    }}
-                    source={require("../Images/comment-chat-icon.png")}
-                  /> */}
-                </>
-              </>
-            ),
             tabBarIcon: ({ size, focused }) => {
               const iconColor = focused ? "#2193F0" : "gray";
               return (
@@ -156,7 +86,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
                     style={{
                       position: "absolute",
                       top: 4,
-                      right:50,
+                      right: 50,
                       backgroundColor: "#2193F0",
                     }}
                   ></Badge>

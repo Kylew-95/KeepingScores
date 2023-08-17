@@ -17,6 +17,7 @@ export default function Maps({
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   });
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [places, setPlaces] = useState([]);
 
   const onChangeSearch = (query) => setSearchQuery(query);
@@ -35,6 +36,15 @@ export default function Maps({
     } catch (error) {
       console.error("Error fetching places:", error);
     }
+  };
+
+  const toggleBottomSheet = () => {
+    if (bottomSheetOpen) {
+      closeBottomSheet();
+    } else {
+      openBottomSheet();
+    }
+    setBottomSheetOpen(!bottomSheetOpen);
   };
 
   return (
@@ -70,10 +80,7 @@ export default function Maps({
         }}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
         icon={() => (
-          <TouchableOpacity
-            onPress={() => openBottomSheet()}
-            onPressOut={() => closeBottomSheet()}
-          >
+          <TouchableOpacity onPress={toggleBottomSheet}>
             <Image
               source={require("../Images/burgermenu.png")}
               style={{

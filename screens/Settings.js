@@ -72,7 +72,10 @@ export default function Settings() {
           iconColor="white"
         />
         {settingsTabs.map((item) => (
-          <List.Section key={item.id} style={{ width: "70%", top: 100 }}>
+          <List.Section
+            key={item.id}
+            style={{ width: "80%", top: 50, alignSelf: "center" }}
+          >
             <List.Item
               key={item.id}
               titleStyle={item.colour === "red" ? { color: "red" } : null}
@@ -113,7 +116,7 @@ styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "50%",
+    width: "60%",
   },
   dividerStyle: {
     backgroundColor: "black",
@@ -133,12 +136,12 @@ styles = StyleSheet.create({
     width: "70%",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 50,
+    marginTop: 60,
   },
   searchbar: {
     width: "70%",
-    backgroundColor: "black",
+    backgroundColor: "#00171F",
     borderRadius: 6,
-    height: 45,
+    height: 50,
   },
 });

@@ -15,14 +15,6 @@ function TabGroup({ userId }) {
 
   return (
     <Tab.Navigator>
-      <Tab.Screen
-        options={{ tabBarInactiveTintColor: "grey" }}
-        name="My Scores"
-      >
-        {() => (
-          <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />
-        )}
-      </Tab.Screen>
       <Tab.Screen name="Add Scores">
         {() => (
           <AddScoresTab
@@ -30,6 +22,14 @@ function TabGroup({ userId }) {
             setScoresData={setScoresData}
             userId={userId}
           />
+        )}
+      </Tab.Screen>
+      <Tab.Screen
+        options={{ tabBarInactiveTintColor: "grey" }}
+        name="My Scores"
+      >
+        {() => (
+          <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />
         )}
       </Tab.Screen>
     </Tab.Navigator>
