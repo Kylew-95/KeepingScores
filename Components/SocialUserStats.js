@@ -10,7 +10,7 @@ export default function SocialUserStats() {
         </View>
         <Text style={styles.text}>Posts</Text>
       </View>
-      <View style={styles.item}>
+      {/* <View style={styles.item}>
         <View style={styles.valueContainer}>
           <Text style={styles.text}>1.2M</Text>
         </View>
@@ -21,7 +21,7 @@ export default function SocialUserStats() {
           <Text style={styles.text}>456</Text>
         </View>
         <Text style={styles.text}>Following</Text>
-      </View>
+      </View> */}
     </SafeAreaView>
   );
 }
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 80,
     alignItems: "center",
     textAlign: "center",
   },

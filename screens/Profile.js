@@ -13,7 +13,8 @@ import {
 import { Avatar, Appbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import SocialUserStats from "../Components/SocialUserStats";
-import ImgContainer from "../Components/ImgContainer";
+import ImgContainer from "../Components/ImgContainerNew";
+
 export default function Profiles({
   users,
   setUsers,
@@ -107,8 +108,8 @@ export default function Profiles({
         <SafeAreaView
           style={{ flex: 1, backgroundColor: "white", height: "100%" }}
         >
-          <View style={{ top: 10 }}></View>
-          <ImgContainer />
+          <View style={{ marginTop: 20 }}></View>
+          <ImgContainer profileData={profileData} />
         </SafeAreaView>
       </SafeAreaView>
     </>
