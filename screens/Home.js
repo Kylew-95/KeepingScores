@@ -9,12 +9,14 @@ export default function Home({ profileData }) {
   const snapPoints = [1, "50%"];
 
   const openBottomSheet = () => {
+    console.log("Opening bottom sheet");
     if (bottomSheetRef.current) {
       bottomSheetRef.current.expand();
     }
   };
 
   const closeBottomSheet = () => {
+    console.log("Closing bottom sheet");
     if (bottomSheetRef.current) {
       bottomSheetRef.current.close();
     }
