@@ -49,7 +49,7 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
         <Tab.Screen
           name="Scores"
           options={{
-            title: "Scores",
+            title: "Keep Score",
             headerStyle: {
               backgroundColor: "#2193F0",
             },

@@ -17,7 +17,7 @@ function TabGroup({ userId }) {
     <Tab.Navigator>
       <Tab.Screen
         options={{ tabBarInactiveTintColor: "grey" }}
-        name="My Scores"
+        name="My Matches"
       >
         {() => (
           <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />

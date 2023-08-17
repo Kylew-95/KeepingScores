@@ -15,14 +15,14 @@ function TabGroup({ profileData, setProfileData }) {
     <Tab.Navigator>
       <Tab.Screen
         options={{
-          tabBarStyle: { backgroundColor: "#307CBA", height: 40 },
+          tabBarStyle: { backgroundColor: "white", height: 40, width: 100 },
           tabBarInactiveTintColor: "grey",
           tabBarLabel: "",
           tabBarIcon: ({ color, focused }) => (
             <Image
               source={require("../Images/dashboardicon.png")}
               style={{
-                tintColor: focused ? "white" : "grey",
+                tintColor: focused ? "black" : "grey",
                 width: 14,
                 height: 14,
               }}
@@ -40,14 +40,14 @@ function TabGroup({ profileData, setProfileData }) {
       </Tab.Screen>
       <Tab.Screen
         options={{
-          tabBarStyle: { backgroundColor: "#307CBA", height: 40 },
+          tabBarStyle: { backgroundColor: "white", height: 40, width: 100 },
           tabBarInactiveTintColor: "black",
           tabBarLabel: "",
           tabBarIcon: ({ color, focused }) => (
             <Image
               source={require("../Images/molecularicon.png")}
               style={{
-                tintColor: focused ? "white" : "grey",
+                tintColor: focused ? "black" : "grey",
                 width: 14,
                 height: 14,
               }}
