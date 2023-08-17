@@ -85,7 +85,7 @@ export default function SignInAuth({
           >
             Sign In
           </Text>
-          {/* <Button
+          <Button
             mode="outlined"
             disabled={loading}
             onPress={signinWithGmail}
@@ -101,7 +101,7 @@ export default function SignInAuth({
               style={{ width: 18, height: 18, top: 6, marginLeft: 10 }}
             />
             <Text style={{ color: "black" }}>Sign in With Google</Text>
-          </Button> */}
+          </Button>
           <View style={styles.container}>
             <View style={[styles.verticallySpaced, styles.mt20]}>
               <TextInput

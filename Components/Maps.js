@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import { StyleSheet, View, Image } from "react-native";
+import { StyleSheet, View, Image, TouchableOpacity } from "react-native";
 import { Searchbar } from "react-native-paper";
 import axios from "axios";
 import { RADAR_API_KEY } from "@env";
 
-export default function Maps({ profileData }) {
+export default function Maps({
+  profileData,
+  openBottomSheet,
+  closeBottomSheet,
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapRegion, setMapRegion] = useState({
     latitude: 51.5072,
@@ -66,15 +70,20 @@ export default function Maps({ profileData }) {
         }}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
         icon={() => (
-          <Image
-            source={require("../Images/burgermenu.png")}
-            style={{
-              width: 30,
-              height: 30,
-              alignSelf: "center",
-              right: 0,
-            }}
-          />
+          <TouchableOpacity
+            onPress={() => openBottomSheet()}
+            onPressOut={() => closeBottomSheet()}
+          >
+            <Image
+              source={require("../Images/burgermenu.png")}
+              style={{
+                width: 30,
+                height: 30,
+                alignSelf: "center",
+                right: 0,
+              }}
+            />
+          </TouchableOpacity>
         )}
         clearIcon={() => (
           <Image
