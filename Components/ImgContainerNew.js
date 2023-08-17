@@ -5,7 +5,7 @@ import { FlatList, Image } from "react-native";
 import { LikesIcon } from "./InteractionIcons/LikesIcon";
 import { Avatar, Divider } from "react-native-paper";
 
-export default function ImgContainer({ profileData }) {
+export default function ImgContainerNew({ profileData }) {
   const renderItem = ({ item }) => {
     if (!item) {
       console.log("Item is undefined");
@@ -67,7 +67,7 @@ export default function ImgContainer({ profileData }) {
         <Image
           style={{
             width: 400,
-            height: 500,
+            height: 450,
             resizeMode: "contain",
             margin: 2,
             borderRadius: 10,
