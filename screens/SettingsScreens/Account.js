@@ -1,4 +1,4 @@
-import { SafeAreaView, ScrollView, Text } from "react-native";
+import { SafeAreaView, ScrollView, Text, StyleSheet } from "react-native";
 import React from "react";
 import { Appbar, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
@@ -20,16 +20,12 @@ export default function Account({ profileData, setProfileData }) {
 
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
         <ScrollView style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: "bold", margin: 20 }}>
-            Update Profile Picture
-          </Text>
+          <Text style={styles.stettingsHeader}>Update Profile Picture</Text>
           <UpdateAvatarImage
             profileData={profileData}
             setProfileData={setProfileData}
           />
-          <Text style={{ fontSize: 20, fontWeight: "bold", margin: 20 }}>
-            Update Name
-          </Text>
+          <Text style={styles.stettingsHeader}>Update Name</Text>
           <UpdateMetaData
             profileData={profileData}
             setProfileData={setProfileData}
@@ -39,3 +35,13 @@ export default function Account({ profileData, setProfileData }) {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  stettingsHeader: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginLeft: 20,
+    marginBottom: 10,
+  },
+});

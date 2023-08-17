@@ -15,7 +15,9 @@ export default function StartHomePage() {
   }, []);
   return (
     <View>
-      <Text style={{ alignSelf: "center", top: 425 }}>initalStart</Text>
+      <Text style={{ alignSelf: "center", top: 425, fontSize: 30 }}>
+        KEEPING SCORE
+      </Text>
     </View>
   );
 }

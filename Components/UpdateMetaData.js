@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView } from "react-native";
+import { View, Text, SafeAreaView, StyleSheet } from "react-native";
 import React, { useState } from "react";
 import { TextInput, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
@@ -35,7 +35,9 @@ export default function UpdateMetaData({ profileData, setProfileData }) {
       }}
     >
       <TextInput
-        placeholder="First Name"
+        style={styles.stettingsTextbox}
+        mode="outlined"
+        placeholder="User Name"
         value={firstName}
         onChangeText={setFirstName}
       />
@@ -44,6 +46,7 @@ export default function UpdateMetaData({ profileData, setProfileData }) {
           width: 200,
           alignSelf: "center",
           backgroundColor: "#2193F0",
+          borderRadius: 6,
           marginTop: 20,
         }}
         mode="contained"
@@ -54,3 +57,14 @@ export default function UpdateMetaData({ profileData, setProfileData }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  stettingsTextbox: {
+    width: "80%",
+    alignSelf: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    borderRadius: 6,
+    height: 30,
+  },
+});
