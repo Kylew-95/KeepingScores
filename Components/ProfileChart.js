@@ -20,18 +20,11 @@ export default function ProfileChart() {
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
           datasets: [
             {
-              data: [
-                Math.random() * 10000,
-                Math.random() * 10000,
-                Math.random() * 10000,
-                Math.random() * 10000,
-                Math.random() * 10000,
-                Math.random() * 10000,
-              ],
+              data: ["1000", "2000", "3000", "4000", "5000", "6000", "7000"],
             },
           ],
         }}
-        renderDotContent={({ x, y, index, value }) => (
+        renderDotContent={({ x, y, index }) => (
           <>
             {clickedIndex === index && (
               <Text
@@ -59,8 +52,8 @@ export default function ProfileChart() {
         yAxisSuffix=""
         yAxisInterval={1}
         chartConfig={{
-          backgroundColor: "#e26a00",
-          backgroundGradientFrom: "#fb8c00",
+          backgroundColor: "#2193F0",
+          backgroundGradientFrom: "#2193F0",
           backgroundGradientTo: "#ffa726",
           decimalPlaces: 0,
           color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
