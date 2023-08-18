@@ -23,10 +23,7 @@ export default function Home({ profileData }) {
   };
 
   return (
-    <SafeAreaView style={{ height: "100%", backgroundColor: "white" }}>
-      {/* <Text style={{ alignItems: "center", fontSize: 40 }}>
-        UNDER CONSTRUCTION
-      </Text> */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <Maps
         profileData={profileData}
         openBottomSheet={openBottomSheet}

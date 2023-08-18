@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { List } from "react-native-paper";
 import { sportsList } from "../../SportsList&Forms";
@@ -45,22 +45,26 @@ export default function AddScoresTab() {
         <List.Item title="Match Form" />
       </List.Section>
 
-      <DropDownPicker
-        searchable={true}
-        open={open}
-        value={value}
-        items={items}
-        setOpen={setOpen}
-        setValue={setValue}
-        theme="DARK"
-        mode="BADGE"
-        placeholder="Pick a Sport"
-        selectedItemContainerStyle={{ backgroundColor: "#2193F0" }}
-        style={{ height: 50 }}
-        onSelectItem={(item) => {
-          handleItemSelected(item);
-        }}
-      />
+      <View style={styles.dropDownContainer}>
+        <DropDownPicker
+          searchable={true}
+          open={open}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={setValue}
+          theme="DARK"
+          mode="SIMPLE"
+          placeholder="Pick a Sport"
+          searchContainerStyle={{ height: 50 }}
+          dropDownDirection="AUTO"
+          maxHeight={550}
+          selectedItemContainerStyle={{ backgroundColor: "#2193F0" }}
+          onSelectItem={(item) => {
+            handleItemSelected(item);
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -69,6 +73,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    height: "100%",
+  },
+  dropDownContainer: {
+    marginTop: 10, // Adjust this value as needed
   },
 });
