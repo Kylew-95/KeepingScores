@@ -1,22 +1,14 @@
 import { View, Text, Dimensions, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart,
-} from "react-native-chart-kit";
-import { Modal, Portal, Button, PaperProvider } from "react-native-paper";
+import { LineChart } from "react-native-chart-kit";
 
 export default function ProfileChart() {
+  const [clickedIndex, setClickedIndex] = useState(null);
   const [clickedValue, setClickedValue] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
 
   const handleDataPointClick = (value) => {
-    setClickedValue(value);
-    setModalVisible(true);
+    setClickedValue(value.value);
+    setClickedIndex(value.index);
   };
 
   return (
@@ -39,6 +31,28 @@ export default function ProfileChart() {
             },
           ],
         }}
+        renderDotContent={({ x, y, index, value }) => (
+          <>
+            {clickedIndex === index && (
+              <Text
+                key={index}
+                style={{
+                  position: "absolute",
+                  left: x - 10,
+                  top: y - 10, // Adjust vertical position
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: "black",
+                }}
+              >
+                {Math.round(clickedValue)}
+                {console.log(clickedValue)}
+                {console.log(clickedIndex)}
+                {/* {Math.round(clickedIndex?.dataset.data)} */}
+              </Text>
+            )}
+          </>
+        )}
         width={Dimensions.get("window").width}
         height={210}
         yAxisLabel=""
@@ -48,9 +62,8 @@ export default function ProfileChart() {
           backgroundColor: "#e26a00",
           backgroundGradientFrom: "#fb8c00",
           backgroundGradientTo: "#ffa726",
-          decimalPlaces: 0, // optional, defaults to 2dp
+          decimalPlaces: 0,
           color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-
           style: {
             borderRadius: 16,
           },
@@ -62,36 +75,6 @@ export default function ProfileChart() {
           borderRadius: 16,
         }}
       />
-      <PaperProvider>
-        <Portal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => {
-              setModalVisible(false);
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <View style={{ backgroundColor: "white", padding: 20 }}>
-                <Text>
-                  Dataset: {clickedValue.dataset.data[clickedValue.index]}
-                </Text>
-                {/* {console.log(clickedValue.dataset.data[clickedValue.index])} */}
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Text>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </Portal>
-      </PaperProvider>
     </View>
   );
 }
