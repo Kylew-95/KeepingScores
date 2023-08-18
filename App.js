@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Login from "./Onboarding/Login";
-import Navigation from "./Navigation/BottomNavigation";
+import BottomNavigation from "./Navigation/BottomNavigation";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
 import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
 import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
+import VsForm from "./Components/FormComps/VsForm";
 import StartHomePage from "./Onboarding/StartHomePage";
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [scoresData, setScoresData] = useState([]);
 
   const toggleDrawer = () => {
     setIsDrawerVisible(!isDrawerVisible);
@@ -72,11 +74,13 @@ export default function App() {
         </Stack.Screen> */}
         <Stack.Screen name="Navigation">
           {() => (
-            <Navigation
+            <BottomNavigation
               users={users}
               setUsers={setUsers}
               profileData={profileData}
               setProfileData={setProfileData}
+              scoresData={scoresData}
+              setScoresData={setScoresData}
             />
           )}
         </Stack.Screen>
@@ -90,6 +94,11 @@ export default function App() {
               profileData={profileData}
               setProfileData={setProfileData}
             />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Match Form">
+          {() => (
+            <VsForm scoresData={scoresData} setScoresData={setScoresData} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

@@ -6,13 +6,17 @@ import AddScoresTab from "../screens/ScoreScreens/AddScoresTab";
 
 const Tab = createMaterialTopTabNavigator();
 
-export function TopNavScoreBar({ userId }) {
-  return <TabGroup />;
+export function TopNavScoreBar({ userId, scoresData, setScoresData }) {
+  return (
+    <TabGroup
+      scoresData={scoresData}
+      setScoresData={setScoresData}
+      userId={userId}
+    />
+  );
 }
 
-function TabGroup({ userId }) {
-  const [scoresData, setScoresData] = useState([]);
-
+function TabGroup({ userId, scoresData, setScoresData }) {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Add Scores">
