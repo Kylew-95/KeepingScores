@@ -3,6 +3,7 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 
 import ScoresTab from "../screens/ScoreScreens/ScoresTab";
 import AddScoresTab from "../screens/ScoreScreens/AddScoresTab";
+import AddSteps from "../screens/ScoreScreens/AddSteps";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -35,6 +36,12 @@ function TabGroup({ userId, scoresData, setScoresData }) {
         {() => (
           <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />
         )}
+      </Tab.Screen>
+      <Tab.Screen
+        options={{ tabBarInactiveTintColor: "grey" }}
+        name="Step Counter"
+      >
+        {() => <AddSteps />}
       </Tab.Screen>
     </Tab.Navigator>
   );
