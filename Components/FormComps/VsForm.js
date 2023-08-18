@@ -4,6 +4,7 @@ import { Appbar, Card, Text, TextInput } from "react-native-paper";
 import AddScoreButton from "../../Components/FormComps/AddScoreButton";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function VsForm({ scoresData, setScoresData }) {
   const navigation = useNavigation();
@@ -71,6 +72,7 @@ export default function VsForm({ scoresData, setScoresData }) {
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Add Score" />
       </Appbar.Header>
+
       <SafeAreaView style={{ height: "100%", backgroundColor: "white" }}>
         <Card
           style={{
@@ -86,6 +88,7 @@ export default function VsForm({ scoresData, setScoresData }) {
               Location
             </Text>
             <TextInput
+              scrollEnabled={true}
               value={formData.location}
               mode="outlined"
               onChangeText={(text) => handleInputChange("location", text)}

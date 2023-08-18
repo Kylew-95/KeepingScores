@@ -59,8 +59,8 @@ export default function App() {
       >
         {/* <Stack.Screen name="StartHomePage">
           {() => <StartHomePage />}
-        </Stack.Screen> */}
-        {/* <Stack.Screen name="Login">
+        </Stack.Screen>
+        <Stack.Screen name="Login">
           {() => (
             <Login
               loading={loading}

@@ -15,7 +15,7 @@ function TabGroup({ profileData, setProfileData }) {
     <Tab.Navigator>
       <Tab.Screen
         options={{
-          tabBarStyle: { backgroundColor: "white", height: 40, width: 100 },
+          tabBarStyle: { backgroundColor: "white", height: 40 },
           tabBarInactiveTintColor: "grey",
           tabBarLabel: "",
           tabBarIcon: ({ color, focused }) => (
@@ -40,7 +40,7 @@ function TabGroup({ profileData, setProfileData }) {
       </Tab.Screen>
       <Tab.Screen
         options={{
-          tabBarStyle: { backgroundColor: "white", height: 40, width: 100 },
+          tabBarStyle: { backgroundColor: "white", height: 40 },
           tabBarInactiveTintColor: "black",
           tabBarLabel: "",
           tabBarIcon: ({ color, focused }) => (

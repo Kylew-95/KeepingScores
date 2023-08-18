@@ -10,6 +10,16 @@ export default function AddScoresTab() {
   const [value, setValue] = useState(null);
   const navigation = useNavigation();
 
+  // This is for when Im ready to add more Drop downs for each form
+  // const matchFormOptions = sportsList.filter(
+  //   (sport) => sport.Form === "Match Form"
+  // );
+  // const items = matchFormOptions.map((sport) => ({
+  //   label: sport.name,
+  //   value: sport.id,
+  //   form: sport.Form,
+  // }));
+
   const items = sportsList.map((sport) => ({
     label: sport.name,
     value: sport.id,
