@@ -33,7 +33,8 @@ export default function App() {
       const { data, error } = await supabase
         .from("UserProfileData")
         .select("*")
-        .eq("userprofile_id", session.user.id);
+        .eq("userprofile_id", session.user.id)
+        .single();
       if (error) {
         console.log(error);
       } else {
