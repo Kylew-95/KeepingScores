@@ -4,7 +4,7 @@ import BottomNavigation from "./Navigation/BottomNavigation";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { supabase } from "./SupabaseConfig/SupabaseClient";
-import ProfileSetUp from "./Onboarding/SetUp/ProfileSetUp";
+import SignUp from "./Onboarding/Auth/SignUpAuth";
 import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
 import VsForm from "./Components/FormComps/VsForm";
@@ -16,17 +16,14 @@ export default function App() {
   const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [scoresData, setScoresData] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("NewSession", session);
       setSession(session);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("NewerSesssion", session);
       setSession(session);
     });
   }, []);
@@ -36,8 +33,7 @@ export default function App() {
       const { data, error } = await supabase
         .from("UserProfileData")
         .select("*")
-        .eq("UserProfile_id", session.user.id)
-        .single();
+        .eq("userprofile_id", session.user.id);
       if (error) {
         console.log(error);
       } else {
@@ -46,8 +42,22 @@ export default function App() {
     }
   }
 
+  console.log(profileData);
+
   useEffect(() => {
     UsersData();
+  }, [session]);
+
+  const getUserId = () => {
+    if (session) {
+      return setUsers(session.user);
+    } else {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    getUserId();
   }, [session]);
 
   return (
@@ -84,7 +94,17 @@ export default function App() {
           )}
         </Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
-          {() => <ProfileSetUp />}
+          {() => (
+            <SignUp
+              session={session}
+              setSession={setSession}
+              loading={loading}
+              setLoading={setLoading}
+              profileData={profileData}
+              setProfileData={setProfileData}
+              users={users}
+            />
+          )}
         </Stack.Screen>
         <Stack.Screen name="Settings">{() => <Settings />}</Stack.Screen>
         <Stack.Screen name="Account">
@@ -92,6 +112,7 @@ export default function App() {
             <Account
               profileData={profileData}
               setProfileData={setProfileData}
+              session={session}
             />
           )}
         </Stack.Screen>

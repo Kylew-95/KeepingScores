@@ -4,7 +4,11 @@ import { Button } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 
-export default function UpdateAvatarImage({ profileData, setProfileData }) {
+export default function UpdateAvatarImage({
+  profileData,
+  setProfileData,
+  session,
+}) {
   async function changeProfilePicture() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -14,7 +18,7 @@ export default function UpdateAvatarImage({ profileData, setProfileData }) {
 
       if (!result.canceled) {
         const timestamp = new Date().getTime();
-        const imagePath = `${profileData.UserProfile_id}/avatar_${timestamp}.png`;
+        const imagePath = `${profileData.userprofile_id}/avatar_${timestamp}.png`;
 
         const { data, error } = await supabase.storage
           .from("avatar-images")
@@ -37,7 +41,7 @@ export default function UpdateAvatarImage({ profileData, setProfileData }) {
             .update({
               avatar_image_url: result.assets[0].uri,
             })
-            .eq("UserProfile_id", profileData.UserProfile_id);
+            .eq("userprofile_id", session.user.id);
 
           if (updateError) {
             console.log("Error updating profile data:", updateError.message);

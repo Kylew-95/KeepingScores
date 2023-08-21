@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import UpdateAvatarImage from "../../Components/UpdateAvatarImage";
 import UpdateMetaData from "../../Components/UpdateMetaData";
 
-export default function Account({ profileData, setProfileData }) {
+export default function Account({ profileData, setProfileData, session }) {
   const navigation = useNavigation();
 
   return (
@@ -24,11 +24,13 @@ export default function Account({ profileData, setProfileData }) {
           <UpdateAvatarImage
             profileData={profileData}
             setProfileData={setProfileData}
+            session={session}
           />
           <Text style={styles.stettingsHeader}>Update Name</Text>
           <UpdateMetaData
             profileData={profileData}
             setProfileData={setProfileData}
+            session={session}
           />
         </ScrollView>
       </SafeAreaView>
