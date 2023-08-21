@@ -63,6 +63,7 @@ export default function Login({
               setLoading={setLoading}
               userId={userId}
               ChangeAuthState={ChangeAuthState}
+              session={session}
             />
           )}
         </SafeAreaView>

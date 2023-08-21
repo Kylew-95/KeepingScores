@@ -3,14 +3,12 @@ import { View, Text, StyleSheet } from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
 
-export default function SignUpAndProfileSetup({
+export default function SignUpAuth({
   ChangeAuthState,
   setLoading,
-  profileData,
-  setProfileData,
-  users,
+  userId,
+  session,
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,62 +16,48 @@ export default function SignUpAndProfileSetup({
   const [lastName, setLastName] = useState("");
   const navigation = useNavigation();
 
-  async function signUp() {
+  async function userSignUp() {
     setLoading(true);
-    const { user, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-    if (error) {
-      console.log(error);
-      setLoading(false);
-    } else {
-      const { data, error } = await supabase.from("UserProfileData").insert([
-        {
-          id: users.id,
-          first_name: firstName,
-          last_name: lastName,
-          avatar_image_url: "",
-        },
-      ]);
-      if (error) {
-        console.error("Error inserting user data:", error.message);
-      } else {
-        console.log("User data inserted successfully:", data);
-        navigation.navigate("Login");
-      }
-    }
-  }
-
-  async function changeProfilePicture() {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+      const response = await supabase.auth.signUp({
+        email: email,
+        password: password,
       });
 
-      if (!result.cancelled) {
-        const timestamp = new Date().getTime();
-        const imagePath = `${profileData.userprofile_id}/avatar_${timestamp}.png`;
+      console.log("Sign-up response:", response.data.user.id);
 
-        const { data, error } = await supabase.storage
-          .from("avatar-images")
-          .upload(imagePath, result.assets[0].uri, { cacheControl: "3600" });
+      if (response.error) {
+        console.log("Sign-up error:", response.error);
+        setLoading(false);
+      } else {
+        const userId = response.data.user.id;
+
+        const { data, error } = await supabase.from("UserProfileData").insert([
+          {
+            userprofile_id: userId,
+            first_name: firstName,
+            last_name: lastName,
+            avatar_image_url: "https://picsum.photos/seed/picsum/200/300",
+          },
+        ]);
+
+        console.log("User data response:", data);
 
         if (error) {
-          console.log("Error uploading image:", error.message);
+          console.error("Error inserting user data:", error.message);
         } else {
-          console.log("Image uploaded successfully:", data);
-
-          const updatedProfileData = {
-            ...profileData,
-            avatar_image_url: result.assets[0].uri,
-          };
-          setProfileData(updatedProfileData);
+          console.log("User data inserted successfully:", data);
+          alert("User data inserted successfully");
+          setEmail("");
+          setPassword("");
+          setFirstName("");
+          setLastName("");
         }
+        setLoading(false);
       }
     } catch (error) {
-      console.log("Image picker error:", error);
+      console.log("Unexpected error:", error);
+      setLoading(false);
     }
   }
 
@@ -109,7 +93,7 @@ export default function SignUpAndProfileSetup({
         value={lastName}
         onChangeText={setLastName}
       />
-      <Button
+      {/* <Button
         textColor="#2193F0"
         style={{
           backgroundColor: "white",
@@ -121,8 +105,8 @@ export default function SignUpAndProfileSetup({
         onPress={changeProfilePicture}
       >
         Add Image
-      </Button>
-      <Button style={styles.button} mode="contained" onPress={signUp}>
+      </Button> */}
+      <Button style={styles.button} mode="contained" onPress={userSignUp}>
         Sign Up
       </Button>
       <Text style={styles.signInText} onPress={ChangeAuthState}>
@@ -134,7 +118,7 @@ export default function SignUpAndProfileSetup({
 
 const styles = StyleSheet.create({
   container: {
-    top: 20,
+    top: 0,
     padding: 12,
     width: "80%",
     alignSelf: "center",

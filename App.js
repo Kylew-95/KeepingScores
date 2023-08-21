@@ -13,6 +13,7 @@ const Stack = createStackNavigator();
 
 export default function App() {
   const [users, setUsers] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -49,15 +50,19 @@ export default function App() {
     UsersData();
   }, [session]);
 
-  const getUserId = () => {
+  const getUserId = async () => {
     if (session) {
-      return setUsers(session.user);
-    } else {
-      return null;
+      const { data, error } = await supabase.auth.getUser(session.access_token);
+      if (error) {
+        console.log(error);
+      } else {
+        setUserId(data.id);
+      }
     }
   };
 
   useEffect(() => {
+    console.log("session", userId);
     getUserId();
   }, [session]);
 
@@ -103,7 +108,7 @@ export default function App() {
               setLoading={setLoading}
               profileData={profileData}
               setProfileData={setProfileData}
-              users={users}
+              userId={userId}
             />
           )}
         </Stack.Screen>
