@@ -19,31 +19,30 @@ export default function App() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [scoresData, setScoresData] = useState([]);
 
-  const toggleDrawer = () => {
-    setIsDrawerVisible(!isDrawerVisible);
-  };
-
-  async function getUser() {
-    const user = await supabase.auth.getUser();
-    if (user) {
-      setUsers(user.data.user);
-      setSession(user);
-    }
-  }
   useEffect(() => {
-    getUser();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("NewSession", session);
+      setSession(session);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("NewerSesssion", session);
+      setSession(session);
+    });
   }, []);
 
   async function UsersData() {
-    const { data, error } = await supabase
-      .from("UserProfileData")
-      .select("*")
-      .eq("UserProfile_id", session.data.user.id)
-      .single();
-    if (error) {
-      console.log(error);
-    } else {
-      setProfileData(data);
+    if (session) {
+      const { data, error } = await supabase
+        .from("UserProfileData")
+        .select("*")
+        .eq("UserProfile_id", session.user.id)
+        .single();
+      if (error) {
+        console.log(error);
+      } else {
+        setProfileData(data);
+      }
     }
   }
 
@@ -57,7 +56,7 @@ export default function App() {
         initialRouteName="StartHomePage"
         screenOptions={{ headerShown: false }}
       >
-        {/* <Stack.Screen name="StartHomePage">
+        <Stack.Screen name="StartHomePage">
           {() => <StartHomePage />}
         </Stack.Screen>
         <Stack.Screen name="Login">
@@ -71,7 +70,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen> */}
+        </Stack.Screen>
         <Stack.Screen name="Navigation">
           {() => (
             <BottomNavigation
