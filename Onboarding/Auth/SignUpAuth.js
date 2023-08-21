@@ -28,8 +28,7 @@ export default function SignUpAndProfileSetup({
       console.log(error);
       setLoading(false);
     } else {
-      // Insert user's additional data into user_profiles table
-      const { data, error } = await supabase.from("user_profiles").insert([
+      const { data, error } = await supabase.from("UserProfileData").insert([
         {
           id: users.id,
           first_name: firstName,
@@ -41,7 +40,7 @@ export default function SignUpAndProfileSetup({
         console.error("Error inserting user data:", error.message);
       } else {
         console.log("User data inserted successfully:", data);
-        navigation.navigate("ProfileSetUp");
+        navigation.navigate("Login");
       }
     }
   }
@@ -135,19 +134,20 @@ export default function SignUpAndProfileSetup({
 
 const styles = StyleSheet.create({
   container: {
-    top: 10,
+    top: 20,
     padding: 12,
     width: "80%",
     alignSelf: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 27,
+    fontWeight: "400",
     marginBottom: 20,
     color: "#2193F0",
     alignSelf: "center",
   },
   input: {
+    backgroundColor: "white",
     marginBottom: 10,
   },
   button: {
