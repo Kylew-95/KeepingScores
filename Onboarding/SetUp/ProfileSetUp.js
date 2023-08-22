@@ -6,10 +6,14 @@ import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 
-export default function ProfileSetUp({ userId }) {
+export default function ProfileSetUp({
+  userId,
+  session,
+  profileData,
+  setProfileData,
+}) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [image, setImage] = useState(null);
 
   async function changeProfilePicture() {
     try {
@@ -20,7 +24,7 @@ export default function ProfileSetUp({ userId }) {
 
       if (!result.cancelled) {
         const timestamp = new Date().getTime(); // Get a unique timestamp
-        const imagePath = `${profileData.UserProfile_id}/avatar_${timestamp}.png`;
+        const imagePath = `${profileData.userprofile_id}/avatar_${timestamp}.png`;
 
         const { data, error } = await supabase.storage
           .from("avatar-images")
@@ -47,7 +51,7 @@ export default function ProfileSetUp({ userId }) {
               last_name: lastName,
               avatar_image_url: result.assets[0].uri,
             })
-            .eq("UserProfile_id", profileData.UserProfile_id);
+            .eq("userprofile_id", session.user.id);
 
           if (updateError) {
             console.log("Error updating profile data:", updateError.message);

@@ -14,10 +14,10 @@ export default function HomeBottomSheet({ bottomSheetRef, snapPoints }) {
       <BottomSheetView
         style={{
           padding: 16,
-          height: "100%",
           backgroundColor: "#00171F",
           borderTopLeftRadius: 30,
           borderTopRightRadius: 30,
+          flex: 1, // Allow content to take up available space
         }}
       >
         <Text style={{ color: "white" }}>FILTER</Text>

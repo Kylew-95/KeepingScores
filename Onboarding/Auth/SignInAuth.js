@@ -41,18 +41,6 @@ export default function SignInAuth({
     }
   };
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, _session) => {
-        session = _session;
-
-        return () => {
-          setSession(authListener.unsubscribe());
-        };
-      }
-    );
-  }, []);
-
   return (
     <>
       <View

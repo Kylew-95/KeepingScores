@@ -3,7 +3,11 @@ import React, { useState } from "react";
 import { TextInput, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 
-export default function UpdateMetaData({ profileData, setProfileData }) {
+export default function UpdateMetaData({
+  profileData,
+  setProfileData,
+  session,
+}) {
   const [firstName, setFirstName] = useState("");
 
   async function UpdateUserName() {
@@ -12,7 +16,7 @@ export default function UpdateMetaData({ profileData, setProfileData }) {
       .update({
         first_name: firstName,
       })
-      .eq("UserProfile_id", profileData.UserProfile_id);
+      .eq("userprofile_id", session.user.id);
 
     if (updateError) {
       console.log("Error updating profile data:", updateError.message);

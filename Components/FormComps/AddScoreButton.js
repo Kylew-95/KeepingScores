@@ -34,7 +34,7 @@ export default function AddScoreButton({ dataTable, setFormData }) {
         }}
       >
         <Image
-          source={require("../Images/plusIcon.png")}
+          source={require("../../Images/plusIcon.png")}
           style={{
             width: 50,
             height: 50,

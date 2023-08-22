@@ -13,6 +13,8 @@ export default function BottomNavigation({
   setUsers,
   profileData,
   setProfileData,
+  scoresData,
+  setScoresData,
 }) {
   return (
     <TabGroup
@@ -20,10 +22,19 @@ export default function BottomNavigation({
       setUsers={setUsers}
       profileData={profileData}
       setProfileData={setProfileData}
+      scoresData={scoresData}
+      setScoresData={setScoresData}
     />
   );
 }
-function TabGroup({ users, setUsers, profileData, setProfileData }) {
+function TabGroup({
+  users,
+  setUsers,
+  profileData,
+  setProfileData,
+  scoresData,
+  setScoresData,
+}) {
   const navigation = useNavigation();
 
   return (
@@ -70,7 +81,13 @@ function TabGroup({ users, setUsers, profileData, setProfileData }) {
             },
           }}
         >
-          {() => <Scores users={users} />}
+          {() => (
+            <Scores
+              users={users}
+              scoresData={scoresData}
+              setScoresData={setScoresData}
+            />
+          )}
         </Tab.Screen>
         <Tab.Screen
           name="Profile"
