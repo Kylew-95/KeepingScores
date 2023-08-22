@@ -40,7 +40,7 @@ export default function Profile({
               zIndex: -10,
               backgroundColor: "transparent",
             }}
-            source={require("../Images/alicja-gancarz-wvDELsJ_E20-unsplash.jpg")}
+            source={require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")}
           />
           <View
             style={{
@@ -53,15 +53,16 @@ export default function Profile({
               left: 100,
             }}
           >
-            <SocialUserStats profileData={profileData} />
+            {/* <SocialUserStats profileData={profileData} /> */}
           </View>
           <Avatar.Image
             style={{
               position: "absolute",
-              zIndex: 30,
-              top: 55,
+              zIndex: 200,
+              top: 75,
               left: 10,
               backgroundColor: "transparent",
+              alignSelf: "center",
             }}
             size={90}
             source={{
