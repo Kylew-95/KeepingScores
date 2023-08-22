@@ -49,10 +49,12 @@ function TabGroup({
               return (
                 <Image
                   style={{ width: size, height: size, tintColor: iconColor }}
-                  source={require("../Images/locationIcon.png")}
+                  source={require("../Images/compassicon.png")}
                 />
               );
+             
             },
+            
           }}
         >
           {() => <Home profileData={profileData} />}
@@ -119,7 +121,7 @@ function TabGroup({
                       top: 1,
                       right: 2,
                     }}
-                    size={30}
+                    size={25}
                     source={{ uri: profileData?.avatar_image_url }}
                   />
                   {/* <Image

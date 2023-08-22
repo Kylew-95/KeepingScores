@@ -44,8 +44,6 @@ export default function App() {
     }
   }
 
-  console.log(profileData);
-
   useEffect(() => {
     UsersData();
   }, [session]);
@@ -62,7 +60,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log("session", userId);
     getUserId();
   }, [session]);
 

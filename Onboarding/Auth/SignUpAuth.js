@@ -41,12 +41,12 @@ export default function SignUpAuth({
           },
         ]);
 
-        console.log("User data response:", data);
+        console.log("User data response:", error);
 
         if (error) {
           console.error("Error inserting user data:", error.message);
         } else {
-          console.log("User data inserted successfully:", data);
+          console.log("User data inserted successfully:", error.message);
           alert("User data inserted successfully");
           setEmail("");
           setPassword("");

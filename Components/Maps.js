@@ -28,7 +28,7 @@ export default function Maps({
         `https://api.radar.io/v1/search/places?query=${searchQuery}`,
         {
           headers: {
-            Authorization: `Bearer ${RADAR_API_KEY}`,
+            Authorization: RADAR_API_KEY,
           },
         }
       );

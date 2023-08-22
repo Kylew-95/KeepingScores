@@ -14,6 +14,7 @@ import { Avatar, Appbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import SocialUserStats from "../Components/SocialUserStats";
 import { TopProfileTabBar } from "../Navigation/TopProfileTabBar";
+import Dashboard from "../Components/Dashboard";
 export default function Profile({
   users,
   setUsers,
@@ -25,97 +26,107 @@ export default function Profile({
 
   return (
     <>
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: "white", height: "100%" }}
+      <Appbar
+        style={{
+          position: "absolute",
+          width: "100%",
+          backgroundColor: "#2193F0",
+          zIndex: 300,
+          height: 80,
+        }}
       >
-        <Appbar.Header style={{ height: 150 }}>
-          <Image
-            style={{
-              position: "absolute",
-              resizeMode: "cover",
-              width: 500,
-              height: 250,
-              top: -50,
-              marginLeft: -20,
-              zIndex: -10,
-              backgroundColor: "transparent",
-            }}
-            source={require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")}
+        <TouchableOpacity style={styles.container}>
+          <Text style={styles.headerUserName}>{profileData.first_name}</Text>
+          <Avatar.Image
+            source={require("../Images/downArrowicon.png")}
+            style={styles.arrowIcon}
+            backgroundColor="transparent"
+            size={23}
           />
-          <View
-            style={{
-              position: "absolute",
-              top: 90,
-              alignSelf: "center",
-              backgroundColor: "transparent",
-              zIndex: 20,
-              flex: 1,
-              left: 100,
-            }}
-          >
-            {/* <SocialUserStats profileData={profileData} /> */}
-          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Settings")}
+          style={{
+            position: "absolute",
+            zIndex: 10,
+            top: 38,
+            backgroundColor: "transparent",
+          }}
+        >
           <Avatar.Image
             style={{
               position: "absolute",
-              zIndex: 200,
-              top: 75,
-              left: 10,
+              zIndex: 10,
+              left: 370,
               backgroundColor: "transparent",
-              alignSelf: "center",
             }}
-            size={90}
-            source={{
-              uri: profileData.avatar_image_url,
-            }}
+            size={25}
+            source={require("../Images/3Dots.png")}
+            tintColor="white"
           />
-          <View style={{ top: -70 }}>
-            <TouchableOpacity style={styles.container}>
-              <Text style={styles.headerUserName}>
-                {profileData.first_name}
-              </Text>
-              <Avatar.Image
-                source={require("../Images/downArrowicon.png")}
-                style={styles.arrowIcon}
-                backgroundColor="transparent"
-                size={23}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Settings")}
-              style={{
-                position: "absolute",
-                zIndex: 10,
-                top: 10,
-                backgroundColor: "transparent",
-              }}
-            >
-              <Avatar.Image
-                style={{
-                  position: "absolute",
-                  zIndex: 10,
-                  left: 370,
-                  backgroundColor: "transparent",
-                }}
-                size={25}
-                source={require("../Images/3Dots.png")}
-                tintColor="white"
-              />
-            </TouchableOpacity>
-          </View>
-        </Appbar.Header>
-
+        </TouchableOpacity>
+      </Appbar>
+      <ScrollView>
         <SafeAreaView
           style={{ flex: 1, backgroundColor: "white", height: "100%" }}
         >
-          <TopProfileTabBar
-            setProfileData={setProfileData}
-            profileData={profileData}
-          />
+          <Appbar.Header style={{ height: 150, zIndex: 20 }}>
+            <Image
+              style={{
+                position: "absolute",
+                resizeMode: "cover",
+                width: 500,
+                height: 300,
+                top: -50,
+                marginLeft: -20,
+                zIndex: -10,
+                backgroundColor: "transparent",
+              }}
+              source={require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")}
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: 90,
+                alignSelf: "center",
+                backgroundColor: "transparent",
+                zIndex: 20,
+                flex: 1,
+                left: 100,
+              }}
+            ></View>
+            <Avatar.Image
+              style={{
+                position: "absolute",
+                zIndex: 200,
+                top: 100,
+                left: 150,
+                backgroundColor: "transparent",
+                alignSelf: "center",
+              }}
+              size={100}
+              source={{
+                uri: profileData.avatar_image_url,
+              }}
+            />
+            {/* 
+          <View style={{ top: -70 }}> */}
 
-          {/* <ImgContainer profileData={profileData} /> */}
+            {/* </View> */}
+          </Appbar.Header>
+
+          <SafeAreaView
+            style={{
+              flex: 1,
+              backgroundColor: "white",
+              top: 100,
+              zIndex: 30,
+            }}
+          >
+            <Dashboard />
+          </SafeAreaView>
         </SafeAreaView>
-      </SafeAreaView>
+      </ScrollView>
     </>
   );
 }
@@ -131,11 +142,12 @@ const styles = StyleSheet.create({
   headerUserName: {
     fontSize: 20,
     marginRight: 5,
+    top: 8,
     fontWeight: "bold",
     color: "white",
   },
   arrowIcon: {
     right: 6,
-    top: 2,
+    top: 8,
   },
 });
