@@ -70,9 +70,11 @@ export default function Maps({
 
   useEffect(() => {
     const fetchNearbyPlaces = async () => {
-      console.log("fetching nearby places", places);
+      const keyWords = ["leisure", "gym", "park", "swimming"];
       try {
-        const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${responseData.geometry.location.lat}%2C${responseData.geometry.location.lng}&radius=10000&keyword=leisure&key=${GOOGLE_API_KEY}`;
+        const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=51.40322%2C-0.16831&radius=10000&keyword=${keyWords
+          .map((word) => encodeURIComponent(word))
+          .join("%7C")}&key=AIzaSyBOGdOyuw2M85OMlkrTTDC1j3pYrR6XGfc`;
 
         const response = await fetch(apiUrl);
         const responseData = await response.json();
@@ -133,14 +135,14 @@ export default function Maps({
         }}
       />
 
-      <Searchbar
+      {/* <Searchbar
         style={styles.searchbar}
         iconColor="white"
         placeholderTextColor={"white"}
         inputStyle={{ color: "white" }}
         mode="bar"
         placeholder="Search"
-        onChangeText={onChangeSearch}
+        onChange={onChangeSearch}
         value={searchQuery}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
         icon={() => (
@@ -167,7 +169,7 @@ export default function Maps({
             }}
           />
         )}
-      />
+      /> */}
     </View>
   );
 }
