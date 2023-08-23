@@ -1,9 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import { StyleSheet, View, Image, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { Searchbar } from "react-native-paper";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import axios from "axios";
-import { RADAR_API_KEY } from "@env";
+import * as Location from "expo-location";
 
 export default function Maps({
   profileData,
@@ -12,60 +19,119 @@ export default function Maps({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapRegion, setMapRegion] = useState({
-    latitude: 51.5072,
-    longitude: -0.1276,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
+    latitude: 51.50853,
+    longitude: -0.12574,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
   });
-  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+
   const [places, setPlaces] = useState([]);
 
   const onChangeSearch = (query) => setSearchQuery(query);
 
-  const fetchPlaces = async (searchQuery) => {
-    try {
-      const response = await axios.get(
-        `https://api.radar.io/v1/search/places?query=${searchQuery}`,
-        {
-          headers: {
-            Authorization: RADAR_API_KEY,
-          },
-        }
-      );
-      setPlaces(response.data.places);
-    } catch (error) {
-      console.error("Error fetching places:", error);
-    }
-  };
-
   const toggleBottomSheet = () => {
-    if (bottomSheetOpen) {
+    if (openBottomSheet) {
       closeBottomSheet();
     } else {
       openBottomSheet();
     }
-    setBottomSheetOpen(!bottomSheetOpen);
   };
 
+  const handleGooglePlaceSelect = (data) => {
+    console.log("data", data);
+    setMapRegion({
+      latitude: data.geometry.location.lat,
+      longitude: data.geometry.location.lng,
+
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+  };
+
+  // useEffect(() => {
+  //   (async () => {
+  //     let { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status !== "granted") {
+  //       console.log("Permission to access location was denied");
+  //       return;
+  //     }
+
+  //     let location = await Location.getCurrentPositionAsync({});
+  //     console.log("location", location);
+  //     setMapRegion({
+  //       latitude: location.coords.latitude,
+  //       longitude: location.coords.longitude,
+  //       latitudeDelta: 0.0922,
+  //       longitudeDelta: 0.0421,
+  //     });
+  //   })();
+  // }, []);
+
+  useEffect(() => {
+    const fetchNearbyPlaces = async () => {
+      try {
+        const apiUrl =
+          "https://maps.googleapis.com/maps/api/place/nearbysearch/json" +
+          `?location=51.50853,-0.12574&radius=10000&keyword=park&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+  
+        const response = await fetch(apiUrl);
+        const responseData = await response.json();
+        console.log(responseData);
+        
+        if (responseData.status === 'OK') {
+          setPlaces(responseData.results);
+        }
+      } catch (error) {
+        console.error("Error fetching nearby places:", error);
+      }
+    };
+  
+    if (searchQuery) {
+      fetchNearbyPlaces();
+    }
+  }, [searchQuery]);
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={mapRegion}
+        region={mapRegion}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+        showsCompass={true}
       >
         {places.map((place) => (
           <Marker
-            key={place.id}
+            key={place.place_id}
             coordinate={{
-              latitude: place.location.geometry.coordinates[1],
-              longitude: place.location.geometry.coordinates[0],
+              latitude: place.geometry.location.lat,
+              longitude: place.geometry.location.lng,
             }}
             title={place.name}
-            description={place.categories.join(", ")}
+            description={place.vicinity}
+            pinColor="#00171F"
           />
         ))}
       </MapView>
+
+      <GooglePlacesAutocomplete
+        placeholder="Search"
+        minLength={2}
+        autoFocus={false}
+        returnKeyType={"search"}
+        listViewDisplayed="auto"
+        fetchDetails={true}
+        query={{
+          key: "AIzaSyBOGdOyuw2M85OMlkrTTDC1j3pYrR6XGfc",
+          language: "en",
+        }}
+        onPress={(data, details = null) => {
+          console.log("Place selected:", data);
+          handleGooglePlaceSelect(data);
+        }}
+      />
+
       <Searchbar
         style={styles.searchbar}
         iconColor="white"
@@ -75,9 +141,6 @@ export default function Maps({
         placeholder="Search"
         onChangeText={onChangeSearch}
         value={searchQuery}
-        onEndEditing={() => {
-          fetchPlaces(searchQuery);
-        }}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
         icon={() => (
           <TouchableOpacity onPress={toggleBottomSheet}>
@@ -113,8 +176,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   map: {
-    width: "100%",
-    height: "100%",
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
   },
   searchbar: {
     alignSelf: "center",

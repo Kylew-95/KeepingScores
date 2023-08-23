@@ -121,6 +121,7 @@ export default function Profile({
               backgroundColor: "white",
               top: 100,
               zIndex: 30,
+              height: "100%",
             }}
           >
             <Dashboard />

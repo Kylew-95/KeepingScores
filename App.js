@@ -69,7 +69,7 @@ export default function App() {
         initialRouteName="StartHomePage"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="StartHomePage">
+        {/* <Stack.Screen name="StartHomePage">
           {() => <StartHomePage />}
         </Stack.Screen>
         <Stack.Screen name="Login">
@@ -83,7 +83,7 @@ export default function App() {
               setUsers={setUsers}
             />
           )}
-        </Stack.Screen>
+        </Stack.Screen> */}
         <Stack.Screen name="Navigation">
           {() => (
             <BottomNavigation

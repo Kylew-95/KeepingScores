@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { List } from "react-native-paper";
-import { sportsList } from "../../SportsList&Forms";
+import { sportsList } from "../../SupabaseConfig/SportsList&Forms";
 import { useNavigation } from "@react-navigation/native";
 
 export default function AddScoresTab() {
