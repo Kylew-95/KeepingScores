@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Searchbar } from "react-native-paper";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import { GOOGLE_API_KEY } from "@env";
 import axios from "axios";
 import * as Location from "expo-location";
 
@@ -69,27 +70,27 @@ export default function Maps({
 
   useEffect(() => {
     const fetchNearbyPlaces = async () => {
+      console.log("fetching nearby places", places);
       try {
-        const apiUrl =
-          "https://maps.googleapis.com/maps/api/place/nearbysearch/json" +
-          `?location=51.50853,-0.12574&radius=10000&keyword=park&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-  
+        const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${responseData.geometry.location.lat}%2C${responseData.geometry.location.lng}&radius=10000&keyword=leisure&key=${GOOGLE_API_KEY}`;
+
         const response = await fetch(apiUrl);
         const responseData = await response.json();
         console.log(responseData);
-        
-        if (responseData.status === 'OK') {
+
+        if (responseData.status === "OK") {
           setPlaces(responseData.results);
         }
       } catch (error) {
         console.error("Error fetching nearby places:", error);
       }
     };
-  
+
     if (searchQuery) {
       fetchNearbyPlaces();
     }
   }, [searchQuery]);
+
   return (
     <View style={styles.container}>
       <MapView
