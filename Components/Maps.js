@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import {
-  StyleSheet,
-  View,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
+import { StyleSheet, View, Dimensions } from "react-native";
 import { Searchbar } from "react-native-paper";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import { GOOGLE_API_KEY } from "@env";
-import axios from "axios";
 import * as Location from "expo-location";
+import MapCarousel from "./MapCarousel";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Maps({
   profileData,
@@ -25,7 +19,6 @@ export default function Maps({
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-
   const [places, setPlaces] = useState([]);
 
   const onChangeSearch = (query) => setSearchQuery(query);
@@ -38,47 +31,44 @@ export default function Maps({
     }
   };
 
-  const handleGooglePlaceSelect = (data) => {
-    console.log("data", data);
-    setMapRegion({
-      latitude: data.geometry.location.lat,
-      longitude: data.geometry.location.lng,
+  const handleGooglePlaceSelect = async (data) => {
+    try {
+      const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=${GOOGLE_API_KEY}`;
+      const response = await fetch(placeDetailsUrl);
+      const placeDetailsData = await response.json();
 
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
+      if (placeDetailsData.status === "OK") {
+        const selectedLocation = placeDetailsData.result.geometry.location;
+        console.log("Selected Location:", selectedLocation);
+
+        setMapRegion({
+          latitude: selectedLocation.lat,
+          longitude: selectedLocation.lng,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        });
+
+        setPlaces([]);
+      }
+    } catch (error) {
+      console.error("Error fetching place details:", error);
+    }
+
+    setSearchQuery("");
   };
-
-  // useEffect(() => {
-  //   (async () => {
-  //     let { status } = await Location.requestForegroundPermissionsAsync();
-  //     if (status !== "granted") {
-  //       console.log("Permission to access location was denied");
-  //       return;
-  //     }
-
-  //     let location = await Location.getCurrentPositionAsync({});
-  //     console.log("location", location);
-  //     setMapRegion({
-  //       latitude: location.coords.latitude,
-  //       longitude: location.coords.longitude,
-  //       latitudeDelta: 0.0922,
-  //       longitudeDelta: 0.0421,
-  //     });
-  //   })();
-  // }, []);
 
   useEffect(() => {
     const fetchNearbyPlaces = async () => {
       const keyWords = ["leisure", "gym", "park", "swimming"];
       try {
-        const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=51.40322%2C-0.16831&radius=10000&keyword=${keyWords
+        const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${
+          mapRegion.latitude
+        }%2C${mapRegion.longitude}&radius=10000&keyword=${keyWords
           .map((word) => encodeURIComponent(word))
           .join("%7C")}&key=AIzaSyBOGdOyuw2M85OMlkrTTDC1j3pYrR6XGfc`;
 
         const response = await fetch(apiUrl);
         const responseData = await response.json();
-        console.log(responseData);
 
         if (responseData.status === "OK") {
           setPlaces(responseData.results);
@@ -88,63 +78,73 @@ export default function Maps({
       }
     };
 
-    if (searchQuery) {
-      fetchNearbyPlaces();
-    }
-  }, [searchQuery]);
+    fetchNearbyPlaces();
+  }, [mapRegion]);
+
+  const handleCarouselItemChange = (index, selectedPlace, navigation) => {
+    setMapRegion({
+      latitude: selectedPlace.geometry.location.lat,
+      longitude: selectedPlace.geometry.location.lng,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+  };
 
   return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={mapRegion}
-        region={mapRegion}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-        showsCompass={true}
-      >
-        {places.map((place) => (
-          <Marker
-            key={place.place_id}
-            coordinate={{
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng,
-            }}
-            title={place.name}
-            description={place.vicinity}
-            pinColor="#00171F"
-          />
-        ))}
-      </MapView>
+    <>
+      <View style={styles.container}>
+        <GooglePlacesAutocomplete
+          placeholder="Search"
+          minLength={2}
+          autoFocus={false}
+          returnKeyType={"search"}
+          listViewDisplayed="auto"
+          fetchDetails={true}
+          query={{
+            key: "AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY",
+            language: "en",
+          }}
+          onPress={(data, details = null) => {
+            console.log("Place selected:", details);
+            console.log("Place selected:", data);
+            handleGooglePlaceSelect(data);
+          }}
+        />
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={mapRegion}
+          region={mapRegion}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+          showsCompass={true}
+        >
+          {places.map((place) => (
+            <Marker
+              tappable={true}
+              key={place.place_id}
+              coordinate={{
+                latitude: place.geometry.location.lat,
+                longitude: place.geometry.location.lng,
+              }}
+              title={place.name}
+              description={place.vicinity}
+              pinColor="#00171F"
+            />
+          ))}
+        </MapView>
 
-      <GooglePlacesAutocomplete
-        placeholder="Search"
-        minLength={2}
-        autoFocus={false}
-        returnKeyType={"search"}
-        listViewDisplayed="auto"
-        fetchDetails={true}
-        query={{
-          key: "AIzaSyBOGdOyuw2M85OMlkrTTDC1j3pYrR6XGfc",
-          language: "en",
-        }}
-        onPress={(data, details = null) => {
-          console.log("Place selected:", data);
-          handleGooglePlaceSelect(data);
-        }}
-      />
-
-      {/* <Searchbar
+        {/* <Searchbar
+        clearButtonMode="always"
         style={styles.searchbar}
         iconColor="white"
         placeholderTextColor={"white"}
         inputStyle={{ color: "white" }}
         mode="bar"
         placeholder="Search"
-        onChange={onChangeSearch}
-        value={searchQuery}
         inputContainerStyle={{ backgroundColor: "#00171F", borderRadius: 20 }}
+        onTextInput={(query) => onChangeSearch(query)}
+        value={searchQuery}
         icon={() => (
           <TouchableOpacity onPress={toggleBottomSheet}>
             <Image
@@ -158,19 +158,16 @@ export default function Maps({
             />
           </TouchableOpacity>
         )}
-        clearIcon={() => (
-          <Image
-            source={{ uri: profileData?.avatar_image_url }}
-            style={{
-              width: 30,
-              height: 30,
-              alignSelf: "center",
-              right: 0,
-            }}
-          />
-        )}
       /> */}
-    </View>
+      </View>
+      <View>
+        <MapCarousel
+          onCarouselItemChange={handleCarouselItemChange}
+          mapRegion={mapRegion}
+          places={places}
+        />
+      </View>
+    </>
   );
 }
 
@@ -189,6 +186,5 @@ const styles = StyleSheet.create({
     top: 60,
     width: "80%",
     backgroundColor: "#00171F",
-    borderRadius: 20,
   },
 });

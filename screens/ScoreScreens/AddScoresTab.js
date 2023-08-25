@@ -57,8 +57,11 @@ export default function AddScoresTab() {
           mode="SIMPLE"
           placeholder="Pick a Sport"
           searchContainerStyle={{ height: 50 }}
+          containerStyle={{ height: 50, width: 300, alignSelf: "center" }}
           dropDownDirection="AUTO"
           maxHeight={550}
+          modalAnimationType="fade"
+          listMode="MODAL"
           selectedItemContainerStyle={{ backgroundColor: "#2193F0" }}
           onSelectItem={(item) => {
             handleItemSelected(item);

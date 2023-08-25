@@ -9,6 +9,10 @@ import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
 import VsForm from "./Components/FormComps/VsForm";
 import StartHomePage from "./Onboarding/StartHomePage";
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["Warning: ..."]); // Ignore log notification by message
+LogBox.ignoreAllLogs(); //Ignore all log notifications
+
 const Stack = createStackNavigator();
 
 export default function App() {
