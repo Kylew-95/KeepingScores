@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SafeAreaView, Text, View, Image } from "react-native";
+import { SafeAreaView, Text, View, Image, Dimensions } from "react-native";
 import SignInAuth from "./Auth/SignInAuth";
 import SignUpAuth from "./Auth/SignUpAuth";
 
@@ -16,8 +16,9 @@ export default function Login({
     setShown(!shown);
   }
 
+  const windowWidth = Dimensions.get("window").width;
   return (
-    <View style={{ height: "100%", backgroundColor: "white" }}>
+    <View style={{ backgroundColor: "white" }}>
       <View style={{ height: "40%" }}>
         <Image
           source={require("../Images/vecteezy_badminton-sport-equipments-on-green-floor-shuttlecocks_7800858_291.jpg")}
@@ -30,25 +31,31 @@ export default function Login({
           }}
         />
       </View>
+      <Image
+        style={{
+          alignSelf: "center",
+          top: 25,
+          left: 140,
+          height: 60,
+          width: 260,
+          position: "absolute",
+          zIndex: 4,
+        }}
+        resizeMode="contain"
+        source={require("../KeepingscoreIdeation/Logo-Keeping-Score.png")}
+      />
+
       <View
         style={{
-          height: "50%",
+          height: "60%",
           justifyContent: "flex-end",
           backgroundColor: "white",
           zIndex: 1,
-          borderRadius: 20,
-          shadowColor: "#000",
+          borderTopLeftRadius: 50,
+          borderTopRightRadius: 50,
         }}
       >
-        <SafeAreaView
-        // style={{
-        //   flex: 1,
-        //   justifyContent: "flex-end",
-        //   top: -40,
-        //   alignSelf: "center",
-        //   width: 300,
-        // }}
-        >
+        <SafeAreaView>
           {!shown ? (
             <SignInAuth
               session={session}

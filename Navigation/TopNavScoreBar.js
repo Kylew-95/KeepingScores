@@ -37,12 +37,12 @@ function TabGroup({ userId, scoresData, setScoresData }) {
           <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />
         )}
       </Tab.Screen>
-      <Tab.Screen
+      {/* <Tab.Screen
         options={{ tabBarInactiveTintColor: "grey" }}
         name="Step Counter"
       >
         {() => <AddSteps />}
-      </Tab.Screen>
+      </Tab.Screen> */}
     </Tab.Navigator>
   );
 }

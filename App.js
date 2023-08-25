@@ -9,6 +9,10 @@ import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
 import VsForm from "./Components/FormComps/VsForm";
 import StartHomePage from "./Onboarding/StartHomePage";
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["Warning: ..."]); // Ignore log notification by message
+LogBox.ignoreAllLogs(); //Ignore all log notifications
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -44,8 +48,6 @@ export default function App() {
     }
   }
 
-  console.log(profileData);
-
   useEffect(() => {
     UsersData();
   }, [session]);
@@ -62,7 +64,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log("session", userId);
     getUserId();
   }, [session]);
 
@@ -99,6 +100,7 @@ export default function App() {
             />
           )}
         </Stack.Screen>
+        <Stack.Screen name="Home">{() => <Home />}</Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
           {() => (
             <SignUp

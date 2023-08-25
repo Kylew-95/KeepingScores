@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { List } from "react-native-paper";
-import { sportsList } from "../../SportsList&Forms";
+import { sportsList } from "../../SupabaseConfig/SportsList&Forms";
 import { useNavigation } from "@react-navigation/native";
 
 export default function AddScoresTab() {
@@ -57,8 +57,11 @@ export default function AddScoresTab() {
           mode="SIMPLE"
           placeholder="Pick a Sport"
           searchContainerStyle={{ height: 50 }}
+          containerStyle={{ height: 50, width: 300, alignSelf: "center" }}
           dropDownDirection="AUTO"
           maxHeight={550}
+          modalAnimationType="fade"
+          listMode="MODAL"
           selectedItemContainerStyle={{ backgroundColor: "#2193F0" }}
           onSelectItem={(item) => {
             handleItemSelected(item);
