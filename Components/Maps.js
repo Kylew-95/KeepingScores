@@ -33,7 +33,7 @@ export default function Maps({
 
   const handleGooglePlaceSelect = async (data) => {
     try {
-      const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=${GOOGLE_API_KEY}`;
+      const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY`;
       const response = await fetch(placeDetailsUrl);
       const placeDetailsData = await response.json();
 
@@ -42,8 +42,8 @@ export default function Maps({
         console.log("Selected Location:", selectedLocation);
 
         setMapRegion({
-          latitude: selectedLocation.lat,
-          longitude: selectedLocation.lng,
+          latitude: selectedLocation?.lat,
+          longitude: selectedLocation?.lng,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         });
@@ -79,7 +79,10 @@ export default function Maps({
     };
 
     fetchNearbyPlaces();
-  }, [mapRegion]);
+  }, [
+    mapRegion ? mapRegion.latitude : null,
+    mapRegion ? mapRegion.longitude : null,
+  ]);
 
   const handleCarouselItemChange = (selectedPlace) => {
     setMapRegion({
@@ -124,8 +127,8 @@ export default function Maps({
               tappable={true}
               key={place.place_id}
               coordinate={{
-                latitude: place.geometry.location.lat,
-                longitude: place.geometry.location.lng,
+                latitude: place.geometry.location?.lat,
+                longitude: place.geometry.location?.lng,
               }}
               title={place.name}
               description={place.vicinity}

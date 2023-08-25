@@ -35,7 +35,10 @@ export default function Profile({
           height: 80,
         }}
       >
-        <TouchableOpacity style={styles.container}>
+        <TouchableOpacity
+          style={styles.container}
+          onPress={() => navigation.navigate("Account")}
+        >
           <Text style={styles.headerUserName}>{profileData.first_name}</Text>
           <Avatar.Image
             source={require("../Images/downArrowicon.png")}
