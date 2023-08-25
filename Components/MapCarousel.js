@@ -15,9 +15,9 @@ const renderItem = ({ item, index }) => {
           }}
         />
         <Card.Content>
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.description}>{item.vicinity}</Text>
-          <Text style={styles.description}>Rating: {item.rating}</Text>
+          <Text style={styles.title}>{item?.name}</Text>
+          <Text style={styles.description}>{item?.vicinity}</Text>
+          <Text style={styles.description}>Rating: {item?.rating}</Text>
         </Card.Content>
       </Card>
     </View>
@@ -32,7 +32,7 @@ export default function MapCarousel({ places, onCarouselItemChange }) {
     <View style={{ bottom: 35, backgroundColor: "transparent" }}>
       <Carousel
         style={{ backgroundColor: "transparent" }}
-        onSnapToItem={(index) => onCarouselItemChange(index, places[index])}
+        onSnapToItem={(index) => onCarouselItemChange(places[index])}
         loop={true}
         data={places}
         renderItem={renderItem}

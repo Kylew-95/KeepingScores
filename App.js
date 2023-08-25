@@ -100,6 +100,7 @@ export default function App() {
             />
           )}
         </Stack.Screen>
+        <Stack.Screen name="Home">{() => <Home />}</Stack.Screen>
         <Stack.Screen name="ProfileSetUp">
           {() => (
             <SignUp

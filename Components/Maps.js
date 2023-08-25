@@ -81,10 +81,10 @@ export default function Maps({
     fetchNearbyPlaces();
   }, [mapRegion]);
 
-  const handleCarouselItemChange = (index, selectedPlace, navigation) => {
+  const handleCarouselItemChange = (selectedPlace) => {
     setMapRegion({
-      latitude: selectedPlace.geometry.location.lat,
-      longitude: selectedPlace.geometry.location.lng,
+      latitude: selectedPlace.geometry?.location.lat,
+      longitude: selectedPlace.geometry?.location.lng,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     });

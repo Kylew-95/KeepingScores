@@ -118,7 +118,7 @@ export default function SignUpAuth({
 
 const styles = StyleSheet.create({
   container: {
-    top: 0,
+    top: -60,
     padding: 12,
     width: "80%",
     alignSelf: "center",

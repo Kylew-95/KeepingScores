@@ -1,14 +1,24 @@
-import { View, Text, SafeAreaView, Image, StyleSheet } from "react-native";
 import React from "react";
+import {
+  View,
+  Text,
+  SafeAreaView,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { Card, List, Divider } from "react-native-paper";
 import { FlatList } from "react-native-gesture-handler";
+import ProfileChart from "./ProfileChart";
+import { useNavigation } from "@react-navigation/native";
 
 const data = [
   {
     id: 1,
     img: require("../Images/DashboardCardImgs/health.png"),
     title: "Exercise",
-    description: "Stay active with tailored workouts.",
+    description: "Stay active and explore new horizons.",
+    screen: "Home",
   },
   {
     id: 2,
@@ -24,24 +34,34 @@ const data = [
   },
 ];
 
-const renderItem = ({ item }) => {
-  return (
-    <View style={styles.itemContainer}>
-      <List.Section>
-        <List.Item
-          title={item.title}
-          left={() => <Image source={item.img} style={styles.itemImage} />}
-          right={() => <List.Icon icon="chevron-right" />}
-        />
-        <List.Subheader style={{ marginTop: -30, left: 40 }}>
-          {item.description}
-        </List.Subheader>
-      </List.Section>
-      <Divider style={styles.divider} />
-    </View>
-  );
-};
 export default function Dashboard() {
+  const navigation = useNavigation();
+  const renderItem = ({ item }) => {
+    return (
+      <View style={styles.itemContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            if (item.screen) {
+              navigation.navigate(item.screen);
+            }
+          }}
+        >
+          <List.Section>
+            <List.Item
+              title={item.title}
+              left={() => <Image source={item.img} style={styles.itemImage} />}
+              right={() => <List.Icon icon="chevron-right" />}
+            />
+            <List.Subheader style={{ marginTop: -30, left: 40 }}>
+              {item.description}
+            </List.Subheader>
+          </List.Section>
+          <Divider style={styles.divider} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={{ height: "100%" }}>
       <Card
@@ -54,34 +74,36 @@ export default function Dashboard() {
           backgroundColor: "white",
         }}
       >
-        <Card.Title title="Card Title" subtitle="Card Subtitle" />
+        <Card.Title title="Win Streak" />
+        <Card.Content>
+          <Text
+            style={{
+              fontSize: 50,
+              fontWeight: "bold",
+              color: "#2193F0",
+              top: -30,
+              alignSelf: "center",
+            }}
+          >
+            0
+          </Text>
+        </Card.Content>
       </Card>
-      <Card
-        style={{
-          width: "80%",
-          height: 130,
-          alignSelf: "center",
-          top: -40,
-          marginTop: 25,
-          backgroundColor: "white",
-        }}
-      >
-        <Card.Title title="Card Title" subtitle="Card Subtitle 2" />
-      </Card>
+      <ProfileChart />
       <Text
         style={{
-          left: 40,
+          left: 20,
           top: -30,
           marginTop: 20,
           fontSize: 22,
-          fontWeight: 500,
+          fontWeight: "500",
         }}
       >
         Start Your Journey
       </Text>
       <Card
         style={{
-          width: "80%",
+          width: "90%",
           height: 300,
           alignSelf: "center",
           top: -40,
@@ -93,7 +115,8 @@ export default function Dashboard() {
         <FlatList
           data={data}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
+          on
         />
       </Card>
     </SafeAreaView>
@@ -107,23 +130,10 @@ const styles = StyleSheet.create({
     top: 50,
     marginBottom: 10,
   },
-  itemContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
   itemImage: {
     width: 50,
     height: 50,
     marginRight: 10,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
   },
   divider: {
     height: 1,

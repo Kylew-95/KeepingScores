@@ -47,10 +47,11 @@ export default function SignInAuth({
         style={{
           position: "absolute",
           // height: "70%",
-          top: -500,
+          top: -560,
           width: "100%",
           // backgroundColor: "#2193f0",
           borderBottomLeftRadius: 500,
+          borderBottomRightRadius: 500,
         }}
       >
         <SafeAreaView

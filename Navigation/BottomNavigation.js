@@ -52,9 +52,7 @@ function TabGroup({
                   source={require("../Images/compassicon.png")}
                 />
               );
-             
             },
-            
           }}
         >
           {() => <Home profileData={profileData} />}
@@ -100,7 +98,7 @@ function TabGroup({
               const iconColor = focused ? "#2193F0" : "gray";
               return (
                 <>
-                  <Badge
+                  {/* <Badge
                     size={5}
                     style={{
                       position: "absolute",
@@ -108,7 +106,7 @@ function TabGroup({
                       right: 50,
                       backgroundColor: "#2193F0",
                     }}
-                  ></Badge>
+                  ></Badge> */}
 
                   {/* Need to turn badge into a component so I can reuse it because ill need to use it on the live chat icon */}
                   <Avatar.Image
