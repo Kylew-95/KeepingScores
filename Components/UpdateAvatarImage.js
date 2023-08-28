@@ -51,7 +51,7 @@ export default function UpdateAvatarImage({
 
           const updatedProfileData = {
             ...profileData,
-            avatar_image_url: imageURL,
+            avatar_image_url: result.assets[0].uri,
           };
           setProfileData(updatedProfileData);
         }
