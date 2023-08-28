@@ -1,6 +1,6 @@
 import { Dimensions, View, Text, StyleSheet } from "react-native";
 import { Card } from "react-native-paper";
-import Carousel, { CarouselProps } from "react-native-snap-carousel"; // Import CarouselProps from the library
+import Carousel, { CarouselProps } from "react-native-snap-carousel"; 
 import React from "react";
 
 type Place = {
@@ -15,8 +15,10 @@ interface MapCarouselProps {
   onCarouselItemChange: (place: Place) => void;
 }
 
-const renderItem: CarouselProps<Place>['renderItem'] = ({ item, index }) => { // Use CarouselProps for renderItem
-  const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=500&photoreference=${item?.photos[0].photo_reference}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+const renderItem: CarouselProps<Place>['renderItem'] = ({ item, index }) => { 
+  const photoUrl = item?.photos && item.photos.length > 0
+  ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=500&photoreference=${item.photos[0].photo_reference}&key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}`
+  : '';
 
   return (
     <View style={[styles.slide]}>
