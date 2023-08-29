@@ -1,8 +1,10 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import React from "react";
 import { Button } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
+import * as FileSystem from "expo-file-system";
+import { decode } from "base64-arraybuffer";
 
 export default function UpdateAvatarImage({
   profileData,
@@ -15,43 +17,47 @@ export default function UpdateAvatarImage({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
       });
-
       if (!result.canceled) {
-        const timestamp = new Date().getTime();
-        const imagePath = `${profileData.userprofile_id}/avatar_${timestamp}.png`;
+        const img = result.assets[0];
+        const base64 = await FileSystem.readAsStringAsync(img.uri, {
+          encoding: "base64",
+        });
 
-        const { data, error } = await supabase.storage
+        const decodedData = decode(base64);
+
+        console.log("Decoded Data Length:", decodedData.byteLength);
+
+        const filePath = `${session.user.id}/${new Date().getTime()}.${
+          img.type === "image" ? "png" : "mp4"
+        }`;
+        const contentType = img.type === "image" ? "image/png" : "video/mp4";
+        await supabase.storage
           .from("avatar-images")
-          .upload(imagePath, result.assets[0].uri, { cacheControl: "3600" });
+          .upload(filePath, decodedData, { contentType });
 
-        if (error) {
-          console.log("Error uploading image:", error.message);
+        const imageURL = `https://qhagflbltaiccnpwghhf.supabase.co/storage/v1/object/public/avatar-images/${filePath}`;
+
+        const { data: updateData, error: updateError } = await supabase
+          .from("UserProfileData")
+          .update({
+            avatar_image_url: imageURL,
+          })
+          .eq("userprofile_id", session.user.id);
+
+        if (updateError) {
+          console.log("Error updating profile data:", updateError.message);
         } else {
-          console.log("Image uploaded successfully:", data);
+          console.log("Profile data updated successfully:", updateData);
 
-          // Local change
           const updatedProfileData = {
             ...profileData,
-            avatar_image_url: result.assets[0].uri,
+            avatar_image_url: imageURL,
           };
           setProfileData(updatedProfileData);
-
-          const { data: updateData, error: updateError } = await supabase
-            .from("UserProfileData")
-            .update({
-              avatar_image_url: result.assets[0].uri,
-            })
-            .eq("userprofile_id", session.user.id);
-
-          if (updateError) {
-            console.log("Error updating profile data:", updateError.message);
-          } else {
-            console.log("Profile data updated successfully:", updateData);
-          }
         }
       }
     } catch (error) {
-      console.log("Image picker error:", error);
+      console.log("Error:", error.message);
     }
   }
 
