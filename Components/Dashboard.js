@@ -89,7 +89,7 @@ export default function Dashboard() {
           </Text>
         </Card.Content>
       </Card>
-      <ProfileChart />
+      {/* <ProfileChart /> */}
       <Text
         style={{
           left: 20,
