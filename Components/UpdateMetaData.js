@@ -2,7 +2,7 @@ import { View, Text, SafeAreaView, StyleSheet } from "react-native";
 import React, { useState } from "react";
 import { TextInput, Button } from "react-native-paper";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
-
+//
 export default function UpdateMetaData({
   profileData,
   setProfileData,
