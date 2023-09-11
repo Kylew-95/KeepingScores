@@ -35,12 +35,17 @@ export default function UpdateAvatarImage({
           .from("avatar-images")
           .upload(filePath, decodedData, { contentType });
 
-        const imageURL = `https://qhagflbltaiccnpwghhf.supabase.co/storage/v1/object/public/avatar-images/${filePath}`;
+        const publicURL = await supabase.storage
+          .from("avatar-images")
+          .getPublicUrl(filePath);
+        // const imageURL = `https://qhagflbltaiccnpwghhf.supabase.co/storage/v1/object/public/avatar-images/${filePath}`;
+
+        console.log("Image URL:", publicURL);
 
         const { data: updateData, error: updateError } = await supabase
           .from("UserProfileData")
           .update({
-            avatar_image_url: imageURL,
+            avatar_image_url: publicURL.data.publicUrl,
           })
           .eq("userprofile_id", session.user.id);
 

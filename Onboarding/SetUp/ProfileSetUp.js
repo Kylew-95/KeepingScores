@@ -22,8 +22,8 @@ export default function ProfileSetUp({
         allowsEditing: true,
       });
 
-      if (!result.cancelled) {
-        const timestamp = new Date().getTime(); // Get a unique timestamp
+      if (!result.canceled) {
+        const timestamp = new Date().getTime();
         const imagePath = `${profileData.userprofile_id}/avatar_${timestamp}.png`;
 
         const { data, error } = await supabase.storage
@@ -49,7 +49,7 @@ export default function ProfileSetUp({
             .update({
               first_name: firstName,
               last_name: lastName,
-              avatar_image_url: result.assets[0].uri,
+              avatar_image_url: "https://picsum.photos/200/300",
             })
             .eq("userprofile_id", session.user.id);
 
