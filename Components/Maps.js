@@ -59,7 +59,7 @@ export default function Maps({
       console.error("Error fetching place details:", error);
     }
 
-    setSearchQuery("");
+    setSearchQuery(data);
   };
   useEffect(() => {
     const fetchNearbyPlaces = async () => {
