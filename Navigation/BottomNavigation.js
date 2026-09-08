@@ -84,6 +84,8 @@ function TabGroup({
           {() => (
             <Scores
               users={users}
+              userId={profileData?.userprofile_id}
+              profileData={profileData}
               scoresData={scoresData}
               setScoresData={setScoresData}
             />
@@ -120,7 +122,11 @@ function TabGroup({
                       right: 2,
                     }}
                     size={25}
-                    source={{ uri: profileData?.avatar_image_url }}
+                    source={
+                      profileData?.avatar_image_url
+                        ? { uri: profileData.avatar_image_url }
+                        : require("../Images/Logo-Keeping-Score.png")
+                    }
                   />
                   {/* <Image
                   style={{ width: size, height: size, tintColor: iconColor }}

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from "react-native";
 import { Appbar, Divider, List, Searchbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
-import { ExpoSecureStoreAdapter } from "../SupabaseConfig/SupabaseClient";
 
 export default function Settings() {
   const navigation = useNavigation();
@@ -24,7 +23,7 @@ export default function Settings() {
     { id: 3, title: "Privacy", iconName: "lock", iconArrow: "chevron-right" },
     {
       id: 4,
-      title: "Help",
+      title: "Help & Support",
       iconName: "help-circle",
       iconArrow: "chevron-right",
     },
@@ -44,7 +43,6 @@ export default function Settings() {
         console.error("Error logging out:", error.message);
       } else {
         console.log("Logged out successfully");
-        await ExpoSecureStoreAdapter.removeItem();
         navigation.navigate("Login");
       }
     } catch (error) {

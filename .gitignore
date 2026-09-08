@@ -11,6 +11,9 @@ dist/
 web-build/
 
 # Native
+# Native builds
+android/
+ios/
 *.orig.*
 *.jks
 *.p8
@@ -35,3 +38,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# local backups & tools
+KS_DB/
+restore_supabase.sql
+*.sql
+%ProgramData%/

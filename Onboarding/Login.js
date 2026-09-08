@@ -42,7 +42,7 @@ export default function Login({
           zIndex: 4,
         }}
         resizeMode="contain"
-        source={require("../KeepingscoreIdeation/Logo-Keeping-Score.png")}
+        source={require("../Images/Logo-Keeping-Score.png")}
       />
 
       <View

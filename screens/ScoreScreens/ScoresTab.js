@@ -6,19 +6,32 @@ import DeleteScoreButton from "../../Components/DeleteScoreButton";
 
 // import { data } from "../../DummyScoresData";
 
-export default function ScoresTab({}) {
-  const [scoresData, setScoresData] = useState([]);
+export default function ScoresTab({
+  scoresData: propScoresData,
+  setScoresData: propSetScoresData,
+}) {
+  const [localScoresData, setLocalScoresData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    !propScoresData || propScoresData.length === 0,
+  );
+
+  const scoresData = propScoresData || localScoresData;
+  const setScoresData = propSetScoresData || setLocalScoresData;
 
   async function fetchScores() {
     try {
-      let fetchedData = await supabase.from("ScoresData").select("*").order("id", { ascending: false });
-      setScoresData(fetchedData.data);
+      let fetchedData = await supabase
+        .from("ScoresData")
+        .select("*")
+        .order("id", { ascending: false });
+      if (fetchedData.data) {
+        setScoresData(fetchedData.data);
+      }
     } catch (error) {
       console.error("Error fetching data:", error.message);
     } finally {
-      setTimeout(() => setLoading(false), 2500);
+      setLoading(false);
     }
   }
 

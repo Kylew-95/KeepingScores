@@ -26,7 +26,7 @@ export default function StartHomePage() {
           width: windowWidth,
           height: 60,
         }}
-        source={require("../KeepingscoreIdeation/Logo-Keeping-Score.png")}
+        source={require("../Images/Logo-Keeping-Score.png")}
       />
     </View>
   );

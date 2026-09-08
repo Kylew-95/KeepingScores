@@ -13,3 +13,4 @@ let reqOptions = {
 
 let response = await axios.request(reqOptions);
 console.log(response.data);
+// Old Thunder Client test file - disabled to prevent Google API calls

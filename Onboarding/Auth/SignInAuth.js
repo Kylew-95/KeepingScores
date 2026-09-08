@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Image, SafeAreaView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Image,
+  SafeAreaView,
+  Linking,
+  Alert,
+} from "react-native";
 import { Button, TextInput, Text } from "react-native-paper";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 import { useNavigation } from "@react-navigation/native";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInAuth({
   ChangeAuthState,
@@ -17,25 +28,97 @@ export default function SignInAuth({
   const navigation = useNavigation();
 
   const signinWithGmail = async () => {
-    // setLoading(true);
-    const { session, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    try {
+      setLoading(true);
+      const redirectUrl = makeRedirectUri({
+        scheme: "keepingscores",
+        path: "auth/callback",
+      });
+
+      console.log("OAuth Redirect URL:", redirectUrl);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        console.error("Google sign-in error:", error.message);
+        Alert.alert("Google Sign-In Error", error.message);
+        return;
+      }
+
+      if (data?.url) {
+        const res = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUrl,
+        );
+
+        if (res.type === "success" && res.url) {
+          const url = res.url;
+          let tokenString = "";
+          if (url.includes("#")) {
+            tokenString = url.split("#")[1];
+          } else if (url.includes("?")) {
+            tokenString = url.split("?")[1];
+          }
+
+          if (tokenString) {
+            const params = new URLSearchParams(tokenString);
+            const access_token = params.get("access_token");
+            const refresh_token = params.get("refresh_token");
+
+            if (access_token && refresh_token) {
+              const { data: sessionData, error: sessionError } =
+                await supabase.auth.setSession({
+                  access_token,
+                  refresh_token,
+                });
+
+              if (sessionError) {
+                console.error("Session error:", sessionError.message);
+                Alert.alert("Authentication Failed", sessionError.message);
+              } else if (sessionData?.session) {
+                if (setSession) {
+                  setSession(sessionData.session);
+                }
+                navigation.navigate("Navigation");
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error signing in with Google:", err);
+      Alert.alert("Error", err.message || "Could not sign in with Google.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signInWithEmail = async () => {
     try {
       setLoading(true);
-      const { user, error } = await supabase.auth.signInWithPassword({
-        email: email,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password: password,
       });
 
       if (error) {
         console.error("Email sign-in error:", error.message);
-      } else {
+        Alert.alert("Sign In Failed", error.message);
+      } else if (data?.session) {
+        if (setSession) {
+          setSession(data.session);
+        }
         navigation.navigate("Navigation");
       }
+    } catch (err) {
+      console.error("Unexpected error signing in:", err);
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

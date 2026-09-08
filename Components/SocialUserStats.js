@@ -1,55 +1,69 @@
-import { View, Text, SafeAreaView, StyleSheet } from "react-native";
 import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
-export default function SocialUserStats() {
+export default function SocialUserStats({
+  matchesCount = 0,
+  followersCount = 0,
+  followingCount = 0,
+  onPressFriends,
+}) {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.item}>
-        <View style={styles.valueContainer}>
-          <Text style={styles.text}>5</Text>
-        </View>
-        <Text style={styles.text}>Posts</Text>
+        <Text style={styles.valueText}>{matchesCount}</Text>
+        <Text style={styles.labelColor}>Matches</Text>
       </View>
-      {/* <View style={styles.item}>
-        <View style={styles.valueContainer}>
-          <Text style={styles.text}>1.2M</Text>
-        </View>
-        <Text style={styles.text}>Followers</Text>
-      </View>
-      <View style={styles.item}>
-        <View style={styles.valueContainer}>
-          <Text style={styles.text}>456</Text>
-        </View>
-        <Text style={styles.text}>Following</Text>
-      </View> */}
-    </SafeAreaView>
+
+      <TouchableOpacity
+        style={styles.item}
+        onPress={onPressFriends}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.valueText}>{followersCount}</Text>
+        <Text style={styles.labelColor}>Followers</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.item}
+        onPress={onPressFriends}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.valueText}>{followingCount}</Text>
+        <Text style={styles.labelColor}>Following</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 80,
+    justifyContent: "space-around",
     alignItems: "center",
-    textAlign: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginHorizontal: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
   },
   item: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  valueContainer: {
     justifyContent: "center",
-    alignSelf: "center",
-    marginBottom: 5,
   },
-  text: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
+  valueText: {
+    color: "#0F172A",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  labelColor: {
+    color: "#64748B",
+    fontSize: 13,
+    fontWeight: "500",
   },
 });
