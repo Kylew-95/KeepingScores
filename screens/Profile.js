@@ -83,14 +83,13 @@ export default function Profile({
     fetchStats();
     loadSavedHeader();
 
-    const unsubscribe = navigation?.addListener
-      ? navigation.addListener("focus", () => {
-          fetchStats();
-          loadSavedHeader();
-        })
-      : undefined;
-
-    return unsubscribe;
+    if (navigation && typeof navigation.addListener === "function") {
+      const unsubscribe = navigation.addListener("focus", () => {
+        fetchStats();
+        loadSavedHeader();
+      });
+      return unsubscribe;
+    }
   }, [navigation, fetchStats, loadSavedHeader]);
 
   const onRefresh = async () => {

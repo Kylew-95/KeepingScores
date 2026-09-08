@@ -70,13 +70,12 @@ export default function ProfileMatchScores({
   useEffect(() => {
     fetchMatches();
 
-    const unsubscribe = navigation?.addListener
-      ? navigation.addListener("focus", () => {
-          fetchMatches();
-        })
-      : undefined;
-
-    return unsubscribe;
+    if (navigation && typeof navigation.addListener === "function") {
+      const unsubscribe = navigation.addListener("focus", () => {
+        fetchMatches();
+      });
+      return unsubscribe;
+    }
   }, [navigation, fetchMatches]);
 
   const handleDeleteScore = (scoreId, p1, p2) => {

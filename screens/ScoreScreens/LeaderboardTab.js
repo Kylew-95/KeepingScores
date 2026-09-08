@@ -22,9 +22,16 @@ import {
   Button,
   IconButton,
 } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 
-export default function LeaderboardTab({ userId, profileData }) {
+export default function LeaderboardTab({
+  userId,
+  profileData,
+  navigation: propNavigation,
+}) {
+  const hookNavigation = useNavigation();
+  const navigation = propNavigation || hookNavigation;
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -229,14 +236,13 @@ export default function LeaderboardTab({ userId, profileData }) {
     fetchLeaderboard();
     loadFollows();
 
-    const unsubscribe = navigation?.addListener
-      ? navigation.addListener("focus", () => {
-          fetchLeaderboard();
-          loadFollows();
-        })
-      : undefined;
-
-    return unsubscribe;
+    if (navigation && typeof navigation.addListener === "function") {
+      const unsubscribe = navigation.addListener("focus", () => {
+        fetchLeaderboard();
+        loadFollows();
+      });
+      return unsubscribe;
+    }
   }, [navigation, fetchLeaderboard, loadFollows]);
 
   const checkIfFollowing = (item) => {
