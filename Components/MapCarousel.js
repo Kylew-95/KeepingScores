@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import {
   Dimensions,
   View,
@@ -27,12 +27,47 @@ const sportImages = {
     "https://images.unsplash.com/photo-1529900245534-47fbf7c3f600?w=500&q=80",
   swimming_pool:
     "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=500&q=80",
+  tennis:
+    "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=500&q=80",
   park: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=500&q=80",
   default:
     "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&q=80",
 };
 
-export default function MapCarousel({ places = [], onCarouselItemChange }) {
+// Safe Image component with Keeping Score Logo fallback on error or missing image
+function CardImage({ uri, item }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError || !uri) {
+    return (
+      <View style={styles.fallbackLogoContainer}>
+        <Image
+          source={require("../Images/Logo-Keeping-Score.png")}
+          style={styles.fallbackLogoImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.fallbackLogoText}>
+          {item.type ? item.type.replace(/_/g, " ").toUpperCase() : "SPORTS VENUE"}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={styles.cardCover}
+      resizeMode="cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+export default function MapCarousel({
+  places = [],
+  onCarouselItemChange,
+  onCardPress,
+}) {
   const flatListRef = useRef(null);
   const activeIndexRef = useRef(0);
 
@@ -70,6 +105,9 @@ export default function MapCarousel({ places = [], onCarouselItemChange }) {
           if (onCarouselItemChange) {
             onCarouselItemChange(item);
           }
+          if (onCardPress) {
+            onCardPress(item);
+          }
         }}
         style={[
           styles.slide,
@@ -77,7 +115,7 @@ export default function MapCarousel({ places = [], onCarouselItemChange }) {
         ]}
       >
         <Card style={styles.card}>
-          <Card.Cover style={styles.cardCover} source={{ uri: photoUrl }} />
+          <CardImage uri={photoUrl} item={item} />
           {item.distance && (
             <View style={styles.distanceFloatingBadge}>
               <Text style={styles.distanceFloatingText}>
@@ -96,11 +134,7 @@ export default function MapCarousel({ places = [], onCarouselItemChange }) {
             </Text>
             <View style={styles.bottomRow}>
               <Text style={styles.rating}>⭐ {item.rating || "4.5"}</Text>
-              {item.distance && (
-                <Text style={styles.distanceInlineText}>
-                  {item.distance}
-                </Text>
-              )}
+              <Text style={styles.tapDetailsText}>Details & Maps →</Text>
             </View>
           </Card.Content>
         </Card>
@@ -140,29 +174,51 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   card: {
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    borderRadius: 12,
-    borderColor: "transparent",
-    elevation: 4,
+    backgroundColor: "rgba(0, 23, 31, 0.85)",
+    borderRadius: 14,
+    borderColor: "rgba(33, 147, 240, 0.4)",
+    borderWidth: 1,
+    elevation: 5,
     overflow: "hidden",
   },
   cardCover: {
-    height: 140,
-    resizeMode: "cover",
-    borderRadius: 0,
+    height: 125,
+    width: "100%",
+  },
+  fallbackLogoContainer: {
+    height: 125,
+    width: "100%",
+    backgroundColor: "#00171F",
+    justifyContent: "center",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(33, 147, 240, 0.3)",
+    padding: 12,
+  },
+  fallbackLogoImage: {
+    width: 110,
+    height: 60,
+  },
+  fallbackLogoText: {
+    color: "#38BDF8",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 4,
   },
   cardContent: {
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
     color: "white",
+    flex: 1,
   },
   description: {
     fontSize: 12,
-    color: "#d0d0d0",
+    color: "#cbd5e1",
     marginTop: 2,
   },
   rating: {
@@ -174,12 +230,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "rgba(0, 23, 31, 0.88)",
+    backgroundColor: "rgba(0, 23, 31, 0.9)",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#2193F0",
+    zIndex: 10,
   },
   distanceFloatingText: {
     color: "#FFFFFF",
@@ -195,10 +252,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 6,
   },
-  distanceInlineText: {
-    fontSize: 12,
+  tapDetailsText: {
+    fontSize: 11,
     color: "#38BDF8",
     fontWeight: "700",
   },

@@ -8,11 +8,69 @@ import {
   Text,
   FlatList,
   Keyboard,
+  Modal,
+  Image,
+  Linking,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { Searchbar, IconButton, ActivityIndicator } from "react-native-paper";
 import * as Location from "expo-location";
 import MapCarousel from "./MapCarousel";
+
+const sportImages = {
+  fitness_centre:
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
+  gym: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
+  sports_centre:
+    "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80",
+  pitch:
+    "https://images.unsplash.com/photo-1529900245534-47fbf7c3f600?w=800&q=80",
+  football:
+    "https://images.unsplash.com/photo-1529900245534-47fbf7c3f600?w=800&q=80",
+  swimming_pool:
+    "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=800&q=80",
+  tennis:
+    "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&q=80",
+  park: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80",
+  default:
+    "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=800&q=80",
+};
+
+// Component to render venue image with logo fallback on load failure
+function VenueModalImage({ venue }) {
+  const [hasError, setHasError] = useState(false);
+  const photoUrl =
+    venue?.photo ||
+    sportImages[venue?.type] ||
+    sportImages[venue?.sport] ||
+    sportImages.default;
+
+  if (hasError || !photoUrl) {
+    return (
+      <View style={styles.modalFallbackContainer}>
+        <Image
+          source={require("../Images/Logo-Keeping-Score.png")}
+          style={styles.modalFallbackLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.modalFallbackText}>
+          {venue?.type ? venue.type.replace(/_/g, " ").toUpperCase() : "SPORTS VENUE"}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri: photoUrl }}
+      style={styles.modalHeaderImage}
+      resizeMode="cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 const LEAFLET_HTML = `
 <!DOCTYPE html>
@@ -36,6 +94,7 @@ const LEAFLET_HTML = `
       line-height: 28px;
       font-size: 14px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      cursor: pointer;
     }
     @keyframes pulse {
       0% { transform: scale(0.8); opacity: 0.9; }
@@ -58,34 +117,38 @@ const LEAFLET_HTML = `
     .user-location-pin {
       position: relative;
       background: #0284C7;
-      border: 3px solid #FFFFFF;
+      border: 2.5px solid #FFFFFF;
       border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      line-height: 22px;
+      color: white;
       text-align: center;
-      font-size: 14px;
-      box-shadow: 0 0 12px rgba(2, 132, 199, 0.8);
-      z-index: 2000;
+      line-height: 24px;
+      font-size: 12px;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.6);
     }
     .leaflet-popup-content-wrapper {
       background: #00171F;
       color: white;
-      border-radius: 8px;
-      font-family: sans-serif;
+      border-radius: 12px;
+      border: 1px solid #2193F0;
+      padding: 4px;
     }
     .leaflet-popup-tip {
       background: #00171F;
     }
     .leaflet-popup-content h4 {
-      margin: 0 0 4px 0;
-      font-size: 14px;
+      margin: 4px 0;
       color: #2193F0;
+      font-size: 14px;
     }
     .leaflet-popup-content p {
-      margin: 0;
+      margin: 2px 0 6px 0;
+      color: #cbd5e1;
       font-size: 12px;
-      color: #ccc;
+    }
+    .popup-hint {
+      color: #38BDF8;
+      font-size: 11px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -95,58 +158,56 @@ const LEAFLET_HTML = `
     var map = L.map('map', {
       zoomControl: false,
       attributionControl: false
-    }).setView([51.4624, -0.1382], 11.5);
+    }).setView([51.50853, -0.12574], 11.5);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd'
     }).addTo(map);
 
-    var userMarker = null;
     var markersLayer = L.layerGroup().addTo(map);
+    var userMarker = null;
 
-    function setUserLocation(lat, lon, label) {
+    function setUserLocation(lat, lng) {
       if (userMarker) {
-        userMarker.setLatLng([lat, lon]);
-      } else {
-        var userIcon = L.divIcon({
-          className: 'user-location-wrapper',
-          html: '<div class="user-pulse"></div><div class="user-location-pin">📍</div>',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        });
-        userMarker = L.marker([lat, lon], { icon: userIcon, zIndexOffset: 2000 }).addTo(map);
+        markersLayer.removeLayer(userMarker);
       }
-      var popupText = '<h4>📍 You Are Here</h4><p>' + (label || 'Current Location') + '</p>';
-      userMarker.bindPopup(popupText);
+      var userIcon = L.divIcon({
+        className: 'user-location-wrapper',
+        html: '<div class="user-pulse"></div><div class="user-location-pin">📍</div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+      });
+      userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 });
+      userMarker.bindPopup('<b>You are here</b><br/>Current user location');
+      markersLayer.addLayer(userMarker);
     }
 
-    function flyToLocation(lat, lon, zoom) {
-      map.flyTo([lat, lon], zoom || 11.5, { duration: 0.8 });
+    function flyToLocation(lat, lng, zoom) {
+      map.flyTo([lat, lng], zoom || 14, { duration: 1.2 });
     }
 
     function updatePlaces(places) {
-      markersLayer.clearLayers();
-      if (!places || !places.length) return;
-
-      var emojiMap = {
-        fitness_centre: '🏋️',
-        gym: '🏋️',
-        sports_centre: '🏟️',
-        pitch: '⚽',
-        football: '⚽',
-        swimming_pool: '🏊',
-        park: '🌳',
-        tennis: '🎾',
-        badminton: '🏸',
-        sports: '🏅'
-      };
+      markersLayer.eachLayer(function(layer) {
+        if (layer !== userMarker) {
+          markersLayer.removeLayer(layer);
+        }
+      });
 
       places.forEach(function(place) {
         if (!place.geometry || !place.geometry.location) return;
         var lat = place.geometry.location.lat;
         var lng = place.geometry.location.lng;
-        var iconEmoji = emojiMap[place.type] || emojiMap[place.sport] || '🏅';
+
+        var iconEmoji = '🏟️';
+        var t = (place.type || '').toLowerCase();
+        var s = (place.sport || '').toLowerCase();
+        if (t.includes('gym') || t.includes('fitness') || s.includes('fitness')) iconEmoji = '🏋️';
+        else if (t.includes('tennis') || s.includes('tennis')) iconEmoji = '🎾';
+        else if (t.includes('pitch') || s.includes('football') || s.includes('soccer')) iconEmoji = '⚽';
+        else if (t.includes('swim') || s.includes('swim')) iconEmoji = '🏊';
+        else if (t.includes('park')) iconEmoji = '🌳';
 
         var customIcon = L.divIcon({
           className: 'custom-sport-pin',
@@ -157,7 +218,7 @@ const LEAFLET_HTML = `
         });
 
         var marker = L.marker([lat, lng], { icon: customIcon });
-        var popupContent = '<h4>' + (place.name || 'Sports Venue') + '</h4><p>' + (place.vicinity || '') + '</p>';
+        var popupContent = '<h4>' + (place.name || 'Sports Venue') + '</h4><p>' + (place.vicinity || '') + '</p><div class="popup-hint">Tap for details & directions &rarr;</div>';
         marker.bindPopup(popupContent);
 
         marker.on('click', function() {
@@ -229,7 +290,7 @@ const isEmulatorDefaultLocation = (lat, lon) => {
   return isAndroidEmu || isIosSim;
 };
 
-// Query real physical location via IP (accurate to user's ISP city / borough, e.g. London / Wimbledon)
+// Query real physical location via IP (accurate to user's ISP city / borough)
 const fetchIpLocation = async () => {
   try {
     const res = await fetch("http://ip-api.com/json");
@@ -331,6 +392,11 @@ export default function Maps({
   );
   const [isMapReady, setIsMapReady] = useState(false);
 
+  // Modals state
+  const [areaModalVisible, setAreaModalVisible] = useState(false);
+  const [venueDetailModalVisible, setVenueDetailModalVisible] = useState(false);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+
   // 1. Get user location and reverse geocode (with smart emulator bypass)
   const locateUser = async () => {
     setIsLocating(true);
@@ -387,7 +453,7 @@ export default function Maps({
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`
           setUserLocation(${lat}, ${lon});
-          flyToLocation(${lat}, ${lon}, 14);
+          flyToLocation(${lat}, ${lon}, 11.5);
           true;
         `);
       }
@@ -448,14 +514,15 @@ export default function Maps({
           "tennis",
           "pitch",
           "swimming pool",
-          "recreation ground",
+          "sports club",
+          "park",
         ];
 
         const reqs = categories.map(async (cat) => {
           try {
             const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(
               cat,
-            )}&lat=${lat}&lon=${lon}&limit=15`;
+            )}&lat=${lat}&lon=${lon}&limit=16`;
             const resp = await fetch(url, {
               signal: controller.signal,
               headers: { "User-Agent": "KeepingScoresApp/1.0" },
@@ -465,7 +532,7 @@ export default function Maps({
               return data.features || [];
             }
           } catch (e) {
-            return [];
+            // Aborted or network timeout
           }
           return [];
         });
@@ -560,7 +627,7 @@ export default function Maps({
       const results = [];
       const seen = new Set();
 
-      // 1. Query Photon (super fast, finds specific leisure centres, gyms, and places)
+      // 1. Query Photon
       try {
         const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(
           q,
@@ -658,7 +725,7 @@ export default function Maps({
     setMapRegion({ latitude: lat, longitude: lon });
     if (webViewRef.current) {
       webViewRef.current.injectJavaScript(`
-        flyToLocation(${lat}, ${lon}, 15);
+        flyToLocation(${lat}, ${lon}, 13.5);
         true;
       `);
     }
@@ -668,6 +735,18 @@ export default function Maps({
     setCurrentLocationName(
       `📍 ${item.name || item.display_name.split(",")[0]}`,
     );
+  };
+
+  const handleSelectArea = (area) => {
+    setMapRegion({ latitude: area.lat, longitude: area.lon });
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`
+        flyToLocation(${area.lat}, ${area.lon}, 13.5);
+        true;
+      `);
+    }
+    setCurrentLocationName(`📍 ${area.name}`);
+    setAreaModalVisible(false);
   };
 
   const handleCarouselItemChange = (selectedPlace) => {
@@ -681,18 +760,53 @@ export default function Maps({
     }
   };
 
+  // Open Venue Details when either card is tapped OR pin on Leaflet map is tapped
+  const handleOpenVenueDetail = (venue) => {
+    if (!venue) return;
+    setSelectedVenue(venue);
+    setVenueDetailModalVisible(true);
+    handleCarouselItemChange(venue);
+  };
+
   const handleWebViewMessage = (event) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === "markerPress") {
-        const found = places.find((p) => p.place_id === msg.placeId);
+        const found = places.find((p) => String(p.place_id) === String(msg.placeId));
         if (found) {
-          handleCarouselItemChange(found);
+          handleOpenVenueDetail(found);
         }
       }
     } catch (err) {
       // Ignored
     }
+  };
+
+  // Open Google Maps app or web directions
+  const openGoogleMaps = (venue) => {
+    if (!venue?.geometry?.location) return;
+    const lat = venue.geometry.location.lat;
+    const lng = venue.geometry.location.lng;
+    const destName = encodeURIComponent(venue.name || "Sports Venue");
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${destName}`;
+
+    Linking.canOpenURL(googleMapsUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(googleMapsUrl);
+        } else {
+          const fallbackUrl = Platform.select({
+            ios: `maps:0,0?q=${destName}@${lat},${lng}`,
+            android: `geo:0,0?q=${lat},${lng}(${destName})`,
+            default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+          });
+          Linking.openURL(fallbackUrl);
+        }
+      })
+      .catch((err) => {
+        console.log("Could not open maps:", err);
+        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+      });
   };
 
   return (
@@ -737,7 +851,7 @@ export default function Maps({
           placeholderTextColor="#8fa3ad"
         />
 
-        {/* Current Area Indicator Badge (Touchable to change borough) */}
+        {/* Current Area Indicator Badge (Touchable to open area selector) */}
         <TouchableOpacity
           style={styles.locationBadge}
           onPress={() => setAreaModalVisible(true)}
@@ -795,13 +909,166 @@ export default function Maps({
         )}
       </TouchableOpacity>
 
-      {/* Bottom Map Carousel (slider intact) */}
+      {/* Bottom Map Carousel (slider intact, cards clickable) */}
       <View style={styles.carouselWrapper}>
         <MapCarousel
           onCarouselItemChange={handleCarouselItemChange}
+          onCardPress={handleOpenVenueDetail}
           places={places}
         />
       </View>
+
+      {/* 1. Quick Area Selection Modal */}
+      <Modal
+        visible={areaModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setAreaModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setAreaModalVisible(false)}
+        >
+          <View style={styles.areaModalBox}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Choose London Area</Text>
+              <TouchableOpacity onPress={() => setAreaModalVisible(false)}>
+                <IconButton icon="close" iconColor="#94A3B8" size={20} style={{ margin: 0 }} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Instantly view sports facilities, pitches and gyms around:
+            </Text>
+
+            {POPULAR_AREAS.map((area) => (
+              <TouchableOpacity
+                key={area.name}
+                style={styles.areaItem}
+                onPress={() => handleSelectArea(area)}
+              >
+                <Text style={styles.areaEmoji}>📍</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.areaName}>{area.name}</Text>
+                  <Text style={styles.areaDesc}>{area.desc}</Text>
+                </View>
+                <Text style={styles.areaArrow}>&rarr;</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 2. Detailed Venue Modal with Google Maps Directions */}
+      <Modal
+        visible={venueDetailModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setVenueDetailModalVisible(false)}
+      >
+        <View style={styles.venueModalOverlay}>
+          <View style={styles.venueModalCard}>
+            {/* Modal Image Header with fallback */}
+            <View style={styles.venueModalImageWrapper}>
+              <VenueModalImage venue={selectedVenue} />
+              <TouchableOpacity
+                style={styles.closeIconBtn}
+                onPress={() => setVenueDetailModalVisible(false)}
+              >
+                <IconButton icon="close" iconColor="#FFFFFF" size={22} style={{ margin: 0 }} />
+              </TouchableOpacity>
+              {selectedVenue?.distance ? (
+                <View style={styles.modalDistanceBadge}>
+                  <Text style={styles.modalDistanceBadgeText}>
+                    📍 {selectedVenue.distance}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Modal Content Details */}
+            <ScrollView style={styles.venueModalBody} contentContainerStyle={{ paddingBottom: 24 }}>
+              <View style={styles.venueCategoryRow}>
+                <View style={styles.typeBadge}>
+                  <Text style={styles.typeBadgeText}>
+                    {selectedVenue?.type
+                      ? selectedVenue.type.replace(/_/g, " ").toUpperCase()
+                      : "SPORTS FACILITY"}
+                  </Text>
+                </View>
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingBadgeText}>
+                    ⭐ {selectedVenue?.rating || "4.8"} / 5.0
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.venueModalName}>
+                {selectedVenue?.name || "Sports & Leisure Centre"}
+              </Text>
+
+              {/* Location & Address Section */}
+              <View style={styles.infoSection}>
+                <Text style={styles.infoSectionTitle}>Address & Location</Text>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowIcon}>📍</Text>
+                  <Text style={styles.infoRowText}>
+                    {selectedVenue?.vicinity || "London, United Kingdom"}
+                  </Text>
+                </View>
+                {selectedVenue?.distance ? (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoRowIcon}>📏</Text>
+                    <Text style={styles.infoRowText}>
+                      Approx. {selectedVenue.distance} from your location
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Facility Highlights */}
+              <View style={styles.infoSection}>
+                <Text style={styles.infoSectionTitle}>Facility Features</Text>
+                <View style={styles.tagsContainer}>
+                  <View style={styles.featureTag}>
+                    <Text style={styles.featureTagText}>✓ Open to Public</Text>
+                  </View>
+                  <View style={styles.featureTag}>
+                    <Text style={styles.featureTagText}>✓ Equipment & Courts</Text>
+                  </View>
+                  <View style={styles.featureTag}>
+                    <Text style={styles.featureTagText}>✓ Score Match Here</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Directions Button */}
+              <TouchableOpacity
+                style={styles.directionsBtn}
+                onPress={() => openGoogleMaps(selectedVenue)}
+                activeOpacity={0.85}
+              >
+                <IconButton
+                  icon="google-maps"
+                  iconColor="#FFFFFF"
+                  size={24}
+                  style={{ margin: 0, marginRight: 8 }}
+                />
+                <Text style={styles.directionsBtnText}>
+                  Get Directions in Google Maps
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setVenueDetailModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Close</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -830,9 +1097,9 @@ const styles = StyleSheet.create({
   locationBadge: {
     marginTop: 6,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(0, 23, 31, 0.85)",
+    backgroundColor: "rgba(0, 23, 31, 0.9)",
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(33, 147, 240, 0.4)",
@@ -898,5 +1165,259 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 5,
+  },
+
+  // Area Selection Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  areaModalBox: {
+    backgroundColor: "#00171F",
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    maxWidth: 380,
+    borderWidth: 1,
+    borderColor: "#2193F0",
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  modalSubtitle: {
+    color: "#94A3B8",
+    fontSize: 13,
+    marginVertical: 10,
+  },
+  areaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#0A2533",
+  },
+  areaEmoji: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  areaName: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  areaDesc: {
+    color: "#64748B",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  areaArrow: {
+    color: "#2193F0",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  // Venue Detail Modal Styles
+  venueModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "flex-end",
+  },
+  venueModalCard: {
+    backgroundColor: "#00171F",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: Dimensions.get("window").height * 0.85,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: "#2193F0",
+    overflow: "hidden",
+  },
+  venueModalImageWrapper: {
+    position: "relative",
+    width: "100%",
+    height: 180,
+    backgroundColor: "#001117",
+  },
+  modalHeaderImage: {
+    width: "100%",
+    height: "100%",
+  },
+  modalFallbackContainer: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#00171F",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#0A2533",
+  },
+  modalFallbackLogo: {
+    width: 140,
+    height: 70,
+    marginBottom: 8,
+  },
+  modalFallbackText: {
+    color: "#2193F0",
+    fontSize: 11,
+    fontWeight: "bold",
+    letterSpacing: 1.5,
+  },
+  closeIconBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 23, 31, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalDistanceBadge: {
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+    backgroundColor: "rgba(0, 23, 31, 0.85)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2193F0",
+  },
+  modalDistanceBadgeText: {
+    color: "#38BDF8",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  venueModalBody: {
+    padding: 20,
+  },
+  venueCategoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  typeBadge: {
+    backgroundColor: "#0A2533",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#2193F0",
+  },
+  typeBadgeText: {
+    color: "#2193F0",
+    fontSize: 11,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  ratingBadge: {
+    backgroundColor: "#1E293B",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  ratingBadgeText: {
+    color: "#FACC15",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  venueModalName: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  infoSection: {
+    backgroundColor: "#0A1D27",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#123040",
+  },
+  infoSectionTitle: {
+    color: "#94A3B8",
+    fontSize: 11,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 6,
+  },
+  infoRowIcon: {
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 1,
+  },
+  infoRowText: {
+    color: "#E2E8F0",
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  featureTag: {
+    backgroundColor: "#00171F",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1a3a4c",
+  },
+  featureTagText: {
+    color: "#38BDF8",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  directionsBtn: {
+    backgroundColor: "#2193F0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 10,
+    elevation: 4,
+    shadowColor: "#2193F0",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  directionsBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cancelBtn: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  cancelBtnText: {
+    color: "#94A3B8",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
