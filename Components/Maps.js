@@ -1291,7 +1291,7 @@ const styles = StyleSheet.create({
   venueMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   venueCategoryRow: {
@@ -1319,6 +1319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
+    marginLeft: "auto",
   },
   ratingBadgeText: {
     color: "#FACC15",
