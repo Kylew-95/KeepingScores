@@ -24,8 +24,15 @@ export default function FriendsListModal({
   onClose,
   currentUserId,
   onFollowChange,
+  initialTab = "following",
 }) {
-  const [tab, setTab] = useState("following"); // 'following' | 'followers' | 'discover'
+  const [tab, setTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (visible && initialTab) {
+      setTab(initialTab);
+    }
+  }, [visible, initialTab]);
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);

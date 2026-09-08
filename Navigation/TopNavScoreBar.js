@@ -38,7 +38,9 @@ function TabGroup({ userId, profileData, scoresData, setScoresData }) {
         },
       }}
     >
-      <Tab.Screen name="Leaderboard">{() => <LeaderboardTab />}</Tab.Screen>
+      <Tab.Screen name="Leaderboard">
+        {() => <LeaderboardTab userId={userId} profileData={profileData} />}
+      </Tab.Screen>
       <Tab.Screen name="Add Scores">
         {() => (
           <AddScoresTab

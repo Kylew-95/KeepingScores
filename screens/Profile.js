@@ -24,6 +24,7 @@ export default function Profile({
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
+  const [friendsModalTab, setFriendsModalTab] = useState("following");
   const [followingCount, setFollowingCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [matchesCount, setMatchesCount] = useState(0);
@@ -157,12 +158,15 @@ export default function Profile({
             <Text style={styles.profileName}>{fullName}</Text>
 
             {/* Stats Row */}
-            <View style={{ marginTop: 14 }}>
+            <View style={styles.statsWrapper}>
               <SocialUserStats
                 matchesCount={matchesCount}
                 followersCount={followersCount}
                 followingCount={followingCount}
-                onPressFriends={() => setShowFriendsModal(true)}
+                onPressFriends={(selectedTab) => {
+                  setFriendsModalTab(selectedTab || "following");
+                  setShowFriendsModal(true);
+                }}
               />
             </View>
 
@@ -171,11 +175,15 @@ export default function Profile({
               <Button
                 mode="contained"
                 icon="account-group"
-                onPress={() => setShowFriendsModal(true)}
+                onPress={() => {
+                  setFriendsModalTab("discover");
+                  setShowFriendsModal(true);
+                }}
                 style={styles.friendsBtn}
-                labelStyle={{ fontWeight: "700" }}
+                contentStyle={{ height: 44 }}
+                labelStyle={{ fontWeight: "700", fontSize: 13 }}
               >
-                Friends & Followers
+                Find & Manage Friends
               </Button>
             </View>
           </View>
@@ -193,6 +201,7 @@ export default function Profile({
         onClose={() => setShowFriendsModal(false)}
         currentUserId={profileData?.userprofile_id}
         onFollowChange={fetchStats}
+        initialTab={friendsModalTab}
       />
     </>
   );
@@ -236,12 +245,19 @@ const styles = StyleSheet.create({
   profileBody: {
     marginTop: 56,
     alignItems: "center",
+    width: "100%",
   },
   profileName: {
     fontSize: 22,
     fontWeight: "700",
     color: "#0F172A",
     textAlign: "center",
+    marginBottom: 4,
+  },
+  statsWrapper: {
+    width: "100%",
+    paddingHorizontal: 20,
+    marginTop: 14,
   },
   buttonRow: {
     flexDirection: "row",
@@ -253,7 +269,8 @@ const styles = StyleSheet.create({
   },
   friendsBtn: {
     backgroundColor: "#2193F0",
-    borderRadius: 20,
-    paddingHorizontal: 12,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    elevation: 2,
   },
 });

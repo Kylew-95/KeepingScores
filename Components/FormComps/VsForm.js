@@ -34,6 +34,46 @@ const POPULAR_SPORTS = [
   { name: "Other", icon: "trophy" },
 ];
 
+const POPULAR_VENUES = [
+  {
+    name: "Clapham Leisure Centre",
+    type: "sports_centre",
+    desc: "Clapham Manor St, London",
+  },
+  {
+    name: "Brixton Recreation Centre",
+    type: "sports_centre",
+    desc: "Brixton Station Rd, London",
+  },
+  {
+    name: "Crystal Palace National Sports Centre",
+    type: "sports_centre",
+    desc: "Ledrington Rd, London",
+  },
+  {
+    name: "City Tennis & Padel Club",
+    type: "tennis",
+    desc: "Grass & Indoor Courts",
+  },
+  {
+    name: "Central Health & Fitness Gym",
+    type: "gym",
+    desc: "Fitness Suite & Studios",
+  },
+  {
+    name: "Meadowside Football Ground",
+    type: "pitch",
+    desc: "4G All-Weather Pitches",
+  },
+  {
+    name: "Riverside Badminton Center",
+    type: "badminton",
+    desc: "Indoor Courts",
+  },
+  { name: "Local Court", type: "sports", desc: "Community Park / Court" },
+  { name: "Home / Private Club", type: "sports", desc: "Private Ground" },
+];
+
 export default function VsForm({
   scoresData,
   setScoresData,
@@ -49,8 +89,14 @@ export default function VsForm({
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [gameRound, setGameRound] = useState("1");
-  const [location, setLocation] = useState("Local Court");
+  const [location, setLocation] = useState("Clapham Leisure Centre");
   const [submitting, setSubmitting] = useState(false);
+
+  // Venue picker modal state
+  const [venueModalVisible, setVenueModalVisible] = useState(false);
+  const [venueSearchQuery, setVenueSearchQuery] = useState("");
+  const [venueResults, setVenueResults] = useState([]);
+  const [isSearchingVenues, setIsSearchingVenues] = useState(false);
 
   // Selected opponent state
   const [selectedOpponent, setSelectedOpponent] = useState(null);
@@ -65,6 +111,55 @@ export default function VsForm({
   const currentUserId = userId || profileData?.userprofile_id;
   const p1Name = profileData?.first_name || "You";
   const p1Avatar = profileData?.avatar_image_url;
+
+  const handleVenueSearch = async (text) => {
+    setVenueSearchQuery(text);
+    if (!text.trim()) {
+      setVenueResults([]);
+      return;
+    }
+    setIsSearchingVenues(true);
+    try {
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(text.trim())}&limit=10`;
+      const resp = await fetch(url, {
+        headers: { "User-Agent": "KeepingScoresApp/1.0" },
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const seen = new Set();
+        const list = [];
+        (data.features || []).forEach((f) => {
+          const p = f.properties || {};
+          const name = p.name || p.street || text.trim();
+          const city = p.city || p.district || p.county || "";
+          const desc =
+            [p.street, city].filter(Boolean).join(", ") ||
+            (p.osm_value ? p.osm_value.replace(/_/g, " ") : "Location");
+          const key = name.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            list.push({
+              name: name,
+              type: p.osm_value || "sports",
+              desc: desc,
+            });
+          }
+        });
+        setVenueResults(list);
+      }
+    } catch (err) {
+      console.log("Venue search notice:", err);
+    } finally {
+      setIsSearchingVenues(false);
+    }
+  };
+
+  const handleSelectVenue = (venueName) => {
+    setLocation(venueName);
+    setVenueModalVisible(false);
+    setVenueSearchQuery("");
+    setVenueResults([]);
+  };
 
   // Fetch followed friends and community users
   const loadOpponents = async () => {
@@ -396,14 +491,16 @@ export default function VsForm({
 
               <View style={{ flex: 2, marginLeft: 8 }}>
                 <Text style={styles.inputLabel}>Location / Venue</Text>
-                <TextInput
-                  value={location}
-                  onChangeText={setLocation}
-                  mode="outlined"
-                  placeholder="e.g. Clapham Court"
-                  style={styles.textInputStyle}
-                  dense
-                />
+                <TouchableOpacity
+                  style={styles.venuePickerButton}
+                  onPress={() => setVenueModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.venuePickerText} numberOfLines={1}>
+                    📍 {location || "Select Venue ▾"}
+                  </Text>
+                  <Text style={styles.venuePickerAction}>Search / Pick ▾</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </Card.Content>
@@ -554,6 +651,126 @@ export default function VsForm({
                 Add
               </Button>
             </View>
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Venue / Leisure Centre Picker Modal */}
+      <Modal
+        visible={venueModalVisible}
+        animationType="slide"
+        onRequestClose={() => setVenueModalVisible(false)}
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Location / Venue</Text>
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={() => setVenueModalVisible(false)}
+            />
+          </View>
+
+          <Searchbar
+            placeholder="Search leisure centre, gym, court, park..."
+            onChangeText={handleVenueSearch}
+            value={venueSearchQuery}
+            loading={isSearchingVenues}
+            style={styles.searchbar}
+            inputStyle={{ minHeight: 0 }}
+          />
+
+          <ScrollView
+            style={{ flex: 1, paddingHorizontal: 16 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Custom Venue Option if typing */}
+            {venueSearchQuery.trim().length > 0 && (
+              <TouchableOpacity
+                style={[styles.venueRow, styles.customVenueRow]}
+                onPress={() => handleSelectVenue(venueSearchQuery.trim())}
+              >
+                <View style={styles.venueIconCircle}>
+                  <Text style={{ fontSize: 18 }}>✏️</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.venueName}>
+                    Use "{venueSearchQuery.trim()}"
+                  </Text>
+                  <Text style={styles.venueDesc}>
+                    Tap to use this location name
+                  </Text>
+                </View>
+                <Text style={styles.selectArrow}>→</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Live Search Results */}
+            {venueResults.length > 0 ? (
+              <>
+                <Text style={styles.modalSectionHeading}>
+                  🔍 Search Results ({venueResults.length})
+                </Text>
+                {venueResults.map((item, idx) => (
+                  <TouchableOpacity
+                    key={`${item.name}_${idx}`}
+                    style={styles.venueRow}
+                    onPress={() => handleSelectVenue(item.name)}
+                  >
+                    <View style={styles.venueIconCircle}>
+                      <Text style={{ fontSize: 18 }}>🏟️</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.venueName} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.venueDesc} numberOfLines={1}>
+                        {item.desc}
+                      </Text>
+                    </View>
+                    <Text style={styles.selectArrow}>→</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalSectionHeading}>
+                  ⭐ Popular Leisure Centres & Courts
+                </Text>
+                {POPULAR_VENUES.map((item) => (
+                  <TouchableOpacity
+                    key={item.name}
+                    style={styles.venueRow}
+                    onPress={() => handleSelectVenue(item.name)}
+                  >
+                    <View style={styles.venueIconCircle}>
+                      <Text style={{ fontSize: 18 }}>
+                        {item.type === "tennis"
+                          ? "🎾"
+                          : item.type === "badminton"
+                            ? "🏸"
+                            : item.type === "pitch"
+                              ? "⚽"
+                              : item.type === "gym"
+                                ? "🏋️"
+                                : "🏟️"}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.venueName} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.venueDesc} numberOfLines={1}>
+                        {item.desc}
+                      </Text>
+                    </View>
+                    <Text style={styles.selectArrow}>→</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
             <View style={{ height: 40 }} />
           </ScrollView>
         </SafeAreaView>
@@ -807,5 +1024,65 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 4,
+  },
+  venuePickerButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 46,
+    justifyContent: "center",
+  },
+  venuePickerText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  venuePickerAction: {
+    fontSize: 11,
+    color: "#2193F0",
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  venueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  customVenueRow: {
+    borderColor: "#2193F0",
+    backgroundColor: "#F0F9FF",
+  },
+  venueIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  venueName: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  venueDesc: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  selectArrow: {
+    fontSize: 18,
+    color: "#94A3B8",
+    marginLeft: 8,
   },
 });

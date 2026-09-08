@@ -6,6 +6,9 @@ import {
   RefreshControl,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Modal,
+  Alert,
 } from "react-native";
 import {
   Card,
@@ -16,10 +19,12 @@ import {
   DataTable,
   SegmentedButtons,
   Badge,
+  Button,
+  IconButton,
 } from "react-native-paper";
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 
-export default function LeaderboardTab() {
+export default function LeaderboardTab({ userId, profileData }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,6 +32,19 @@ export default function LeaderboardTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("table"); // 'table' | 'cards'
   const [availableSports, setAvailableSports] = useState(["All"]);
+
+  // Follow state
+  const [currentUserId, setCurrentUserId] = useState(
+    userId || profileData?.userprofile_id,
+  );
+  const [currentUserName, setCurrentUserName] = useState(
+    profileData?.first_name || "",
+  );
+  const [followingIds, setFollowingIds] = useState(new Set());
+  const [followingNames, setFollowingNames] = useState(new Set());
+  const [userProfilesMap, setUserProfilesMap] = useState({});
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [playerModalVisible, setPlayerModalVisible] = useState(false);
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -156,13 +174,169 @@ export default function LeaderboardTab() {
     }
   }, [selectedSport]);
 
+  const loadFollows = useCallback(async () => {
+    let uid = currentUserId;
+    if (!uid) {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        uid = authData.user.id;
+        setCurrentUserId(uid);
+      }
+    }
+    if (!uid) return;
+
+    try {
+      const { data: follows } = await supabase
+        .from("UserFollows")
+        .select("following_id, following_name")
+        .eq("follower_id", uid);
+
+      if (follows) {
+        const idSet = new Set();
+        const nameSet = new Set();
+        follows.forEach((f) => {
+          if (f.following_id) idSet.add(f.following_id);
+          if (f.following_name)
+            nameSet.add(f.following_name.trim().toLowerCase());
+        });
+        setFollowingIds(idSet);
+        setFollowingNames(nameSet);
+      }
+
+      const { data: profiles } = await supabase
+        .from("UserProfileData")
+        .select("userprofile_id, first_name, last_name, avatar_image_url");
+
+      if (profiles) {
+        const map = {};
+        profiles.forEach((p) => {
+          if (p.first_name) {
+            map[p.first_name.trim().toLowerCase()] = p;
+          }
+          if (p.userprofile_id) {
+            map[p.userprofile_id] = p;
+          }
+        });
+        setUserProfilesMap(map);
+      }
+    } catch (err) {
+      console.log("Error loading follows in Leaderboard:", err);
+    }
+  }, [currentUserId]);
+
   useEffect(() => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
+  useEffect(() => {
+    loadFollows();
+  }, [loadFollows]);
+
+  const checkIfFollowing = (item) => {
+    if (!item) return false;
+    const nameKey = (item.player_name || "").trim().toLowerCase();
+    if (followingNames.has(nameKey)) return true;
+    if (item.userprofile_id && followingIds.has(item.userprofile_id))
+      return true;
+    const mapped = userProfilesMap[nameKey];
+    if (mapped?.userprofile_id && followingIds.has(mapped.userprofile_id))
+      return true;
+    return false;
+  };
+
+  const checkIfSelf = (item) => {
+    if (!item) return false;
+    const nameKey = (item.player_name || "").trim().toLowerCase();
+    const myName = (currentUserName || profileData?.first_name || "")
+      .trim()
+      .toLowerCase();
+    if (myName && nameKey === myName) return true;
+    if (
+      currentUserId &&
+      item.userprofile_id &&
+      item.userprofile_id === currentUserId
+    )
+      return true;
+    return false;
+  };
+
+  const toggleFollowPlayer = async (item) => {
+    let uid = currentUserId;
+    if (!uid) {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        uid = authData.user.id;
+        setCurrentUserId(uid);
+      } else {
+        Alert.alert("Sign In Required", "Please sign in to follow players.");
+        return;
+      }
+    }
+
+    if (checkIfSelf(item)) {
+      Alert.alert("That's you!", "You are viewing your own profile ranking.");
+      return;
+    }
+
+    const isFollowing = checkIfFollowing(item);
+    const nameKey = item.player_name.trim().toLowerCase();
+    const targetUid =
+      item.userprofile_id || userProfilesMap[nameKey]?.userprofile_id || null;
+
+    // Optimistic state update
+    setFollowingNames((prev) => {
+      const next = new Set(prev);
+      if (isFollowing) {
+        next.delete(nameKey);
+      } else {
+        next.add(nameKey);
+      }
+      return next;
+    });
+
+    if (targetUid) {
+      setFollowingIds((prev) => {
+        const next = new Set(prev);
+        if (isFollowing) {
+          next.delete(targetUid);
+        } else {
+          next.add(targetUid);
+        }
+        return next;
+      });
+    }
+
+    try {
+      if (isFollowing) {
+        if (targetUid) {
+          await supabase
+            .from("UserFollows")
+            .delete()
+            .eq("follower_id", uid)
+            .eq("following_id", targetUid);
+        } else {
+          await supabase
+            .from("UserFollows")
+            .delete()
+            .eq("follower_id", uid)
+            .ilike("following_name", item.player_name.trim());
+        }
+      } else {
+        await supabase.from("UserFollows").insert({
+          follower_id: uid,
+          following_id: targetUid,
+          following_name: item.player_name.trim(),
+        });
+      }
+    } catch (err) {
+      console.error("Error updating follow:", err);
+      loadFollows();
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchLeaderboard();
+    await Promise.all([fetchLeaderboard(), loadFollows()]);
     setRefreshing(false);
   };
 
@@ -285,6 +459,33 @@ export default function LeaderboardTab() {
                     <Text style={styles.podiumStats}>
                       {topThree[1].wins}W / {topThree[1].losses}L
                     </Text>
+                    {!checkIfSelf(topThree[1]) ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.podiumFollowBtn,
+                          checkIfFollowing(topThree[1])
+                            ? styles.podiumFollowingBtn
+                            : styles.podiumNotFollowingBtn,
+                        ]}
+                        onPress={() => toggleFollowPlayer(topThree[1])}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.podiumFollowBtnText,
+                            checkIfFollowing(topThree[1])
+                              ? styles.podiumFollowingBtnText
+                              : styles.podiumNotFollowingBtnText,
+                          ]}
+                        >
+                          {checkIfFollowing(topThree[1])
+                            ? "✓ Following"
+                            : "+ Follow"}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Badge style={styles.podiumSelfBadge}>You</Badge>
+                    )}
                   </View>
                 )}
 
@@ -323,6 +524,33 @@ export default function LeaderboardTab() {
                     <Text style={styles.podiumStats}>
                       {topThree[0].wins}W / {topThree[0].losses}L
                     </Text>
+                    {!checkIfSelf(topThree[0]) ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.podiumFollowBtn,
+                          checkIfFollowing(topThree[0])
+                            ? styles.podiumFollowingBtn
+                            : styles.podiumNotFollowingBtn,
+                        ]}
+                        onPress={() => toggleFollowPlayer(topThree[0])}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.podiumFollowBtnText,
+                            checkIfFollowing(topThree[0])
+                              ? styles.podiumFollowingBtnText
+                              : styles.podiumNotFollowingBtnText,
+                          ]}
+                        >
+                          {checkIfFollowing(topThree[0])
+                            ? "✓ Following"
+                            : "+ Follow"}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Badge style={styles.podiumSelfBadge}>You</Badge>
+                    )}
                   </View>
                 )}
 
@@ -352,6 +580,33 @@ export default function LeaderboardTab() {
                     <Text style={styles.podiumStats}>
                       {topThree[2].wins}W / {topThree[2].losses}L
                     </Text>
+                    {!checkIfSelf(topThree[2]) ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.podiumFollowBtn,
+                          checkIfFollowing(topThree[2])
+                            ? styles.podiumFollowingBtn
+                            : styles.podiumNotFollowingBtn,
+                        ]}
+                        onPress={() => toggleFollowPlayer(topThree[2])}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.podiumFollowBtnText,
+                            checkIfFollowing(topThree[2])
+                              ? styles.podiumFollowingBtnText
+                              : styles.podiumNotFollowingBtnText,
+                          ]}
+                        >
+                          {checkIfFollowing(topThree[2])
+                            ? "✓ Following"
+                            : "+ Follow"}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Badge style={styles.podiumSelfBadge}>You</Badge>
+                    )}
                   </View>
                 )}
               </View>
@@ -389,7 +644,10 @@ export default function LeaderboardTab() {
                     Win%
                   </DataTable.Title>
                   <DataTable.Title numeric style={styles.colStreak}>
-                    Streak
+                    Strk
+                  </DataTable.Title>
+                  <DataTable.Title style={styles.colAction}>
+                    Follow
                   </DataTable.Title>
                 </DataTable.Header>
 
@@ -411,6 +669,10 @@ export default function LeaderboardTab() {
                           isEven ? styles.rowEven : styles.rowOdd,
                           isTopThree && styles.topThreeRow,
                         ]}
+                        onPress={() => {
+                          setSelectedPlayer(item);
+                          setPlayerModalVisible(true);
+                        }}
                       >
                         {/* Rank */}
                         <DataTable.Cell style={styles.colRank}>
@@ -484,6 +746,38 @@ export default function LeaderboardTab() {
                             {item.win_streak > 0 ? `🔥${item.win_streak}` : "—"}
                           </Text>
                         </DataTable.Cell>
+
+                        {/* Follow Action */}
+                        <DataTable.Cell style={styles.colAction}>
+                          {checkIfSelf(item) ? (
+                            <Badge style={styles.selfBadge}>You</Badge>
+                          ) : (
+                            <TouchableOpacity
+                              style={[
+                                styles.tableFollowBtn,
+                                checkIfFollowing(item)
+                                  ? styles.tableFollowingBtn
+                                  : styles.tableNotFollowingBtn,
+                              ]}
+                              onPress={(e) => {
+                                e.stopPropagation?.();
+                                toggleFollowPlayer(item);
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Text
+                                style={[
+                                  styles.tableFollowBtnText,
+                                  checkIfFollowing(item)
+                                    ? styles.tableFollowingBtnText
+                                    : styles.tableNotFollowingBtnText,
+                                ]}
+                              >
+                                {checkIfFollowing(item) ? "✓" : "+ Follow"}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </DataTable.Cell>
                       </DataTable.Row>
                     );
                   })
@@ -495,65 +789,244 @@ export default function LeaderboardTab() {
             <View style={{ marginTop: 8 }}>
               {filteredList.map((item, index) => (
                 <Card key={item.player_name} style={styles.playerCard}>
-                  <View style={styles.cardRow}>
-                    <View style={styles.cardRankCircle}>
-                      <Text style={styles.cardRankText}>
-                        {getMedalOrRank(index)}
-                      </Text>
-                    </View>
-
-                    {item.avatar_image_url ? (
-                      <Avatar.Image
-                        size={46}
-                        source={{ uri: item.avatar_image_url }}
-                      />
-                    ) : (
-                      <Avatar.Text
-                        size={46}
-                        label={item.player_name.substring(0, 2).toUpperCase()}
-                        style={{ backgroundColor: "#2193F0" }}
-                      />
-                    )}
-
-                    <View style={styles.cardInfo}>
-                      <View style={styles.cardNameRow}>
-                        <Text style={styles.cardPlayerName} numberOfLines={1}>
-                          {item.player_name}
-                        </Text>
-                        <Text style={styles.cardWinRateText}>
-                          {item.win_rate}% Win Rate
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setSelectedPlayer(item);
+                      setPlayerModalVisible(true);
+                    }}
+                  >
+                    <View style={styles.cardRow}>
+                      <View style={styles.cardRankCircle}>
+                        <Text style={styles.cardRankText}>
+                          {getMedalOrRank(index)}
                         </Text>
                       </View>
 
-                      <View style={styles.cardStatsRow}>
-                        <Text style={styles.cardStat}>
-                          Played:{" "}
-                          <Text style={styles.statVal}>
-                            {item.total_matches}
+                      {item.avatar_image_url ? (
+                        <Avatar.Image
+                          size={46}
+                          source={{ uri: item.avatar_image_url }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={46}
+                          label={item.player_name.substring(0, 2).toUpperCase()}
+                          style={{ backgroundColor: "#2193F0" }}
+                        />
+                      )}
+
+                      <View style={styles.cardInfo}>
+                        <View style={styles.cardNameRow}>
+                          <Text style={styles.cardPlayerName} numberOfLines={1}>
+                            {item.player_name}
                           </Text>
-                        </Text>
-                        <Text style={styles.cardStat}>
-                          W: <Text style={styles.statValWin}>{item.wins}</Text>
-                        </Text>
-                        <Text style={styles.cardStat}>
-                          L:{" "}
-                          <Text style={styles.statValLoss}>{item.losses}</Text>
-                        </Text>
-                        <Text style={styles.cardStat}>
-                          Streak:{" "}
-                          <Text style={styles.statValStreak}>
-                            {item.win_streak > 0 ? `🔥${item.win_streak}` : "—"}
+                          <Text style={styles.cardWinRateText}>
+                            {item.win_rate}% Win Rate
                           </Text>
-                        </Text>
+                        </View>
+
+                        <View style={styles.cardStatsRow}>
+                          <Text style={styles.cardStat}>
+                            P:{" "}
+                            <Text style={styles.statVal}>
+                              {item.total_matches}
+                            </Text>
+                          </Text>
+                          <Text style={styles.cardStat}>
+                            W:{" "}
+                            <Text style={styles.statValWin}>{item.wins}</Text>
+                          </Text>
+                          <Text style={styles.cardStat}>
+                            L:{" "}
+                            <Text style={styles.statValLoss}>
+                              {item.losses}
+                            </Text>
+                          </Text>
+                          <Text style={styles.cardStat}>
+                            Streak:{" "}
+                            <Text style={styles.statValStreak}>
+                              {item.win_streak > 0
+                                ? `🔥${item.win_streak}`
+                                : "—"}
+                            </Text>
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Follow Button on Card */}
+                      <View style={styles.cardActionWrapper}>
+                        {checkIfSelf(item) ? (
+                          <Badge style={styles.selfBadge}>You</Badge>
+                        ) : (
+                          <TouchableOpacity
+                            style={[
+                              styles.cardFollowBtn,
+                              checkIfFollowing(item)
+                                ? styles.cardFollowingBtn
+                                : styles.cardNotFollowingBtn,
+                            ]}
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              toggleFollowPlayer(item);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text
+                              style={[
+                                styles.cardFollowBtnText,
+                                checkIfFollowing(item)
+                                  ? styles.cardFollowingBtnText
+                                  : styles.cardNotFollowingBtnText,
+                              ]}
+                            >
+                              {checkIfFollowing(item)
+                                ? "✓ Following"
+                                : "+ Follow"}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 </Card>
               ))}
             </View>
           )}
         </ScrollView>
       )}
+
+      {/* Player Detail & Follow Modal */}
+      <Modal
+        visible={playerModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPlayerModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedPlayer && (
+              <>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalHeading}>Player Profile</Text>
+                  <IconButton
+                    icon="close"
+                    size={22}
+                    onPress={() => setPlayerModalVisible(false)}
+                  />
+                </View>
+
+                <View style={styles.modalAvatarContainer}>
+                  {selectedPlayer.avatar_image_url ? (
+                    <Avatar.Image
+                      size={72}
+                      source={{ uri: selectedPlayer.avatar_image_url }}
+                    />
+                  ) : (
+                    <Avatar.Text
+                      size={72}
+                      label={selectedPlayer.player_name
+                        .substring(0, 2)
+                        .toUpperCase()}
+                      style={{ backgroundColor: "#2193F0" }}
+                    />
+                  )}
+                  <Text style={styles.modalPlayerName}>
+                    {selectedPlayer.player_name}
+                  </Text>
+                  <Text style={styles.modalSubText}>
+                    Sport:{" "}
+                    {selectedSport === "All" ? "All Activities" : selectedSport}
+                  </Text>
+                </View>
+
+                {/* Stats Grid */}
+                <View style={styles.modalStatsGrid}>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Played</Text>
+                    <Text style={styles.modalStatVal}>
+                      {selectedPlayer.total_matches}
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Wins</Text>
+                    <Text style={[styles.modalStatVal, { color: "#16A34A" }]}>
+                      {selectedPlayer.wins}
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Losses</Text>
+                    <Text style={[styles.modalStatVal, { color: "#DC2626" }]}>
+                      {selectedPlayer.losses}
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Win Rate</Text>
+                    <Text style={[styles.modalStatVal, { color: "#2193F0" }]}>
+                      {selectedPlayer.win_rate}%
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Draws</Text>
+                    <Text style={styles.modalStatVal}>
+                      {selectedPlayer.draws || 0}
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Streak</Text>
+                    <Text style={[styles.modalStatVal, { color: "#EA580C" }]}>
+                      {selectedPlayer.win_streak > 0
+                        ? `🔥 ${selectedPlayer.win_streak}`
+                        : "0"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Follow Action */}
+                <View style={styles.modalActionWrapper}>
+                  {checkIfSelf(selectedPlayer) ? (
+                    <View style={styles.selfNotice}>
+                      <Text style={styles.selfNoticeText}>
+                        👤 This is your profile
+                      </Text>
+                    </View>
+                  ) : (
+                    <Button
+                      mode={
+                        checkIfFollowing(selectedPlayer)
+                          ? "outlined"
+                          : "contained"
+                      }
+                      onPress={() => toggleFollowPlayer(selectedPlayer)}
+                      style={[
+                        styles.modalFollowBtn,
+                        checkIfFollowing(selectedPlayer)
+                          ? styles.modalFollowingBtn
+                          : styles.modalNotFollowingBtn,
+                      ]}
+                      labelStyle={{
+                        fontWeight: "700",
+                        color: checkIfFollowing(selectedPlayer)
+                          ? "#64748B"
+                          : "#FFFFFF",
+                      }}
+                      icon={
+                        checkIfFollowing(selectedPlayer)
+                          ? "account-check"
+                          : "account-plus"
+                      }
+                    >
+                      {checkIfFollowing(selectedPlayer)
+                        ? "Following Player"
+                        : "Follow Player"}
+                    </Button>
+                  )}
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -653,24 +1126,202 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F9FF",
   },
   colRank: {
-    flex: 0.6,
+    flex: 0.5,
     justifyContent: "center",
   },
   colPlayer: {
-    flex: 2.5,
+    flex: 2.2,
     justifyContent: "flex-start",
   },
   colStat: {
-    flex: 0.8,
+    flex: 0.65,
     justifyContent: "center",
   },
   colWinRate: {
-    flex: 1.2,
+    flex: 1.0,
     justifyContent: "center",
   },
   colStreak: {
-    flex: 1.1,
+    flex: 0.85,
     justifyContent: "center",
+  },
+  colAction: {
+    flex: 1.4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tableFollowBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tableNotFollowingBtn: {
+    backgroundColor: "#2193F0",
+  },
+  tableFollowingBtn: {
+    backgroundColor: "#E2E8F0",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  tableFollowBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  tableNotFollowingBtnText: {
+    color: "#FFFFFF",
+  },
+  tableFollowingBtnText: {
+    color: "#475569",
+  },
+  selfBadge: {
+    backgroundColor: "#94A3B8",
+    fontSize: 10,
+  },
+  cardActionWrapper: {
+    marginLeft: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardFollowBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  cardNotFollowingBtn: {
+    backgroundColor: "#2193F0",
+  },
+  cardFollowingBtn: {
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  cardFollowBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  cardNotFollowingBtnText: {
+    color: "#FFFFFF",
+  },
+  cardFollowingBtnText: {
+    color: "#475569",
+  },
+  podiumFollowBtn: {
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  podiumNotFollowingBtn: {
+    backgroundColor: "#2193F0",
+  },
+  podiumFollowingBtn: {
+    backgroundColor: "#E2E8F0",
+  },
+  podiumFollowBtnText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  podiumNotFollowingBtnText: {
+    color: "#FFFFFF",
+  },
+  podiumFollowingBtnText: {
+    color: "#475569",
+  },
+  podiumSelfBadge: {
+    marginTop: 6,
+    backgroundColor: "#94A3B8",
+    fontSize: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 8,
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalHeading: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  modalAvatarContainer: {
+    alignItems: "center",
+    marginVertical: 12,
+  },
+  modalPlayerName: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginTop: 8,
+  },
+  modalSubText: {
+    fontSize: 13,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  modalStatsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginVertical: 12,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 10,
+  },
+  modalStatBox: {
+    width: "30%",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  modalStatLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  modalStatVal: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  modalActionWrapper: {
+    marginTop: 8,
+  },
+  modalFollowBtn: {
+    borderRadius: 12,
+    paddingVertical: 2,
+  },
+  modalNotFollowingBtn: {
+    backgroundColor: "#2193F0",
+  },
+  modalFollowingBtn: {
+    borderColor: "#CBD5E1",
+  },
+  selfNotice: {
+    alignItems: "center",
+    paddingVertical: 10,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 10,
+  },
+  selfNoticeText: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "600",
   },
   rankBadgeText: {
     fontSize: 13,
