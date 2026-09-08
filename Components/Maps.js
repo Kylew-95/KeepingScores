@@ -1004,13 +1004,6 @@ export default function Maps({
               >
                 <IconButton icon="close" iconColor="#FFFFFF" size={22} style={{ margin: 0 }} />
               </TouchableOpacity>
-              {selectedVenue?.distance ? (
-                <View style={styles.modalDistanceBadge}>
-                  <Text style={styles.modalDistanceBadgeText}>
-                    📍 {selectedVenue.distance}
-                  </Text>
-                </View>
-              ) : null}
             </View>
 
             {/* Modal Content Details */}
@@ -1021,8 +1014,8 @@ export default function Maps({
 
               <View style={styles.venueMetaRow}>
                 {selectedVenue?.distance ? (
-                  <View style={styles.modalDistanceBadge}>
-                    <Text style={styles.modalDistanceBadgeText}>
+                  <View style={styles.singleDistanceBadge}>
+                    <Text style={styles.singleDistanceText}>
                       📍 {selectedVenue.distance}
                     </Text>
                   </View>
@@ -1279,18 +1272,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modalDistanceBadge: {
-    position: "absolute",
-    bottom: 12,
-    left: 12,
-    backgroundColor: "rgba(0, 23, 31, 0.85)",
+  singleDistanceBadge: {
+    backgroundColor: "#0A2533",
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#2193F0",
   },
-  modalDistanceBadgeText: {
+  singleDistanceText: {
     color: "#38BDF8",
     fontSize: 12,
     fontWeight: "bold",
@@ -1327,7 +1317,7 @@ const styles = StyleSheet.create({
   ratingBadge: {
     backgroundColor: "#1E293B",
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 8,
   },
   ratingBadgeText: {
