@@ -74,7 +74,7 @@ const POPULAR_VENUES = [
   { name: "Home / Private Club", type: "sports", desc: "Private Ground" },
 ];
 
-export default function VsForm({
+export function VsForm({
   scoresData,
   setScoresData,
   profileData,
@@ -1086,3 +1086,5 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+
+export default VsForm;

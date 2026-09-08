@@ -1,7 +1,16 @@
 import React from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { SafeAreaView, StyleSheet, View, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import VsForm from "../../Components/FormComps/VsForm";
+import RawVsForm, { VsForm as NamedVsForm } from "../../Components/FormComps/VsForm";
+
+const VsForm =
+  typeof RawVsForm === "function"
+    ? RawVsForm
+    : RawVsForm && typeof RawVsForm.default === "function"
+    ? RawVsForm.default
+    : typeof NamedVsForm === "function"
+    ? NamedVsForm
+    : null;
 
 export default function AddScoresTab({
   scoresData,
@@ -10,6 +19,16 @@ export default function AddScoresTab({
   profileData,
 }) {
   const navigation = useNavigation();
+
+  if (!VsForm) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: "#64748B" }}>Loading Match Form...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
