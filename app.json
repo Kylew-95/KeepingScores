@@ -11,13 +11,18 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": ["assets/**/*", "Images/**/*"],
     "ios": {
       "supportsTablet": true
     },
     "scheme": "keepingscores",
     "android": {
       "package": "com.sndpck.wav.KeepingScores",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDWQ1l0pMlYDA5mkoxRaxmYhDeuKAWLex4"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

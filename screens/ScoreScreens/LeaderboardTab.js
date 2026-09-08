@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   SafeAreaView,
   View,
   Text,
-  FlatList,
   RefreshControl,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
 } from "react-native";
 import {
@@ -16,7 +13,6 @@ import {
   ActivityIndicator,
   Searchbar,
   Chip,
-  ProgressBar,
   DataTable,
   SegmentedButtons,
   Badge,
@@ -24,8 +20,6 @@ import {
 import { supabase } from "../../SupabaseConfig/SupabaseClient";
 
 export default function LeaderboardTab() {
-  const [scores, setScores] = useState([]);
-  const [profiles, setProfiles] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,16 +28,8 @@ export default function LeaderboardTab() {
   const [viewMode, setViewMode] = useState("table"); // 'table' | 'cards'
   const [availableSports, setAvailableSports] = useState(["All"]);
 
-  const fetchData = async () => {
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const [scoresRes, profilesRes] = await Promise.all([
-        supabase
-          .from("ScoresData")
-          .select("*")
-          .order("id", { ascending: false }),
-        supabase.from("UserProfileData").select("*"),
-      ]);
       // 1. Fetch from GlobalLeaderboard table
       let query = supabase
         .from("GlobalLeaderboard")
@@ -52,33 +38,14 @@ export default function LeaderboardTab() {
         .order("wins", { ascending: false })
         .order("total_matches", { ascending: false });
 
-      if (scoresRes.data) {
-        setScores(scoresRes.data);
       if (selectedSport && selectedSport !== "All") {
         query = query.eq("activity", selectedSport);
       } else {
         query = query.eq("activity", "All");
       }
-      if (profilesRes.data) {
-        setProfiles(profilesRes.data);
-      }
-    } catch (err) {
-      console.error("Error fetching leaderboard data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
       const { data, error } = await query;
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  };
       if (!error && data && data.length > 0) {
         setLeaderboard(data);
       } else {
@@ -88,22 +55,9 @@ export default function LeaderboardTab() {
           supabase.from("UserProfileData").select("*"),
         ]);
 
-  // Extract unique sports from score records
-  const availableSports = useMemo(() => {
-    const set = new Set();
-    scores.forEach((s) => {
-      if (s.activity && s.activity.trim()) {
-        set.add(s.activity.trim());
-      }
-    });
-    return ["All", ...Array.from(set)];
-  }, [scores]);
         const rawScores = scoresRes.data || [];
         const rawProfiles = profilesRes.data || [];
 
-  // Aggregate player win/loss records
-  const leaderboardData = useMemo(() => {
-    const stats = {};
         const stats = {};
         rawScores.forEach((s) => {
           if (
@@ -113,31 +67,16 @@ export default function LeaderboardTab() {
             return;
           }
 
-    scores.forEach((s) => {
-      // Filter by sport if selected
-      if (
-        selectedSport !== "All" &&
-        s.activity?.trim().toLowerCase() !== selectedSport.toLowerCase()
-      ) {
-        return;
-      }
           const players = s.players;
           if (!players || !Array.isArray(players) || players.length < 2) return;
 
-      const players = s.players;
-      if (!players || !Array.isArray(players) || players.length < 2) return;
           const p1 = (players[0]?.player1 || "").trim();
           const p2 = (players[1]?.player2 || "").trim();
           if (!p1 || !p2) return;
 
-      const p1Name = (players[0]?.player1 || "").trim();
-      const p2Name = (players[1]?.player2 || "").trim();
-      if (!p1Name || !p2Name) return;
           const s1 = parseFloat(players[0]?.scores) || 0;
           const s2 = parseFloat(players[1]?.scores) || 0;
 
-      const p1Score = parseFloat(players[0]?.scores) || 0;
-      const p2Score = parseFloat(players[1]?.scores) || 0;
           [p1, p2].forEach((p) => {
             if (!stats[p]) {
               stats[p] = {
@@ -151,14 +90,6 @@ export default function LeaderboardTab() {
             }
           });
 
-      [p1Name, p2Name].forEach((p) => {
-        if (!stats[p]) {
-          stats[p] = {
-            name: p,
-            wins: 0,
-            losses: 0,
-            draws: 0,
-            total: 0,
           stats[p1].total_matches += 1;
           stats[p2].total_matches += 1;
 
@@ -193,67 +124,22 @@ export default function LeaderboardTab() {
             win_rate: wr,
             avatar_image_url: prof?.avatar_image_url || null,
           };
-        }
-      });
         });
 
-      stats[p1Name].total += 1;
-      stats[p2Name].total += 1;
         computedList.sort((a, b) => {
           if (b.win_rate !== a.win_rate) return b.win_rate - a.win_rate;
           if (b.wins !== a.wins) return b.wins - a.wins;
           return b.total_matches - a.total_matches;
         });
 
-      if (p1Score > p2Score) {
-        stats[p1Name].wins += 1;
-        stats[p2Name].losses += 1;
-      } else if (p2Score > p1Score) {
-        stats[p2Name].wins += 1;
-        stats[p1Name].losses += 1;
-      } else {
-        stats[p1Name].draws += 1;
-        stats[p2Name].draws += 1;
         setLeaderboard(computedList);
       }
-    });
 
-    // Match each player with profile avatar if available
-    const list = Object.values(stats).map((player) => {
-      const winRate =
-        player.total > 0
-          ? Math.round((player.wins / player.total) * 1000) / 10
-          : 0;
       // Fetch distinct sports
       const { data: sportsData } = await supabase
         .from("GlobalLeaderboard")
         .select("activity");
 
-      // Find avatar from profiles by first name
-      const matchedProfile = profiles.find(
-        (prof) =>
-          prof.first_name?.trim().toLowerCase() ===
-          player.name.trim().toLowerCase(),
-      );
-
-      return {
-        ...player,
-        winRate,
-        avatarUrl: matchedProfile?.avatar_image_url || null,
-      };
-    });
-
-    // Sort: highest win rate first, then most wins, then most matches
-    list.sort((a, b) => {
-      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return b.total - a.total;
-    });
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      return list.filter((p) => p.name.toLowerCase().includes(q));
       if (sportsData && sportsData.length > 0) {
         const unique = new Set(["All"]);
         sportsData.forEach((r) => {
@@ -270,24 +156,16 @@ export default function LeaderboardTab() {
     }
   }, [selectedSport]);
 
-    return list;
-  }, [scores, profiles, selectedSport, searchQuery]);
   useEffect(() => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  // Top 3 players for podium display
-  const topThree = leaderboardData.slice(0, 3);
-  const remainingPlayers = leaderboardData.slice(3);
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchLeaderboard();
     setRefreshing(false);
   };
 
-  const renderPlayerRow = ({ item, index }) => {
-    const rankIndex = searchQuery ? index : index + 3;
-    const progressVal = item.total > 0 ? item.wins / item.total : 0;
   const filteredList = useMemo(() => {
     if (!searchQuery.trim()) return leaderboard;
     const q = searchQuery.toLowerCase().trim();
@@ -296,12 +174,6 @@ export default function LeaderboardTab() {
     );
   }, [leaderboard, searchQuery]);
 
-    return (
-      <Card style={styles.playerCard}>
-        <View style={styles.cardRow}>
-          <View style={styles.rankBadge}>
-            <Text style={styles.rankText}>{rankIndex + 1}</Text>
-          </View>
   const getMedalOrRank = (index) => {
     switch (index) {
       case 0:
@@ -315,58 +187,10 @@ export default function LeaderboardTab() {
     }
   };
 
-          {item.avatarUrl ? (
-            <Avatar.Image size={46} source={{ uri: item.avatarUrl }} />
-          ) : (
-            <Avatar.Text
-              size={46}
-              label={item.name.substring(0, 2).toUpperCase()}
-              style={{ backgroundColor: "#2193F0" }}
-              labelStyle={{ color: "white", fontWeight: "bold" }}
-            />
-          )}
   const topThree = filteredList.slice(0, 3);
-
-          <View style={styles.playerDetails}>
-            <View style={styles.nameWinRow}>
-              <Text style={styles.playerName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={styles.winRateText}>{item.winRate}% Win Rate</Text>
-            </View>
-
-            <ProgressBar
-              progress={progressVal}
-              color={progressVal >= 0.5 ? "#2193F0" : "#F44336"}
-              style={styles.progressBar}
-            />
-
-            <View style={styles.statsSummary}>
-              <Text style={styles.statLabel}>
-                Wins: <Text style={styles.statValWin}>{item.wins}</Text>
-              </Text>
-              <Text style={styles.statLabel}>
-                Losses: <Text style={styles.statValLoss}>{item.losses}</Text>
-              </Text>
-              <Text style={styles.statLabel}>
-                Total: <Text style={styles.statValTotal}>{item.total}</Text>
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Card>
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Searchbar
-        placeholder="Search player..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchbar}
-        inputStyle={{ minHeight: 0 }}
-      />
       {/* Search & Toggle Row */}
       <View style={styles.topControls}>
         <Searchbar
@@ -389,8 +213,6 @@ export default function LeaderboardTab() {
         </View>
       </View>
 
-      {/* Sports Filter Bar */}
-      <View style={{ height: 46 }}>
       {/* Sports Filter Chips */}
       <View style={{ height: 44, marginVertical: 4 }}>
         <ScrollView
@@ -421,53 +243,15 @@ export default function LeaderboardTab() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#2193F0" />
-          <Text style={{ marginTop: 12, color: "gray" }}>
-            Compiling Leaderboard...
           <Text style={{ marginTop: 12, color: "#64748B" }}>
             Loading Global Leaderboard...
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={searchQuery ? leaderboardData : remainingPlayers}
-          keyExtractor={(item) => item.name}
-          renderItem={renderPlayerRow}
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          ListHeaderComponent={
-            !searchQuery && topThree.length > 0 ? (
-              <View style={styles.podiumContainer}>
-                <Text style={styles.sectionHeading}>🏆 Top Players</Text>
-                <View style={styles.podiumRow}>
-                  {/* 2nd Place */}
-                  {topThree[1] && (
-                    <View style={[styles.podiumCard, { marginTop: 24 }]}>
-                      <Text style={styles.medalEmoji}>🥈</Text>
-                      {topThree[1].avatarUrl ? (
-                        <Avatar.Image
-                          size={54}
-                          source={{ uri: topThree[1].avatarUrl }}
-                        />
-                      ) : (
-                        <Avatar.Text
-                          size={54}
-                          label={topThree[1].name.substring(0, 2).toUpperCase()}
-                          style={{ backgroundColor: "#C0C0C0" }}
-                        />
-                      )}
-                      <Text style={styles.podiumName} numberOfLines={1}>
-                        {topThree[1].name}
-                      </Text>
-                      <Badge style={styles.podiumBadge}>
-                        {topThree[1].winRate}%
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[1].wins}W / {topThree[1].losses}L
-                      </Text>
-                    </View>
-                  )}
           contentContainerStyle={{ paddingBottom: 40 }}
         >
           {/* Top 3 Podium (Always shown on cards view or when searching) */}
@@ -504,9 +288,6 @@ export default function LeaderboardTab() {
                   </View>
                 )}
 
-                  {/* 1st Place */}
-                  {topThree[0] && (
-                    <View
                 {topThree[0] && (
                   <View style={[styles.podiumCard, styles.goldCard]}>
                     <Text style={styles.medalEmoji}>👑 🥇</Text>
@@ -533,37 +314,10 @@ export default function LeaderboardTab() {
                     </Text>
                     <Badge
                       style={[
-                        styles.podiumCard,
-                        styles.goldCard,
-                        { marginTop: 0 },
                         styles.podiumBadge,
                         { backgroundColor: "#FFD700", color: "#000" },
                       ]}
                     >
-                      <Text style={styles.medalEmoji}>👑 🥇</Text>
-                      {topThree[0].avatarUrl ? (
-                        <Avatar.Image
-                          size={66}
-                          source={{ uri: topThree[0].avatarUrl }}
-                          style={{
-                            borderWidth: 2,
-                            borderColor: "#FFD700",
-                          }}
-                        />
-                      ) : (
-                        <Avatar.Text
-                          size={66}
-                          label={topThree[0].name.substring(0, 2).toUpperCase()}
-                          style={{ backgroundColor: "#FFD700" }}
-                        />
-                      )}
-                      <Text
-                        style={[styles.podiumName, { fontWeight: "bold" }]}
-                        numberOfLines={1}
-                      >
-                        {topThree[0].name}
-                      </Text>
-                      <Badge
                       {topThree[0].win_rate}%
                     </Badge>
                     <Text style={styles.podiumStats}>
@@ -653,17 +407,11 @@ export default function LeaderboardTab() {
                       <DataTable.Row
                         key={item.player_name}
                         style={[
-                          styles.podiumBadge,
-                          { backgroundColor: "#FFD700", color: "#000" },
                           styles.tableRow,
                           isEven ? styles.rowEven : styles.rowOdd,
                           isTopThree && styles.topThreeRow,
                         ]}
                       >
-                        {topThree[0].winRate}%
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[0].wins}W / {topThree[0].losses}L
                         {/* Rank */}
                         <DataTable.Cell style={styles.colRank}>
                           <Text
@@ -753,33 +501,7 @@ export default function LeaderboardTab() {
                         {getMedalOrRank(index)}
                       </Text>
                     </View>
-                  )}
 
-                  {/* 3rd Place */}
-                  {topThree[2] && (
-                    <View style={[styles.podiumCard, { marginTop: 34 }]}>
-                      <Text style={styles.medalEmoji}>🥉</Text>
-                      {topThree[2].avatarUrl ? (
-                        <Avatar.Image
-                          size={50}
-                          source={{ uri: topThree[2].avatarUrl }}
-                        />
-                      ) : (
-                        <Avatar.Text
-                          size={50}
-                          label={topThree[2].name.substring(0, 2).toUpperCase()}
-                          style={{ backgroundColor: "#CD7F32" }}
-                        />
-                      )}
-                      <Text style={styles.podiumName} numberOfLines={1}>
-                        {topThree[2].name}
-                      </Text>
-                      <Badge style={styles.podiumBadge}>
-                        {topThree[2].winRate}%
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[2].wins}W / {topThree[2].losses}L
-                      </Text>
                     {item.avatar_image_url ? (
                       <Avatar.Image
                         size={46}
@@ -825,29 +547,10 @@ export default function LeaderboardTab() {
                         </Text>
                       </View>
                     </View>
-                  )}
-                </View>
-
-                {remainingPlayers.length > 0 && (
-                  <Text style={[styles.sectionHeading, { marginTop: 24 }]}>
-                    All Rankings
-                  </Text>
-                )}
-              </View>
-            ) : null
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={{ fontSize: 16, color: "gray" }}>
-                No match scores recorded yet.
-              </Text>
                   </View>
                 </Card>
               ))}
             </View>
-          }
-          contentContainerStyle={{ paddingBottom: 40 }}
-        />
           )}
         </ScrollView>
       )}
@@ -865,13 +568,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   searchbar: {
-    marginHorizontal: 16,
-    marginVertical: 8,
     backgroundColor: "#FFFFFF",
     elevation: 1,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
-    elevation: 2,
     height: 44,
   },
   viewToggleWrapper: {
@@ -883,7 +582,6 @@ const styles = StyleSheet.create({
   chipScroll: {
     paddingHorizontal: 16,
     alignItems: "center",
-    gap: 8,
   },
   chip: {
     backgroundColor: "#E2E8F0",
@@ -899,7 +597,6 @@ const styles = StyleSheet.create({
   },
   selectedChipText: {
     color: "#FFFFFF",
-    fontWeight: "600",
     fontWeight: "700",
   },
   center: {
@@ -908,7 +605,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 60,
   },
-  podiumContainer: {
   tableCard: {
     marginHorizontal: 12,
     marginTop: 8,
@@ -922,14 +618,11 @@ const styles = StyleSheet.create({
   },
   tableCardHeader: {
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingTop: 14,
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#F1F5F9",
   },
-  sectionHeading: {
-    fontSize: 18,
   tableTitle: {
     fontSize: 16,
     fontWeight: "800",
@@ -1043,21 +736,15 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    paddingVertical: 18,
     paddingVertical: 16,
     paddingHorizontal: 8,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
   },
   podiumCard: {
     alignItems: "center",
     width: "30%",
   },
   goldCard: {
-    transform: [{ scale: 1.05 }],
     transform: [{ scale: 1.06 }],
   },
   medalEmoji: {
@@ -1069,7 +756,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1E293B",
     marginTop: 6,
-    textAlign: "center",
   },
   podiumBadge: {
     backgroundColor: "#2193F0",
@@ -1084,22 +770,16 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     marginHorizontal: 16,
-    marginVertical: 5,
     marginVertical: 4,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
     elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
   },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",
     padding: 12,
   },
-  rankBadge: {
   cardRankCircle: {
     width: 28,
     height: 28,
@@ -1109,49 +789,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
   },
-  rankText: {
   cardRankText: {
     fontSize: 13,
     fontWeight: "700",
     color: "#334155",
   },
-  playerDetails: {
   cardInfo: {
     flex: 1,
     marginLeft: 12,
   },
-  nameWinRow: {
   cardNameRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  playerName: {
   cardPlayerName: {
     fontSize: 15,
     fontWeight: "700",
     color: "#0F172A",
     flex: 1,
   },
-  winRateText: {
   cardWinRateText: {
     fontSize: 13,
     fontWeight: "700",
     color: "#2193F0",
   },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#E2E8F0",
-    marginVertical: 6,
-  },
-  statsSummary: {
   cardStatsRow: {
     flexDirection: "row",
     gap: 12,
     marginTop: 6,
   },
-  statLabel: {
   cardStat: {
     fontSize: 12,
     color: "#64748B",
@@ -1163,21 +830,13 @@ const styles = StyleSheet.create({
   statValWin: {
     fontWeight: "700",
     color: "#16A34A",
-    fontWeight: "700",
   },
   statValLoss: {
     fontWeight: "700",
     color: "#DC2626",
-    fontWeight: "700",
   },
-  statValTotal: {
-    color: "#0F172A",
   statValStreak: {
     fontWeight: "700",
     color: "#EA580C",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    marginTop: 40,
   },
 });
