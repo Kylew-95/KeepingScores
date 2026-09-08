@@ -31,8 +31,12 @@ export default function Profile({
   const [followingCount, setFollowingCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [matchesCount, setMatchesCount] = useState(0);
-  const [resolvedUserId, setResolvedUserId] = useState(profileData?.userprofile_id);
-  const [headerImageUrl, setHeaderImageUrl] = useState(profileData?.header_image_url || null);
+  const [resolvedUserId, setResolvedUserId] = useState(
+    profileData?.userprofile_id,
+  );
+  const [headerImageUrl, setHeaderImageUrl] = useState(
+    profileData?.header_image_url || null,
+  );
   const navigation = useNavigation();
 
   // Load persistent header image if available
@@ -98,13 +102,19 @@ export default function Profile({
     setRefreshing(false);
   };
 
-  const fullName = `${profileData?.first_name || "Profile"} ${
-    profileData?.last_name || ""
-  }`.trim();
+  const displayName = (
+    profileData?.username ||
+    profileData?.first_name ||
+    "Profile"
+  ).trim();
 
   return (
     <View style={styles.screenContainer}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
 
       <ScrollView
         bounces={true}
@@ -175,7 +185,7 @@ export default function Profile({
 
         {/* User Info & Stats Section */}
         <View style={styles.profileBody}>
-          <Text style={styles.profileName}>{fullName}</Text>
+          <Text style={styles.profileName}>{displayName}</Text>
 
           {/* Social Stats Row: Matches, Followers, Following */}
           <View style={styles.statsWrapper}>
