@@ -55,9 +55,6 @@ function VenueModalImage({ venue }) {
           style={styles.modalFallbackLogo}
           resizeMode="contain"
         />
-        <Text style={styles.modalFallbackText}>
-          {venue?.type ? venue.type.replace(/_/g, " ").toUpperCase() : "SPORTS VENUE"}
-        </Text>
       </View>
     );
   }
@@ -539,6 +536,32 @@ export default function Maps({
 
         const allFeatures = (await Promise.all(reqs)).flat();
 
+                const nonSportsList = [
+          "childcare",
+          "kindergarten",
+          "nursery",
+          "school",
+          "college",
+          "university",
+          "bus stop",
+          "parking",
+          "residential",
+          "hotel",
+          "construction",
+          "office",
+          "shop",
+          "restaurant",
+          "cafe",
+          "fast_food",
+          "bank",
+          "pharmacy",
+          "bar",
+          "pub",
+          "dentist",
+          "doctors",
+          "hospital",
+        ];
+
         allFeatures.forEach((f) => {
           const props = f.properties || {};
           const coords = f.geometry?.coordinates;
@@ -548,7 +571,11 @@ export default function Maps({
             if (
               !seenNames.has(lower) &&
               cleanName.length > 3 &&
-              !["bus stop", "parking", "residential", "hotel", "construction"].includes(props.osm_value)
+              !nonSportsList.includes(props.osm_value) &&
+              !nonSportsList.includes(props.osm_key) &&
+              !props.name.toLowerCase().includes("nursery") &&
+              !props.name.toLowerCase().includes("childcare") &&
+              !props.name.toLowerCase().includes("kindergarten")
             ) {
               seenNames.add(lower);
               const address =
@@ -988,24 +1015,24 @@ export default function Maps({
 
             {/* Modal Content Details */}
             <ScrollView style={styles.venueModalBody} contentContainerStyle={{ paddingBottom: 24 }}>
-              <View style={styles.venueCategoryRow}>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>
-                    {selectedVenue?.type
-                      ? selectedVenue.type.replace(/_/g, " ").toUpperCase()
-                      : "SPORTS FACILITY"}
-                  </Text>
-                </View>
+              <Text style={styles.venueModalName}>
+                {selectedVenue?.name || "Sports & Leisure Centre"}
+              </Text>
+
+              <View style={styles.venueMetaRow}>
+                {selectedVenue?.distance ? (
+                  <View style={styles.modalDistanceBadge}>
+                    <Text style={styles.modalDistanceBadgeText}>
+                      📍 {selectedVenue.distance}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={styles.ratingBadge}>
                   <Text style={styles.ratingBadgeText}>
                     ⭐ {selectedVenue?.rating || "4.8"} / 5.0
                   </Text>
                 </View>
               </View>
-
-              <Text style={styles.venueModalName}>
-                {selectedVenue?.name || "Sports & Leisure Centre"}
-              </Text>
 
               {/* Location & Address Section */}
               <View style={styles.infoSection}>
@@ -1015,30 +1042,6 @@ export default function Maps({
                   <Text style={styles.infoRowText}>
                     {selectedVenue?.vicinity || "London, United Kingdom"}
                   </Text>
-                </View>
-                {selectedVenue?.distance ? (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoRowIcon}>📏</Text>
-                    <Text style={styles.infoRowText}>
-                      Approx. {selectedVenue.distance} from your location
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-
-              {/* Facility Highlights */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoSectionTitle}>Facility Features</Text>
-                <View style={styles.tagsContainer}>
-                  <View style={styles.featureTag}>
-                    <Text style={styles.featureTagText}>✓ Open to Public</Text>
-                  </View>
-                  <View style={styles.featureTag}>
-                    <Text style={styles.featureTagText}>✓ Equipment & Courts</Text>
-                  </View>
-                  <View style={styles.featureTag}>
-                    <Text style={styles.featureTagText}>✓ Score Match Here</Text>
-                  </View>
                 </View>
               </View>
 
@@ -1255,24 +1258,16 @@ const styles = StyleSheet.create({
   modalFallbackContainer: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#00171F",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#0A2533",
+    padding: 16,
   },
   modalFallbackLogo: {
-    width: 140,
-    height: 70,
-    marginBottom: 8,
+    width: 200,
+    height: 60,
   },
-  modalFallbackText: {
-    color: "#2193F0",
-    fontSize: 11,
-    fontWeight: "bold",
-    letterSpacing: 1.5,
-  },
+  
   closeIconBtn: {
     position: "absolute",
     top: 12,
@@ -1302,6 +1297,12 @@ const styles = StyleSheet.create({
   },
   venueModalBody: {
     padding: 20,
+  },
+  venueMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
   },
   venueCategoryRow: {
     flexDirection: "row",

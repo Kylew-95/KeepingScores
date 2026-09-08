@@ -35,7 +35,7 @@ const sportImages = {
 };
 
 // Safe Image component with Keeping Score Logo fallback on error or missing image
-function CardImage({ uri, item }) {
+function CardImage({ uri }) {
   const [hasError, setHasError] = useState(false);
 
   if (hasError || !uri) {
@@ -46,9 +46,6 @@ function CardImage({ uri, item }) {
           style={styles.fallbackLogoImage}
           resizeMode="contain"
         />
-        <Text style={styles.fallbackLogoText}>
-          {item.type ? item.type.replace(/_/g, " ").toUpperCase() : "SPORTS VENUE"}
-        </Text>
       </View>
     );
   }
@@ -188,24 +185,16 @@ const styles = StyleSheet.create({
   fallbackLogoContainer: {
     height: 125,
     width: "100%",
-    backgroundColor: "#00171F",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(33, 147, 240, 0.3)",
-    padding: 12,
+    padding: 16,
   },
   fallbackLogoImage: {
-    width: 110,
-    height: 60,
+    width: 170,
+    height: 48,
   },
-  fallbackLogoText: {
-    color: "#38BDF8",
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginTop: 4,
-  },
+  
   cardContent: {
     paddingVertical: 10,
     paddingHorizontal: 12,
