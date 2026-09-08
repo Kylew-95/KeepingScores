@@ -78,14 +78,30 @@ export default function MapCarousel({ places = [], onCarouselItemChange }) {
       >
         <Card style={styles.card}>
           <Card.Cover style={styles.cardCover} source={{ uri: photoUrl }} />
+          {item.distance && (
+            <View style={styles.distanceFloatingBadge}>
+              <Text style={styles.distanceFloatingText}>
+                📍 {item.distance}
+              </Text>
+            </View>
+          )}
           <Card.Content style={styles.cardContent}>
-            <Text style={styles.title} numberOfLines={1}>
-              {item.name || "Sports Facility"}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title} numberOfLines={1}>
+                {item.name || "Sports Facility"}
+              </Text>
+            </View>
             <Text style={styles.description} numberOfLines={1}>
               {item.vicinity || "No Address"}
             </Text>
-            <Text style={styles.rating}>Rating: {item.rating || "4.5"}</Text>
+            <View style={styles.bottomRow}>
+              <Text style={styles.rating}>⭐ {item.rating || "4.5"}</Text>
+              {item.distance && (
+                <Text style={styles.distanceInlineText}>
+                  {item.distance}
+                </Text>
+              )}
+            </View>
           </Card.Content>
         </Card>
       </TouchableOpacity>
@@ -152,7 +168,38 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 12,
     color: "#ffd700",
-    marginTop: 4,
     fontWeight: "600",
+  },
+  distanceFloatingBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0, 23, 31, 0.88)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2193F0",
+  },
+  distanceFloatingText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  distanceInlineText: {
+    fontSize: 12,
+    color: "#38BDF8",
+    fontWeight: "700",
   },
 });

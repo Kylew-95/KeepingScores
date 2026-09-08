@@ -95,7 +95,7 @@ const LEAFLET_HTML = `
     var map = L.map('map', {
       zoomControl: false,
       attributionControl: false
-    }).setView([51.50853, -0.12574], 13);
+    }).setView([51.4624, -0.1382], 11.5);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
@@ -122,7 +122,7 @@ const LEAFLET_HTML = `
     }
 
     function flyToLocation(lat, lon, zoom) {
-      map.flyTo([lat, lon], zoom || 13, { duration: 0.9 });
+      map.flyTo([lat, lon], zoom || 11.5, { duration: 0.8 });
     }
 
     function updatePlaces(places) {
@@ -187,6 +187,34 @@ const LEAFLET_HTML = `
 </body>
 </html>
 `;
+
+// Calculate distance in miles between two coordinates using Haversine formula
+const calculateDistanceInMiles = (lat1, lon1, lat2, lon2) => {
+  if (
+    lat1 == null ||
+    lon1 == null ||
+    lat2 == null ||
+    lon2 == null ||
+    isNaN(lat1) ||
+    isNaN(lon1) ||
+    isNaN(lat2) ||
+    isNaN(lon2)
+  ) {
+    return null;
+  }
+  const R = 3958.8; // Radius of Earth in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return Math.round(d * 10) / 10;
+};
 
 // Helper to detect default emulator / simulator mock locations (Silicon Valley, CA, USA)
 const isEmulatorDefaultLocation = (lat, lon) => {
@@ -399,7 +427,7 @@ export default function Maps({
     locateUser();
   }, [isMapReady]);
 
-  // 2. Fast Unified Photon POI Query (~200ms, no Overpass lag)
+  // 2. Fast Multi-Category POI Query (fetches 50-80 venues with distance calculation)
   useEffect(() => {
     let isCancelled = false;
     const controller = new AbortController();
@@ -413,47 +441,81 @@ export default function Maps({
         const foundPlaces = [];
         const seenNames = new Set();
 
-        const url = `https://photon.komoot.io/api/?q=sports+leisure+centre+gym&lat=${lat}&lon=${lon}&limit=25`;
-        const resp = await fetch(url, {
-          signal: controller.signal,
-          headers: { "User-Agent": "KeepingScoresApp/1.0" },
+        const categories = [
+          "leisure centre",
+          "sports centre",
+          "gym",
+          "tennis",
+          "pitch",
+          "swimming pool",
+          "recreation ground",
+        ];
+
+        const reqs = categories.map(async (cat) => {
+          try {
+            const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(
+              cat,
+            )}&lat=${lat}&lon=${lon}&limit=15`;
+            const resp = await fetch(url, {
+              signal: controller.signal,
+              headers: { "User-Agent": "KeepingScoresApp/1.0" },
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              return data.features || [];
+            }
+          } catch (e) {
+            return [];
+          }
+          return [];
         });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          (data.features || []).forEach((f) => {
-            const props = f.properties || {};
-            const coords = f.geometry?.coordinates;
-            if (coords && coords.length === 2 && props.name) {
-              const cleanName = props.name.trim();
-              const lower = cleanName.toLowerCase();
-              if (
-                !seenNames.has(lower) &&
-                !["bus stop", "parking", "residential", "hotel"].includes(props.osm_value)
-              ) {
-                seenNames.add(lower);
-                const address =
-                  [props.street, props.district || props.city || props.county]
-                    .filter(Boolean)
-                    .join(", ") || "Sports & Leisure Facility";
-                foundPlaces.push({
-                  place_id: String(props.osm_id || Math.random()),
-                  name: cleanName,
-                  vicinity: address,
-                  type: props.osm_value || "sports_centre",
-                  sport: props.osm_value || "sports",
-                  rating: (4.4 + (cleanName.length % 6) * 0.1).toFixed(1),
-                  geometry: {
-                    location: {
-                      lat: coords[1],
-                      lng: coords[0],
-                    },
+        const allFeatures = (await Promise.all(reqs)).flat();
+
+        allFeatures.forEach((f) => {
+          const props = f.properties || {};
+          const coords = f.geometry?.coordinates;
+          if (coords && coords.length === 2 && props.name) {
+            const cleanName = props.name.trim();
+            const lower = cleanName.toLowerCase();
+            if (
+              !seenNames.has(lower) &&
+              cleanName.length > 3 &&
+              !["bus stop", "parking", "residential", "hotel", "construction"].includes(props.osm_value)
+            ) {
+              seenNames.add(lower);
+              const address =
+                [props.street, props.district || props.city || props.county]
+                  .filter(Boolean)
+                  .join(", ") || "Sports & Leisure Facility";
+
+              const dist = calculateDistanceInMiles(lat, lon, coords[1], coords[0]);
+              const distText = dist !== null
+                ? (dist < 10 ? `${dist.toFixed(1)} mi away` : `${Math.round(dist)} mi away`)
+                : null;
+
+              foundPlaces.push({
+                place_id: String(props.osm_id || Math.random()),
+                name: cleanName,
+                vicinity: address,
+                type: props.osm_value || "sports_centre",
+                sport: props.osm_value || "sports",
+                distance: distText,
+                distanceNum: dist != null ? dist : 999,
+                rating: (4.4 + (cleanName.length % 6) * 0.1).toFixed(1),
+                geometry: {
+                  location: {
+                    lat: coords[1],
+                    lng: coords[0],
                   },
-                });
-              }
+                },
+              });
             }
-          });
-        }
+          }
+        });
+
+        // Sort nearest venues first
+        foundPlaces.sort((a, b) => a.distanceNum - b.distanceNum);
 
         if (!isCancelled && foundPlaces.length > 0) {
           setPlaces(foundPlaces);
@@ -645,7 +707,7 @@ export default function Maps({
           if (webViewRef.current) {
             webViewRef.current.injectJavaScript(`
               setUserLocation(${mapRegion.latitude}, ${mapRegion.longitude});
-              flyToLocation(${mapRegion.latitude}, ${mapRegion.longitude}, 13);
+              flyToLocation(${mapRegion.latitude}, ${mapRegion.longitude}, 11.5);
               if (${JSON.stringify(places)}.length > 0) {
                 updatePlaces(${JSON.stringify(places)});
               }
