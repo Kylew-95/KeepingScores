@@ -224,13 +224,20 @@ export default function LeaderboardTab({ userId, profileData }) {
     }
   }, [currentUserId]);
 
-  // Auto-refresh leaderboard and follows whenever user clicks/focuses tab
-  useFocusEffect(
-    useCallback(() => {
-      fetchLeaderboard();
-      loadFollows();
-    }, [fetchLeaderboard, loadFollows])
-  );
+  // Auto-refresh leaderboard and follows whenever tab is clicked / focused
+  useEffect(() => {
+    fetchLeaderboard();
+    loadFollows();
+
+    const unsubscribe = navigation?.addListener
+      ? navigation.addListener("focus", () => {
+          fetchLeaderboard();
+          loadFollows();
+        })
+      : undefined;
+
+    return unsubscribe;
+  }, [navigation, fetchLeaderboard, loadFollows]);
 
   const checkIfFollowing = (item) => {
     if (!item) return false;

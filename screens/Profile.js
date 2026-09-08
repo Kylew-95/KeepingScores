@@ -11,7 +11,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Avatar, IconButton } from "react-native-paper";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SocialUserStats from "../Components/SocialUserStats";
 import ProfileMatchScores from "../Components/ProfileMatchScores";
@@ -78,13 +78,20 @@ export default function Profile({
     }
   }, [profileData?.userprofile_id]);
 
-  // Refresh every time the profile screen is clicked / focused
-  useFocusEffect(
-    useCallback(() => {
-      fetchStats();
-      loadSavedHeader();
-    }, [fetchStats, loadSavedHeader])
-  );
+  // Auto-refresh every time the profile tab is clicked / focused
+  useEffect(() => {
+    fetchStats();
+    loadSavedHeader();
+
+    const unsubscribe = navigation?.addListener
+      ? navigation.addListener("focus", () => {
+          fetchStats();
+          loadSavedHeader();
+        })
+      : undefined;
+
+    return unsubscribe;
+  }, [navigation, fetchStats, loadSavedHeader]);
 
   const onRefresh = async () => {
     setRefreshing(true);

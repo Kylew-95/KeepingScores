@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Avatar, IconButton, ActivityIndicator } from "react-native-paper";
-import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 
 const SPORT_ICONS = {
@@ -29,6 +29,7 @@ export default function ProfileMatchScores({
   currentUserId,
   onScoresCountChange,
 }) {
+  const navigation = useNavigation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [allMatchesModalVisible, setAllMatchesModalVisible] = useState(false);
@@ -66,11 +67,17 @@ export default function ProfileMatchScores({
     }
   }, [profileData?.first_name, currentUserId, onScoresCountChange]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchMatches();
-    }, [fetchMatches])
-  );
+  useEffect(() => {
+    fetchMatches();
+
+    const unsubscribe = navigation?.addListener
+      ? navigation.addListener("focus", () => {
+          fetchMatches();
+        })
+      : undefined;
+
+    return unsubscribe;
+  }, [navigation, fetchMatches]);
 
   const handleDeleteScore = (scoreId, p1, p2) => {
     Alert.alert(
