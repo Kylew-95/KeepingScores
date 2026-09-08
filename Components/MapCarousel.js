@@ -36,25 +36,6 @@ export default function MapCarousel({ places = [], onCarouselItemChange }) {
   const flatListRef = useRef(null);
   const activeIndexRef = useRef(0);
 
-  // Autoplay timer
-  useEffect(() => {
-    if (!places || places.length <= 1) return;
-
-    const interval = setInterval(() => {
-      const nextIndex = (activeIndexRef.current + 1) % places.length;
-      activeIndexRef.current = nextIndex;
-      flatListRef.current?.scrollToOffset({
-        offset: nextIndex * SNAP_INTERVAL,
-        animated: true,
-      });
-      if (onCarouselItemChange && places[nextIndex]) {
-        onCarouselItemChange(places[nextIndex]);
-      }
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [places, onCarouselItemChange]);
-
   if (!places || places.length === 0) {
     return null;
   }

@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
@@ -56,13 +57,16 @@ const LEAFLET_HTML = `
     }
     .user-location-pin {
       position: relative;
-      background: #2193F0;
-      border: 3px solid white;
+      background: #0284C7;
+      border: 3px solid #FFFFFF;
       border-radius: 50%;
-      width: 16px;
-      height: 16px;
-      box-shadow: 0 0 10px rgba(33, 147, 240, 0.8);
-      z-index: 2;
+      width: 28px;
+      height: 28px;
+      line-height: 22px;
+      text-align: center;
+      font-size: 14px;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.8);
+      z-index: 2000;
     }
     .leaflet-popup-content-wrapper {
       background: #00171F;
@@ -101,22 +105,24 @@ const LEAFLET_HTML = `
     var userMarker = null;
     var markersLayer = L.layerGroup().addTo(map);
 
-    function setUserLocation(lat, lon) {
+    function setUserLocation(lat, lon, label) {
       if (userMarker) {
         userMarker.setLatLng([lat, lon]);
       } else {
         var userIcon = L.divIcon({
           className: 'user-location-wrapper',
-          html: '<div class="user-pulse"></div><div class="user-location-pin"></div>',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
+          html: '<div class="user-pulse"></div><div class="user-location-pin">📍</div>',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
-        userMarker = L.marker([lat, lon], { icon: userIcon }).addTo(map);
+        userMarker = L.marker([lat, lon], { icon: userIcon, zIndexOffset: 2000 }).addTo(map);
       }
+      var popupText = '<h4>📍 You Are Here</h4><p>' + (label || 'Current Location') + '</p>';
+      userMarker.bindPopup(popupText);
     }
 
     function flyToLocation(lat, lon, zoom) {
-      map.flyTo([lat, lon], zoom || 15, { duration: 1.2 });
+      map.flyTo([lat, lon], zoom || 13, { duration: 0.9 });
     }
 
     function updatePlaces(places) {
@@ -216,6 +222,16 @@ const fetchIpLocation = async () => {
   }
   return null;
 };
+
+const POPULAR_AREAS = [
+  { name: "Clapham", lat: 51.4624, lon: -0.1382, desc: "Lambeth, London (SW4)" },
+  { name: "Brixton", lat: 51.4613, lon: -0.1156, desc: "Lambeth, London (SW2 / SW9)" },
+  { name: "Battersea", lat: 51.4770, lon: -0.1650, desc: "Wandsworth, London (SW11)" },
+  { name: "Wandsworth", lat: 51.4560, lon: -0.1910, desc: "South West London (SW18)" },
+  { name: "Wimbledon", lat: 51.4223, lon: -0.1984, desc: "Merton, London (SW19)" },
+  { name: "Croydon", lat: 51.3762, lon: -0.0982, desc: "South London (CR0)" },
+  { name: "Central London", lat: 51.5074, lon: -0.1278, desc: "Westminster, London" },
+];
 
 export default function Maps({
   profileData,
@@ -383,7 +399,7 @@ export default function Maps({
     locateUser();
   }, [isMapReady]);
 
-  // 2. Fetch nearby sports/leisure places dynamically using Photon OSM + Overpass
+  // 2. Fast Unified Photon POI Query (~200ms, no Overpass lag)
   useEffect(() => {
     let isCancelled = false;
     const controller = new AbortController();
@@ -397,114 +413,46 @@ export default function Maps({
         const foundPlaces = [];
         const seenNames = new Set();
 
-        // 1. Query Photon POI with keywords around coordinates
-        const keywords = [
-          "leisure centre",
-          "gym",
-          "sports centre",
-          "tennis",
-          "pitch",
-        ];
-        const pPromises = keywords.map(async (kw) => {
-          try {
-            const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(
-              kw,
-            )}&lat=${lat}&lon=${lon}&limit=5`;
-            const resp = await fetch(url, {
-              signal: controller.signal,
-              headers: { "User-Agent": "KeepingScoresApp/1.0" },
-            });
-            if (resp.ok) {
-              const data = await resp.json();
-              return data.features || [];
-            }
-          } catch {
-            return [];
-          }
-          return [];
+        const url = `https://photon.komoot.io/api/?q=sports+leisure+centre+gym&lat=${lat}&lon=${lon}&limit=25`;
+        const resp = await fetch(url, {
+          signal: controller.signal,
+          headers: { "User-Agent": "KeepingScoresApp/1.0" },
         });
 
-        const allFeatures = (await Promise.all(pPromises)).flat();
-        allFeatures.forEach((f) => {
-          const props = f.properties || {};
-          const coords = f.geometry?.coordinates;
-          if (coords && coords.length === 2 && props.name) {
-            const cleanName = props.name.trim();
-            const lower = cleanName.toLowerCase();
-            if (
-              !seenNames.has(lower) &&
-              !["bus stop", "parking", "residential"].includes(props.osm_value)
-            ) {
-              seenNames.add(lower);
-              const address =
-                [props.street, props.district || props.city || props.county]
-                  .filter(Boolean)
-                  .join(", ") || "Sports & Leisure Facility";
-              foundPlaces.push({
-                place_id: String(props.osm_id || Math.random()),
-                name: cleanName,
-                vicinity: address,
-                type: props.osm_value || "sports_centre",
-                sport: props.osm_value || "sports",
-                rating: (4.4 + (cleanName.length % 6) * 0.1).toFixed(1),
-                geometry: {
-                  location: {
-                    lat: coords[1],
-                    lng: coords[0],
-                  },
-                },
-              });
-            }
-          }
-        });
-
-        // 2. Supplement with Overpass GET if available
-        if (foundPlaces.length < 5) {
-          try {
-            const q = `[out:json][timeout:6];(node["leisure"~"fitness_centre|sports_centre|pitch|swimming_pool"]["name"](around:3000,${lat},${lon}););out center 15;`;
-            const ovResp = await fetch(
-              `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(
-                q,
-              )}`,
-              { signal: controller.signal },
-            );
-            if (ovResp.ok) {
-              const ovData = await ovResp.json();
-              (ovData.elements || []).forEach((el) => {
-                const tags = el.tags || {};
-                const name = tags.name?.trim();
-                if (name && !seenNames.has(name.toLowerCase())) {
-                  seenNames.add(name.toLowerCase());
-                  const address =
-                    [
-                      tags["addr:street"],
-                      tags["addr:city"] || tags["addr:suburb"],
-                    ]
-                      .filter(Boolean)
-                      .join(", ") ||
-                    (tags.leisure
-                      ? tags.leisure.replace(/_/g, " ")
-                      : "Sports Facility");
-                  foundPlaces.push({
-                    place_id: String(el.id),
-                    name: name,
-                    vicinity: address,
-                    type: tags.leisure || tags.sport || "sports",
-                    sport: tags.sport || "",
-                    rating: "4.5",
-                    geometry: {
-                      location: {
-                        lat: el.lat || el.center?.lat,
-                        lng: el.lon || el.center?.lon,
-                      },
+        if (resp.ok) {
+          const data = await resp.json();
+          (data.features || []).forEach((f) => {
+            const props = f.properties || {};
+            const coords = f.geometry?.coordinates;
+            if (coords && coords.length === 2 && props.name) {
+              const cleanName = props.name.trim();
+              const lower = cleanName.toLowerCase();
+              if (
+                !seenNames.has(lower) &&
+                !["bus stop", "parking", "residential", "hotel"].includes(props.osm_value)
+              ) {
+                seenNames.add(lower);
+                const address =
+                  [props.street, props.district || props.city || props.county]
+                    .filter(Boolean)
+                    .join(", ") || "Sports & Leisure Facility";
+                foundPlaces.push({
+                  place_id: String(props.osm_id || Math.random()),
+                  name: cleanName,
+                  vicinity: address,
+                  type: props.osm_value || "sports_centre",
+                  sport: props.osm_value || "sports",
+                  rating: (4.4 + (cleanName.length % 6) * 0.1).toFixed(1),
+                  geometry: {
+                    location: {
+                      lat: coords[1],
+                      lng: coords[0],
                     },
-                  });
-                }
-              });
+                  },
+                });
+              }
             }
-          } catch {
-            // Quiet fallback
-          }
+          });
         }
 
         if (!isCancelled && foundPlaces.length > 0) {
@@ -518,7 +466,7 @@ export default function Maps({
           return;
         }
       } catch (err) {
-        console.log("Using local sports venues notice.");
+        // Cancelled or network notice
       }
 
       if (!isCancelled) {
@@ -532,7 +480,7 @@ export default function Maps({
       }
     };
 
-    const timer = setTimeout(fetchNearbyPlaces, 400);
+    const timer = setTimeout(fetchNearbyPlaces, 250);
     return () => {
       isCancelled = true;
       controller.abort();
@@ -665,7 +613,7 @@ export default function Maps({
       const lat = selectedPlace.geometry.location.lat;
       const lng = selectedPlace.geometry.location.lng;
       webViewRef.current.injectJavaScript(`
-        flyToLocation(${lat}, ${lng}, 16);
+        flyToLocation(${lat}, ${lng}, 14);
         true;
       `);
     }
@@ -727,12 +675,16 @@ export default function Maps({
           placeholderTextColor="#8fa3ad"
         />
 
-        {/* Current Area Indicator Badge */}
-        <View style={styles.locationBadge}>
+        {/* Current Area Indicator Badge (Touchable to change borough) */}
+        <TouchableOpacity
+          style={styles.locationBadge}
+          onPress={() => setAreaModalVisible(true)}
+          activeOpacity={0.8}
+        >
           <Text style={styles.locationBadgeText} numberOfLines={1}>
-            {currentLocationName}
+            {currentLocationName} ▾ (Tap to change)
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {searchResults.length > 0 && (
           <View style={styles.resultsDropdown}>

@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
@@ -97,6 +98,98 @@ export function VsForm({
   const [venueSearchQuery, setVenueSearchQuery] = useState("");
   const [venueResults, setVenueResults] = useState([]);
   const [isSearchingVenues, setIsSearchingVenues] = useState(false);
+  const [customVenueInput, setCustomVenueInput] = useState("");
+  const [showCustomVenueInput, setShowCustomVenueInput] = useState(false);
+  const [nearbyVenues, setNearbyVenues] = useState([]);
+  const [loadingNearbyVenues, setLoadingNearbyVenues] = useState(false);
+  const [currentAreaLabel, setCurrentAreaLabel] = useState("Your Area");
+
+  const loadNearbyVenuesForForm = async () => {
+    setLoadingNearbyVenues(true);
+    try {
+      let lat = 51.4624;
+      let lon = -0.1382;
+      let area = "Clapham / London";
+
+      try {
+        const saved = await AsyncStorage.getItem("user_selected_area");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.lat && parsed.lon) {
+            lat = parsed.lat;
+            lon = parsed.lon;
+            area = parsed.name || "Your Area";
+          }
+        }
+      } catch (e) {}
+
+      setCurrentAreaLabel(area);
+
+      const url = `https://photon.komoot.io/api/?q=sports+leisure+centre+gym&lat=${lat}&lon=${lon}&limit=15`;
+      const resp = await fetch(url, {
+        headers: { "User-Agent": "KeepingScoresApp/1.0" },
+        otherVenueCard: {
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1.5,
+    borderColor: "#BAE6FD",
+    borderRadius: 14,
+    marginVertical: 10,
+    padding: 12,
+  },
+  otherVenueHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  otherVenueTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0369A1",
+  },
+  otherVenueSubtitle: {
+    fontSize: 12,
+    color: "#0284C7",
+    marginTop: 2,
+  },
+  otherVenueInputWrapper: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#E0F2FE",
+  },
+});
+      if (resp.ok) {
+        const data = await resp.json();
+        const seen = new Set();
+        const list = [];
+        (data.features || []).forEach((f) => {
+          const p = f.properties || {};
+          const name = p.name?.trim();
+          if (name && !seen.has(name.toLowerCase())) {
+            seen.add(name.toLowerCase());
+            list.push({
+              name,
+              type: p.osm_value || "sports_centre",
+              desc: [p.street, p.district || p.city].filter(Boolean).join(", ") || "Local Sports Facility",
+            });
+          }
+        });
+        if (list.length > 0) {
+          setNearbyVenues(list);
+        }
+      }
+    } catch (e) {
+      console.log("Error loading nearby venues:", e);
+    } finally {
+      setLoadingNearbyVenues(false);
+    }
+  };
+
+  useEffect(() => {
+    if (venueModalVisible) {
+      loadNearbyVenuesForForm();
+    }
+  }, [venueModalVisible]);
 
   // Selected opponent state
   const [selectedOpponent, setSelectedOpponent] = useState(null);
@@ -686,7 +779,57 @@ export function VsForm({
             style={{ flex: 1, paddingHorizontal: 16 }}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Custom Venue Option if typing */}
+            {/* ➕ "Other" / Custom Location Option */}
+            <View style={styles.otherVenueCard}>
+              <TouchableOpacity
+                style={styles.otherVenueHeader}
+                onPress={() => setShowCustomVenueInput(!showCustomVenueInput)}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                  <Text style={{ fontSize: 20, marginRight: 10 }}>➕</Text>
+                  <View>
+                    <Text style={styles.otherVenueTitle}>Other (Custom Park or Venue)</Text>
+                    <Text style={styles.otherVenueSubtitle}>
+                      Write your own place (e.g. park, court, school)
+                    </Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 15, color: "#2193F0", fontWeight: "bold" }}>
+                  {showCustomVenueInput ? "▲" : "▼"}
+                </Text>
+              </TouchableOpacity>
+
+              {showCustomVenueInput && (
+                <View style={styles.otherVenueInputWrapper}>
+                  <TextInput
+                    mode="outlined"
+                    placeholder="e.g. Brockwell Park, School Gym..."
+                    value={customVenueInput}
+                    onChangeText={setCustomVenueInput}
+                    style={{ backgroundColor: "#FFFFFF" }}
+                    dense
+                  />
+                  <Button
+                    mode="contained"
+                    onPress={() => {
+                      if (!customVenueInput.trim()) {
+                        Alert.alert("Required", "Please type a venue or park name.");
+                        return;
+                      }
+                      handleSelectVenue(customVenueInput.trim());
+                      setCustomVenueInput("");
+                      setShowCustomVenueInput(false);
+                    }}
+                    style={{ marginTop: 8, backgroundColor: "#2193F0" }}
+                  >
+                    Use This Location
+                  </Button>
+                </View>
+              )}
+            </View>
+
+            {/* Custom Venue Option if typing in search */}
             {venueSearchQuery.trim().length > 0 && (
               <TouchableOpacity
                 style={[styles.venueRow, styles.customVenueRow]}
@@ -700,7 +843,7 @@ export function VsForm({
                     Use "{venueSearchQuery.trim()}"
                   </Text>
                   <Text style={styles.venueDesc}>
-                    Tap to use this location name
+                    Tap to use this exact place name
                   </Text>
                 </View>
                 <Text style={styles.selectArrow}>→</Text>
@@ -737,38 +880,42 @@ export function VsForm({
             ) : (
               <>
                 <Text style={styles.modalSectionHeading}>
-                  ⭐ Popular Leisure Centres & Courts
+                  📍 Nearby Venues Around You ({currentAreaLabel})
                 </Text>
-                {POPULAR_VENUES.map((item) => (
-                  <TouchableOpacity
-                    key={item.name}
-                    style={styles.venueRow}
-                    onPress={() => handleSelectVenue(item.name)}
-                  >
-                    <View style={styles.venueIconCircle}>
-                      <Text style={{ fontSize: 18 }}>
-                        {item.type === "tennis"
-                          ? "🎾"
-                          : item.type === "badminton"
-                            ? "🏸"
-                            : item.type === "pitch"
-                              ? "⚽"
-                              : item.type === "gym"
-                                ? "🏋️"
-                                : "🏟️"}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.venueName} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.venueDesc} numberOfLines={1}>
-                        {item.desc}
-                      </Text>
-                    </View>
-                    <Text style={styles.selectArrow}>→</Text>
-                  </TouchableOpacity>
-                ))}
+                {loadingNearbyVenues ? (
+                  <ActivityIndicator size="small" color="#2193F0" style={{ marginVertical: 12 }} />
+                ) : (
+                  (nearbyVenues.length > 0 ? nearbyVenues : POPULAR_VENUES).map((item, idx) => (
+                    <TouchableOpacity
+                      key={`${item.name}_${idx}`}
+                      style={styles.venueRow}
+                      onPress={() => handleSelectVenue(item.name)}
+                    >
+                      <View style={styles.venueIconCircle}>
+                        <Text style={{ fontSize: 18 }}>
+                          {item.type === "tennis"
+                            ? "🎾"
+                            : item.type === "badminton"
+                              ? "🏸"
+                              : item.type === "pitch"
+                                ? "⚽"
+                                : item.type === "gym"
+                                  ? "🏋️"
+                                  : "🏟️"}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.venueName} numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.venueDesc} numberOfLines={1}>
+                          {item.desc}
+                        </Text>
+                      </View>
+                      <Text style={styles.selectArrow}>→</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
               </>
             )}
             <View style={{ height: 40 }} />
