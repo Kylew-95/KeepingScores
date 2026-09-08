@@ -63,85 +63,59 @@ export default function Dashboard() {
   };
 
   return (
-    <SafeAreaView style={{ height: "100%" }}>
-      <Card
-        style={{
-          width: "80%",
-          height: 90,
-          alignSelf: "center",
-          top: -40,
-          zIndex: 20,
-          backgroundColor: "white",
-        }}
-      >
-        <Card.Title title="Win Streak" />
-        <Card.Content>
-          <Text
-            style={{
-              fontSize: 50,
-              fontWeight: "bold",
-              color: "#2193F0",
-              top: -30,
-              alignSelf: "center",
-            }}
-          >
-            0
-          </Text>
-        </Card.Content>
-      </Card>
-      {/* <ProfileChart /> */}
-      <Text
-        style={{
-          left: 20,
-          top: -30,
-          marginTop: 20,
-          fontSize: 22,
-          fontWeight: "500",
-        }}
-      >
-        Start Your Journey
-      </Text>
-      <Card
-        style={{
-          width: "90%",
-          height: 300,
-          alignSelf: "center",
-          top: -40,
-          marginTop: 20,
-          marginBottom: 70,
-          backgroundColor: "white",
-        }}
-      >
+    <View style={styles.dashboardContainer}>
+      <Text style={styles.sectionHeading}>Start Your Journey</Text>
+      <Card style={styles.healthCard}>
         <FlatList
           data={data}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
-          on
+          scrollEnabled={false}
         />
       </Card>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  dashboardContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 40,
+  },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+  healthCard: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    paddingVertical: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
   itemContainer: {
-    marginHorizontal: 20,
-    marginVertical: -50,
-    top: 50,
-    marginBottom: 10,
+    marginHorizontal: 12,
+    marginBottom: 4,
   },
   itemImage: {
-    width: 50,
-    height: 50,
+    width: 44,
+    height: 44,
     marginRight: 10,
   },
   divider: {
     height: 1,
-    backgroundColor: "#B9B9B97D",
-    width: "60%",
-    marginVertical: 2,
-    marginBottom: 15,
+    backgroundColor: "#F1F5F9",
+    width: "90%",
+    marginVertical: 4,
     alignSelf: "center",
-    top: -4,
   },
 });

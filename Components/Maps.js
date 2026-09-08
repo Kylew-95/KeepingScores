@@ -310,13 +310,43 @@ const fetchIpLocation = async () => {
 };
 
 const POPULAR_AREAS = [
-  { name: "Clapham", lat: 51.4624, lon: -0.1382, desc: "Lambeth, London (SW4)" },
-  { name: "Brixton", lat: 51.4613, lon: -0.1156, desc: "Lambeth, London (SW2 / SW9)" },
-  { name: "Battersea", lat: 51.4770, lon: -0.1650, desc: "Wandsworth, London (SW11)" },
-  { name: "Wandsworth", lat: 51.4560, lon: -0.1910, desc: "South West London (SW18)" },
-  { name: "Wimbledon", lat: 51.4223, lon: -0.1984, desc: "Merton, London (SW19)" },
+  {
+    name: "Clapham",
+    lat: 51.4624,
+    lon: -0.1382,
+    desc: "Lambeth, London (SW4)",
+  },
+  {
+    name: "Brixton",
+    lat: 51.4613,
+    lon: -0.1156,
+    desc: "Lambeth, London (SW2 / SW9)",
+  },
+  {
+    name: "Battersea",
+    lat: 51.477,
+    lon: -0.165,
+    desc: "Wandsworth, London (SW11)",
+  },
+  {
+    name: "Wandsworth",
+    lat: 51.456,
+    lon: -0.191,
+    desc: "South West London (SW18)",
+  },
+  {
+    name: "Wimbledon",
+    lat: 51.4223,
+    lon: -0.1984,
+    desc: "Merton, London (SW19)",
+  },
   { name: "Croydon", lat: 51.3762, lon: -0.0982, desc: "South London (CR0)" },
-  { name: "Central London", lat: 51.5074, lon: -0.1278, desc: "Westminster, London" },
+  {
+    name: "Central London",
+    lat: 51.5074,
+    lon: -0.1278,
+    desc: "Westminster, London",
+  },
 ];
 
 export default function Maps({
@@ -419,7 +449,9 @@ export default function Maps({
               lat = rawLat;
               lon = rawLon;
             } else {
-              console.log("Detected emulator default location (California, USA); resolving user's actual UK location via IP.");
+              console.log(
+                "Detected emulator default location (California, USA); resolving user's actual UK location via IP.",
+              );
             }
           }
         }
@@ -536,7 +568,7 @@ export default function Maps({
 
         const allFeatures = (await Promise.all(reqs)).flat();
 
-                const nonSportsList = [
+        const nonSportsList = [
           "childcare",
           "kindergarten",
           "nursery",
@@ -583,10 +615,18 @@ export default function Maps({
                   .filter(Boolean)
                   .join(", ") || "Sports & Leisure Facility";
 
-              const dist = calculateDistanceInMiles(lat, lon, coords[1], coords[0]);
-              const distText = dist !== null
-                ? (dist < 10 ? `${dist.toFixed(1)} mi away` : `${Math.round(dist)} mi away`)
-                : null;
+              const dist = calculateDistanceInMiles(
+                lat,
+                lon,
+                coords[1],
+                coords[0],
+              );
+              const distText =
+                dist !== null
+                  ? dist < 10
+                    ? `${dist.toFixed(1)} mi away`
+                    : `${Math.round(dist)} mi away`
+                  : null;
 
               foundPlaces.push({
                 place_id: String(props.osm_id || Math.random()),
@@ -799,7 +839,9 @@ export default function Maps({
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === "markerPress") {
-        const found = places.find((p) => String(p.place_id) === String(msg.placeId));
+        const found = places.find(
+          (p) => String(p.place_id) === String(msg.placeId),
+        );
         if (found) {
           handleOpenVenueDetail(found);
         }
@@ -832,7 +874,9 @@ export default function Maps({
       })
       .catch((err) => {
         console.log("Could not open maps:", err);
-        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+        Linking.openURL(
+          `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+        );
       });
   };
 
@@ -961,7 +1005,12 @@ export default function Maps({
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle}>Choose London Area</Text>
               <TouchableOpacity onPress={() => setAreaModalVisible(false)}>
-                <IconButton icon="close" iconColor="#94A3B8" size={20} style={{ margin: 0 }} />
+                <IconButton
+                  icon="close"
+                  iconColor="#94A3B8"
+                  size={20}
+                  style={{ margin: 0 }}
+                />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalSubtitle}>
@@ -1002,12 +1051,20 @@ export default function Maps({
                 style={styles.closeIconBtn}
                 onPress={() => setVenueDetailModalVisible(false)}
               >
-                <IconButton icon="close" iconColor="#FFFFFF" size={22} style={{ margin: 0 }} />
+                <IconButton
+                  icon="close"
+                  iconColor="#FFFFFF"
+                  size={22}
+                  style={{ margin: 0 }}
+                />
               </TouchableOpacity>
             </View>
 
             {/* Modal Content Details */}
-            <ScrollView style={styles.venueModalBody} contentContainerStyle={{ paddingBottom: 24 }}>
+            <ScrollView
+              style={styles.venueModalBody}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
               <Text style={styles.venueModalName}>
                 {selectedVenue?.name || "Sports & Leisure Centre"}
               </Text>
@@ -1260,7 +1317,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 60,
   },
-  
+
   closeIconBtn: {
     position: "absolute",
     top: 12,

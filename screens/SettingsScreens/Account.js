@@ -4,6 +4,7 @@ import { Appbar, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import UpdateAvatarImage from "../../Components/UpdateAvatarImage";
 import UpdateMetaData from "../../Components/UpdateMetaData";
+import UpdateHeaderImage from "../../Components/UpdateHeaderImage";
 
 export default function Account({ profileData, setProfileData, session }) {
   const navigation = useNavigation();
@@ -13,9 +14,15 @@ export default function Account({ profileData, setProfileData, session }) {
       <Appbar.Header style={{ backgroundColor: "#2193F0" }}>
         <Appbar.BackAction
           color="white"
-          onPress={() => navigation.navigate("Settings")}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate("Profile");
+            }
+          }}
         />
-        <Appbar.Content color="white" title="Account" />
+        <Appbar.Content color="white" title="Account Settings" />
       </Appbar.Header>
 
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
@@ -26,6 +33,14 @@ export default function Account({ profileData, setProfileData, session }) {
             setProfileData={setProfileData}
             session={session}
           />
+
+          <Text style={styles.stettingsHeader}>Update Header Background</Text>
+          <UpdateHeaderImage
+            profileData={profileData}
+            setProfileData={setProfileData}
+            session={session}
+          />
+
           <Text style={styles.stettingsHeader}>Update Name</Text>
           <UpdateMetaData
             profileData={profileData}

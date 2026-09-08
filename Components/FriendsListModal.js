@@ -45,52 +45,121 @@ export default function FriendsListModal({
     if (!currentUserId) return;
     setLoading(true);
     try {
-      // 1. Fetch all user profiles
-      const { data: profiles, error: profErr } = await supabase
-        .from("UserProfileData")
-        .select("*");
+      // 1. Fetch profiles and leaderboard players
+      const [profilesRes, leaderboardRes, followingRes, followersRes] = await Promise.all([
+        supabase.from("UserProfileData").select("*"),
+        supabase.from("GlobalLeaderboard").select("player_name, userprofile_id, avatar_image_url"),
+        supabase.from("UserFollows").select("id, following_id, following_name").eq("follower_id", currentUserId),
+        supabase.from("UserFollows").select("id, follower_id, following_name").eq("following_id", currentUserId),
+      ]);
 
-      if (profErr) throw profErr;
+      const profiles = profilesRes.data || [];
+      const leaderboard = leaderboardRes.data || [];
+      const followingsData = followingRes.data || [];
+      const followersData = followersRes.data || [];
 
-      // Filter out self for discovery
-      const others = (profiles || []).filter(
-        (p) => p.userprofile_id !== currentUserId,
-      );
-      setAllUsers(others);
+      // Create lookup maps by userprofile_id and by lowercase name
+      const profileById = new Map();
+      const profileByName = new Map();
 
-      // 2. Fetch following
-      const { data: followingsData, error: folErr } = await supabase
-        .from("UserFollows")
-        .select("following_id")
-        .eq("follower_id", currentUserId);
+      profiles.forEach((p) => {
+        if (p.userprofile_id) profileById.set(p.userprofile_id, p);
+        if (p.first_name) profileByName.set(p.first_name.trim().toLowerCase(), p);
+      });
 
-      if (folErr) throw folErr;
+      leaderboard.forEach((lb) => {
+        const nameKey = (lb.player_name || "").trim().toLowerCase();
+        if (lb.userprofile_id && !profileById.has(lb.userprofile_id)) {
+          profileById.set(lb.userprofile_id, {
+            userprofile_id: lb.userprofile_id,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+        if (nameKey && !profileByName.has(nameKey)) {
+          profileByName.set(nameKey, {
+            userprofile_id: lb.userprofile_id || `lb-${lb.player_name}`,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+      });
 
-      const followedIdSet = new Set(
-        (followingsData || []).map((f) => f.following_id),
-      );
+      // 2. Build Following List (all 5+ people followed by user)
+      const followedIdSet = new Set();
+      const followedNameSet = new Set();
+      const followingList = [];
+
+      followingsData.forEach((row) => {
+        if (row.following_id) followedIdSet.add(row.following_id);
+        if (row.following_name) followedNameSet.add(row.following_name.trim().toLowerCase());
+
+        let matched = null;
+        if (row.following_id && profileById.has(row.following_id)) {
+          matched = { ...profileById.get(row.following_id), followRowId: row.id };
+        } else if (row.following_name && profileByName.has(row.following_name.trim().toLowerCase())) {
+          matched = { ...profileByName.get(row.following_name.trim().toLowerCase()), followRowId: row.id };
+        } else {
+          matched = {
+            userprofile_id: row.following_id || `follow-name-${row.id}`,
+            first_name: row.following_name || "Friend",
+            last_name: "",
+            avatar_image_url: null,
+            followRowId: row.id,
+          };
+        }
+
+        followingList.push(matched);
+      });
+
       setFollowingIds(followedIdSet);
+      setFollowing(followingList);
 
-      const followingProfiles = (profiles || []).filter((p) =>
-        followedIdSet.has(p.userprofile_id),
-      );
-      setFollowing(followingProfiles);
+      // 3. Build Followers List
+      const followerList = [];
+      followersData.forEach((row) => {
+        let matched = null;
+        if (row.follower_id && profileById.has(row.follower_id)) {
+          matched = profileById.get(row.follower_id);
+        } else {
+          matched = {
+            userprofile_id: row.follower_id || `follower-${row.id}`,
+            first_name: "Follower",
+            last_name: "",
+            avatar_image_url: null,
+          };
+        }
+        followerList.push(matched);
+      });
+      setFollowers(followerList);
 
-      // 3. Fetch followers
-      const { data: followersData, error: fldErr } = await supabase
-        .from("UserFollows")
-        .select("follower_id")
-        .eq("following_id", currentUserId);
+      // 4. Build Discover List (excluding self)
+      const discoverList = [];
+      const seenDiscoverIds = new Set([currentUserId]);
 
-      if (fldErr) throw fldErr;
+      profiles.forEach((p) => {
+        if (p.userprofile_id && !seenDiscoverIds.has(p.userprofile_id)) {
+          seenDiscoverIds.add(p.userprofile_id);
+          discoverList.push(p);
+        }
+      });
 
-      const followerIdSet = new Set(
-        (followersData || []).map((f) => f.follower_id),
-      );
-      const followerProfiles = (profiles || []).filter((p) =>
-        followerIdSet.has(p.userprofile_id),
-      );
-      setFollowers(followerProfiles);
+      leaderboard.forEach((lb) => {
+        const idKey = lb.userprofile_id || `lb-${lb.player_name}`;
+        if (!seenDiscoverIds.has(idKey)) {
+          seenDiscoverIds.add(idKey);
+          discoverList.push({
+            userprofile_id: idKey,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+      });
+
+      setAllUsers(discoverList);
     } catch (err) {
       console.error("Error loading friends/follow data:", err);
     } finally {
@@ -110,42 +179,53 @@ export default function FriendsListModal({
     setRefreshing(false);
   };
 
-  const handleToggleFollow = async (targetUserId) => {
-    const isCurrentlyFollowing = followingIds.has(targetUserId);
+    const handleToggleFollow = async (userItem) => {
+    const targetUserId = typeof userItem === "object" ? userItem.userprofile_id : userItem;
+    const targetName = typeof userItem === "object" ? userItem.first_name : null;
+    const followRowId = typeof userItem === "object" ? userItem.followRowId : null;
 
-    // Optimistic UI update
-    setFollowingIds((prev) => {
-      const next = new Set(prev);
-      if (isCurrentlyFollowing) {
-        next.delete(targetUserId);
-      } else {
-        next.add(targetUserId);
-      }
-      return next;
-    });
+    const isCurrentlyFollowing =
+      followingIds.has(targetUserId) ||
+      following.some(
+        (f) =>
+          f.userprofile_id === targetUserId ||
+          (targetName && f.first_name?.toLowerCase() === targetName?.toLowerCase())
+      );
 
     try {
       if (isCurrentlyFollowing) {
-        const { error } = await supabase
-          .from("UserFollows")
-          .delete()
-          .eq("follower_id", currentUserId)
-          .eq("following_id", targetUserId);
-        if (error) throw error;
+        // Unfollow
+        if (followRowId) {
+          await supabase.from("UserFollows").delete().eq("id", followRowId);
+        } else if (targetUserId && !String(targetUserId).startsWith("follow-name-") && !String(targetUserId).startsWith("lb-")) {
+          await supabase
+            .from("UserFollows")
+            .delete()
+            .eq("follower_id", currentUserId)
+            .eq("following_id", targetUserId);
+        } else if (targetName) {
+          await supabase
+            .from("UserFollows")
+            .delete()
+            .eq("follower_id", currentUserId)
+            .ilike("following_name", targetName.trim());
+        }
       } else {
-        const { error } = await supabase.from("UserFollows").insert({
+        // Follow
+        const insertPayload = {
           follower_id: currentUserId,
-          following_id: targetUserId,
-        });
-        if (error) throw error;
+          following_id: targetUserId && !String(targetUserId).startsWith("follow-name-") && !String(targetUserId).startsWith("lb-") ? targetUserId : null,
+          following_name: targetName || "Friend",
+        };
+        await supabase.from("UserFollows").insert(insertPayload);
       }
 
+      await loadData();
       if (onFollowChange) {
         onFollowChange();
       }
     } catch (err) {
       console.error("Error updating follow state:", err);
-      // Revert optimistic update on error
       loadData();
     }
   };
@@ -173,7 +253,13 @@ export default function FriendsListModal({
   };
 
   const renderUserItem = ({ item }) => {
-    const isFollowing = followingIds.has(item.userprofile_id);
+    const isFollowing =
+      followingIds.has(item.userprofile_id) ||
+      following.some(
+        (f) =>
+          f.userprofile_id === item.userprofile_id ||
+          (item.first_name && f.first_name?.toLowerCase() === item.first_name?.toLowerCase())
+      );
     const fullName =
       `${item.first_name || ""} ${item.last_name || ""}`.trim() || "Player";
 
@@ -200,7 +286,7 @@ export default function FriendsListModal({
         {item.userprofile_id !== currentUserId && (
           <Button
             mode={isFollowing ? "outlined" : "contained"}
-            onPress={() => handleToggleFollow(item.userprofile_id)}
+            onPress={() => handleToggleFollow(item)}
             style={[
               styles.followButton,
               isFollowing ? styles.followingBtn : styles.followBtn,

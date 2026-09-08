@@ -9,9 +9,11 @@ import {
   Text,
   StyleSheet,
 } from "react-native";
-import { Avatar, Appbar, Button } from "react-native-paper";
+import { Avatar, Appbar, IconButton } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SocialUserStats from "../Components/SocialUserStats";
+import ProfileMatchScores from "../Components/ProfileMatchScores";
 import Dashboard from "../Components/Dashboard";
 import FriendsListModal from "../Components/FriendsListModal";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
@@ -28,39 +30,55 @@ export default function Profile({
   const [followingCount, setFollowingCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [matchesCount, setMatchesCount] = useState(0);
+  const [resolvedUserId, setResolvedUserId] = useState(profileData?.userprofile_id);
+  const [headerImageUrl, setHeaderImageUrl] = useState(profileData?.header_image_url || null);
   const navigation = useNavigation();
 
+  // Load persistent header image if available
+  useEffect(() => {
+    async function loadSavedHeader() {
+      try {
+        const saved = await AsyncStorage.getItem("user_header_image_url");
+        if (saved) {
+          setHeaderImageUrl(saved);
+        } else if (profileData?.header_image_url) {
+          setHeaderImageUrl(profileData.header_image_url);
+        }
+      } catch (e) {
+        // Ignored
+      }
+    }
+    loadSavedHeader();
+  }, [profileData?.header_image_url]);
+
   const fetchStats = useCallback(async () => {
-    if (!profileData?.userprofile_id) return;
     try {
-      const [followingRes, followersRes, scoresRes] = await Promise.all([
-        supabase
-          .from("UserFollows")
-          .select("id", { count: "exact", head: true })
-          .eq("follower_id", profileData.userprofile_id),
-        supabase
-          .from("UserFollows")
-          .select("id", { count: "exact", head: true })
-          .eq("following_id", profileData.userprofile_id),
-        supabase.from("ScoresData").select("id, players"),
-      ]);
+      let uid = profileData?.userprofile_id;
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user?.id) {
+        uid = authData.user.id;
+      }
+      setResolvedUserId(uid);
 
-      setFollowingCount(followingRes.count || 0);
-      setFollowersCount(followersRes.count || 0);
+      if (uid) {
+        const [followingRes, followersRes] = await Promise.all([
+          supabase
+            .from("UserFollows")
+            .select("id", { count: "exact", head: true })
+            .eq("follower_id", uid),
+          supabase
+            .from("UserFollows")
+            .select("id", { count: "exact", head: true })
+            .eq("following_id", uid),
+        ]);
 
-      if (scoresRes.data) {
-        const myName = (profileData.first_name || "").trim().toLowerCase();
-        const myMatches = scoresRes.data.filter((s) => {
-          const p1 = (s.players?.[0]?.player1 || "").trim().toLowerCase();
-          const p2 = (s.players?.[1]?.player2 || "").trim().toLowerCase();
-          return p1 === myName || p2 === myName;
-        });
-        setMatchesCount(myMatches.length);
+        setFollowingCount(followingRes.count || 0);
+        setFollowersCount(followersRes.count || 0);
       }
     } catch (err) {
       console.error("Error loading profile stats:", err);
     }
-  }, [profileData?.userprofile_id, profileData?.first_name]);
+  }, [profileData?.userprofile_id]);
 
   useEffect(() => {
     fetchStats();
@@ -78,44 +96,17 @@ export default function Profile({
 
   return (
     <>
-      <Appbar
-        style={{
-          position: "absolute",
-          width: "100%",
-          backgroundColor: "#2193F0",
-          zIndex: 300,
-          height: 80,
-        }}
-      >
+      {/* Sleek Top Appbar - Only 3 dots on top right linking to Account */}
+      <Appbar style={styles.topAppbar}>
+        <View style={{ flex: 1 }} />
         <TouchableOpacity
-          style={styles.container}
           onPress={() => navigation.navigate("Account")}
-        >
-          <Text style={styles.headerUserName}>
-            {profileData?.first_name || "Profile"}
-          </Text>
-          <Avatar.Image
-            source={require("../Images/downArrowicon.png")}
-            style={styles.arrowIcon}
-            backgroundColor="transparent"
-            size={23}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Settings")}
-          style={{
-            position: "absolute",
-            zIndex: 10,
-            top: 38,
-            right: 20,
-            backgroundColor: "transparent",
-          }}
+          style={styles.threeDotsBtn}
+          activeOpacity={0.7}
         >
           <Avatar.Image
-            style={{
-              backgroundColor: "transparent",
-            }}
-            size={25}
+            style={{ backgroundColor: "transparent" }}
+            size={24}
             source={require("../Images/3Dots.png")}
             tintColor="white"
           />
@@ -129,21 +120,37 @@ export default function Profile({
         style={{ backgroundColor: "#F8FAFC" }}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-          {/* Header Banner */}
-          <View style={{ height: 180, position: "relative" }}>
+          {/* Header Banner with customizable background image */}
+          <View style={styles.bannerWrapper}>
             <Image
-              style={{
-                position: "absolute",
-                width: "100%",
-                height: 180,
-                resizeMode: "cover",
-              }}
-              source={require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")}
+              style={styles.bannerImage}
+              source={
+                headerImageUrl
+                  ? { uri: headerImageUrl }
+                  : require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")
+              }
             />
+
+            {/* Quick Edit Header Button */}
+            <TouchableOpacity
+              style={styles.editHeaderBadge}
+              onPress={() => navigation.navigate("Account")}
+              activeOpacity={0.8}
+            >
+              <IconButton
+                icon="camera"
+                iconColor="#FFFFFF"
+                size={14}
+                style={{ margin: 0, marginRight: 2 }}
+              />
+              <Text style={styles.editHeaderText}>Edit Header</Text>
+            </TouchableOpacity>
+
+            {/* Profile Avatar */}
             <View style={styles.avatarWrapper}>
               <Avatar.Image
                 style={styles.avatar}
-                size={100}
+                size={104}
                 source={
                   profileData?.avatar_image_url
                     ? { uri: profileData.avatar_image_url }
@@ -157,7 +164,7 @@ export default function Profile({
           <View style={styles.profileBody}>
             <Text style={styles.profileName}>{fullName}</Text>
 
-            {/* Stats Row */}
+            {/* Social Stats Row: Matches, Followers, Following */}
             <View style={styles.statsWrapper}>
               <SocialUserStats
                 matchesCount={matchesCount}
@@ -169,29 +176,17 @@ export default function Profile({
                 }}
               />
             </View>
-
-            {/* Action Buttons */}
-            <View style={styles.buttonRow}>
-              <Button
-                mode="contained"
-                icon="account-group"
-                onPress={() => {
-                  setFriendsModalTab("discover");
-                  setShowFriendsModal(true);
-                }}
-                style={styles.friendsBtn}
-                contentStyle={{ height: 44 }}
-                labelStyle={{ fontWeight: "700", fontSize: 13 }}
-              >
-                Find & Manage Friends
-              </Button>
-            </View>
           </View>
 
-          {/* Dashboard Section */}
-          <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-            <Dashboard />
-          </SafeAreaView>
+          {/* User's Match Scores (Downwards Triangle Formation) */}
+          <ProfileMatchScores
+            profileData={profileData}
+            currentUserId={resolvedUserId}
+            onScoresCountChange={setMatchesCount}
+          />
+
+          {/* Health & Daily Goals Section (Measurements, Exercise, Sleep untouched) */}
+          <Dashboard />
         </SafeAreaView>
       </ScrollView>
 
@@ -199,7 +194,7 @@ export default function Profile({
       <FriendsListModal
         visible={showFriendsModal}
         onClose={() => setShowFriendsModal(false)}
-        currentUserId={profileData?.userprofile_id}
+        currentUserId={resolvedUserId}
         onFollowChange={fetchStats}
         initialTab={friendsModalTab}
       />
@@ -208,48 +203,74 @@ export default function Profile({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  topAppbar: {
+    position: "absolute",
+    width: "100%",
+    backgroundColor: "#2193F0",
+    zIndex: 300,
+    height: 70,
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "center",
-    left: 15,
-    top: 5,
+    paddingHorizontal: 16,
   },
-  headerUserName: {
-    fontSize: 20,
-    marginRight: 5,
-    top: 8,
-    fontWeight: "bold",
-    color: "white",
+  threeDotsBtn: {
+    padding: 8,
+    marginTop: 18,
   },
-  arrowIcon: {
-    right: 6,
-    top: 8,
+  bannerWrapper: {
+    height: 190,
+    position: "relative",
+    backgroundColor: "#CBD5E1",
+  },
+  bannerImage: {
+    position: "absolute",
+    width: "100%",
+    height: 190,
+    resizeMode: "cover",
+  },
+  editHeaderBadge: {
+    position: "absolute",
+    top: 80,
+    right: 14,
+    backgroundColor: "rgba(0, 23, 31, 0.75)",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    zIndex: 20,
+  },
+  editHeaderText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
   },
   avatarWrapper: {
     position: "absolute",
-    bottom: -50,
+    bottom: -52,
     alignSelf: "center",
     zIndex: 50,
-    elevation: 4,
+    elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   avatar: {
     backgroundColor: "#FFFFFF",
-    borderWidth: 3,
+    borderWidth: 3.5,
     borderColor: "#FFFFFF",
   },
   profileBody: {
-    marginTop: 56,
+    marginTop: 58,
     alignItems: "center",
     width: "100%",
   },
   profileName: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: "800",
     color: "#0F172A",
     textAlign: "center",
     marginBottom: 4,
@@ -257,20 +278,7 @@ const styles = StyleSheet.create({
   statsWrapper: {
     width: "100%",
     paddingHorizontal: 20,
-    marginTop: 14,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    marginTop: 14,
+    marginTop: 10,
     marginBottom: 8,
-    paddingHorizontal: 20,
-    width: "100%",
-    justifyContent: "center",
-  },
-  friendsBtn: {
-    backgroundColor: "#2193F0",
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    elevation: 2,
   },
 });

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 
-import ScoresTab from "../screens/ScoreScreens/ScoresTab";
 import AddScoresTab from "../screens/ScoreScreens/AddScoresTab";
 import LeaderboardTab from "../screens/ScoreScreens/LeaderboardTab";
 import AddSteps from "../screens/ScoreScreens/AddSteps";
@@ -49,11 +48,6 @@ function TabGroup({ userId, profileData, scoresData, setScoresData }) {
             userId={userId}
             profileData={profileData}
           />
-        )}
-      </Tab.Screen>
-      <Tab.Screen name="My Scores">
-        {() => (
-          <ScoresTab scoresData={scoresData} setScoresData={setScoresData} />
         )}
       </Tab.Screen>
     </Tab.Navigator>
