@@ -153,6 +153,7 @@ export default function VsForm({
     setSubmitting(true);
     try {
       const matchRow = {
+        ...(currentUserId ? { scores_id: currentUserId } : {}),
         location: location.trim() || "Local Court",
         activity: sport,
         gameRound: String(gameRound || "1"),
