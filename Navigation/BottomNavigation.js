@@ -59,6 +59,11 @@ function TabGroup({
         </Tab.Screen>
         <Tab.Screen
           name="Scores"
+          listeners={({ navigation }) => ({
+            tabPress: () => {
+              navigation.navigate("Scores", { screen: "Leaderboard" });
+            },
+          })}
           options={{
             title: "Keep Score",
             headerStyle: {

@@ -10,6 +10,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Avatar, IconButton, ActivityIndicator } from "react-native-paper";
+import { useFocusEffect } from "@react-navigation/native";
 import { supabase } from "../SupabaseConfig/SupabaseClient";
 
 const SPORT_ICONS = {
@@ -65,9 +66,11 @@ export default function ProfileMatchScores({
     }
   }, [profileData?.first_name, currentUserId, onScoresCountChange]);
 
-  useEffect(() => {
-    fetchMatches();
-  }, [fetchMatches]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMatches();
+    }, [fetchMatches])
+  );
 
   const handleDeleteScore = (scoreId, p1, p2) => {
     Alert.alert(

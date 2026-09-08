@@ -8,9 +8,10 @@ import {
   View,
   Text,
   StyleSheet,
+  StatusBar,
 } from "react-native";
-import { Avatar, Appbar, IconButton } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { Avatar, IconButton } from "react-native-paper";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SocialUserStats from "../Components/SocialUserStats";
 import ProfileMatchScores from "../Components/ProfileMatchScores";
@@ -35,20 +36,17 @@ export default function Profile({
   const navigation = useNavigation();
 
   // Load persistent header image if available
-  useEffect(() => {
-    async function loadSavedHeader() {
-      try {
-        const saved = await AsyncStorage.getItem("user_header_image_url");
-        if (saved) {
-          setHeaderImageUrl(saved);
-        } else if (profileData?.header_image_url) {
-          setHeaderImageUrl(profileData.header_image_url);
-        }
-      } catch (e) {
-        // Ignored
+  const loadSavedHeader = useCallback(async () => {
+    try {
+      const saved = await AsyncStorage.getItem("user_header_image_url");
+      if (saved) {
+        setHeaderImageUrl(saved);
+      } else if (profileData?.header_image_url) {
+        setHeaderImageUrl(profileData.header_image_url);
       }
+    } catch (e) {
+      // Ignored
     }
-    loadSavedHeader();
   }, [profileData?.header_image_url]);
 
   const fetchStats = useCallback(async () => {
@@ -80,13 +78,17 @@ export default function Profile({
     }
   }, [profileData?.userprofile_id]);
 
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  // Refresh every time the profile screen is clicked / focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchStats();
+      loadSavedHeader();
+    }, [fetchStats, loadSavedHeader])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchStats();
+    await Promise.all([fetchStats(), loadSavedHeader()]);
     setRefreshing(false);
   };
 
@@ -95,42 +97,30 @@ export default function Profile({
   }`.trim();
 
   return (
-    <>
-      {/* Sleek Top Appbar - Only 3 dots on top right linking to Account */}
-      <Appbar style={styles.topAppbar}>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Account")}
-          style={styles.threeDotsBtn}
-          activeOpacity={0.7}
-        >
-          <Avatar.Image
-            style={{ backgroundColor: "transparent" }}
-            size={24}
-            source={require("../Images/3Dots.png")}
-            tintColor="white"
-          />
-        </TouchableOpacity>
-      </Appbar>
+    <View style={styles.screenContainer}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <ScrollView
+        bounces={true}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         style={{ backgroundColor: "#F8FAFC" }}
+        contentContainerStyle={{ paddingBottom: 30 }}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-          {/* Header Banner with customizable background image */}
-          <View style={styles.bannerWrapper}>
-            <Image
-              style={styles.bannerImage}
-              source={
-                headerImageUrl
-                  ? { uri: headerImageUrl }
-                  : require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")
-              }
-            />
+        {/* Header Banner - Starts flush at top, no white space */}
+        <View style={styles.bannerWrapper}>
+          <Image
+            style={styles.bannerImage}
+            source={
+              headerImageUrl
+                ? { uri: headerImageUrl }
+                : require("../Images/blue-mountains-foggy-mountain-range-landscape-scenery-5k-6016x3384-5939.jpg")
+            }
+          />
 
+          {/* Floating Top Controls inside Banner */}
+          <View style={styles.bannerTopBar}>
             {/* Quick Edit Header Button */}
             <TouchableOpacity
               style={styles.editHeaderBadge}
@@ -146,48 +136,64 @@ export default function Profile({
               <Text style={styles.editHeaderText}>Edit Header</Text>
             </TouchableOpacity>
 
-            {/* Profile Avatar */}
-            <View style={styles.avatarWrapper}>
+            {/* 3 Dots Button (Opens Account) */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Account")}
+              style={styles.threeDotsBadge}
+              activeOpacity={0.8}
+            >
               <Avatar.Image
-                style={styles.avatar}
-                size={104}
+                style={{ backgroundColor: "transparent" }}
+                size={22}
+                source={require("../Images/3Dots.png")}
+                tintColor="white"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Flawless Centered Profile Avatar Ring (no offset, no white crescent) */}
+          <View style={styles.avatarOuterRing}>
+            <View style={styles.avatarInnerCircle}>
+              <Image
+                style={styles.avatarImg}
                 source={
                   profileData?.avatar_image_url
                     ? { uri: profileData.avatar_image_url }
                     : require("../Images/Logo-Keeping-Score.png")
                 }
+                resizeMode={profileData?.avatar_image_url ? "cover" : "contain"}
               />
             </View>
           </View>
+        </View>
 
-          {/* User Info & Stats Section */}
-          <View style={styles.profileBody}>
-            <Text style={styles.profileName}>{fullName}</Text>
+        {/* User Info & Stats Section */}
+        <View style={styles.profileBody}>
+          <Text style={styles.profileName}>{fullName}</Text>
 
-            {/* Social Stats Row: Matches, Followers, Following */}
-            <View style={styles.statsWrapper}>
-              <SocialUserStats
-                matchesCount={matchesCount}
-                followersCount={followersCount}
-                followingCount={followingCount}
-                onPressFriends={(selectedTab) => {
-                  setFriendsModalTab(selectedTab || "following");
-                  setShowFriendsModal(true);
-                }}
-              />
-            </View>
+          {/* Social Stats Row: Matches, Followers, Following */}
+          <View style={styles.statsWrapper}>
+            <SocialUserStats
+              matchesCount={matchesCount}
+              followersCount={followersCount}
+              followingCount={followingCount}
+              onPressFriends={(selectedTab) => {
+                setFriendsModalTab(selectedTab || "following");
+                setShowFriendsModal(true);
+              }}
+            />
           </View>
+        </View>
 
-          {/* User's Match Scores (Downwards Triangle Formation) */}
-          <ProfileMatchScores
-            profileData={profileData}
-            currentUserId={resolvedUserId}
-            onScoresCountChange={setMatchesCount}
-          />
+        {/* User's Match Scores (Downwards Triangle Formation) */}
+        <ProfileMatchScores
+          profileData={profileData}
+          currentUserId={resolvedUserId}
+          onScoresCountChange={setMatchesCount}
+        />
 
-          {/* Health & Daily Goals Section (Measurements, Exercise, Sleep untouched) */}
-          <Dashboard />
-        </SafeAreaView>
+        {/* Health & Daily Goals Section (Measurements, Exercise, Sleep) */}
+        <Dashboard />
       </ScrollView>
 
       {/* Friends & Followers Modal */}
@@ -198,40 +204,37 @@ export default function Profile({
         onFollowChange={fetchStats}
         initialTab={friendsModalTab}
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topAppbar: {
-    position: "absolute",
-    width: "100%",
-    backgroundColor: "#2193F0",
-    zIndex: 300,
-    height: 70,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  threeDotsBtn: {
-    padding: 8,
-    marginTop: 18,
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
   bannerWrapper: {
-    height: 190,
+    height: 200,
+    width: "100%",
     position: "relative",
-    backgroundColor: "#CBD5E1",
+    backgroundColor: "#0F172A",
   },
   bannerImage: {
-    position: "absolute",
     width: "100%",
-    height: 190,
+    height: "100%",
     resizeMode: "cover",
   },
-  editHeaderBadge: {
+  bannerTopBar: {
     position: "absolute",
-    top: 80,
-    right: 14,
+    top: 44,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 20,
+  },
+  editHeaderBadge: {
     backgroundColor: "rgba(0, 23, 31, 0.75)",
     flexDirection: "row",
     alignItems: "center",
@@ -240,28 +243,51 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.4)",
-    zIndex: 20,
   },
   editHeaderText: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "700",
   },
-  avatarWrapper: {
+  threeDotsBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 23, 31, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.4)",
+  },
+  avatarOuterRing: {
     position: "absolute",
     bottom: -52,
     alignSelf: "center",
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    backgroundColor: "#FFFFFF",
+    padding: 3,
     zIndex: 50,
-    elevation: 5,
+    elevation: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowRadius: 5,
   },
-  avatar: {
+  avatarInnerCircle: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 51,
+    overflow: "hidden",
     backgroundColor: "#FFFFFF",
-    borderWidth: 3.5,
-    borderColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarImg: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 51,
   },
   profileBody: {
     marginTop: 58,

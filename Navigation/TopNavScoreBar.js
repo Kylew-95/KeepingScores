@@ -26,6 +26,7 @@ export function TopNavScoreBar({
 function TabGroup({ userId, profileData, scoresData, setScoresData }) {
   return (
     <Tab.Navigator
+      initialRouteName="Leaderboard"
       screenOptions={{
         tabBarActiveTintColor: "#2193F0",
         tabBarInactiveTintColor: "#64748B",

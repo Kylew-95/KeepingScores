@@ -224,13 +224,13 @@ export default function LeaderboardTab({ userId, profileData }) {
     }
   }, [currentUserId]);
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [fetchLeaderboard]);
-
-  useEffect(() => {
-    loadFollows();
-  }, [loadFollows]);
+  // Auto-refresh leaderboard and follows whenever user clicks/focuses tab
+  useFocusEffect(
+    useCallback(() => {
+      fetchLeaderboard();
+      loadFollows();
+    }, [fetchLeaderboard, loadFollows])
+  );
 
   const checkIfFollowing = (item) => {
     if (!item) return false;
