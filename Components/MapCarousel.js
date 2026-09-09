@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback, memo } from "react";
 import {
   Dimensions,
   View,
@@ -35,7 +35,7 @@ const sportImages = {
 };
 
 // Safe Image component with Keeping Score Logo fallback on error or missing image
-function CardImage({ uri }) {
+const CardImage = memo(function CardImage({ uri }) {
   const [hasError, setHasError] = useState(false);
 
   if (hasError || !uri) {
@@ -58,7 +58,50 @@ function CardImage({ uri }) {
       onError={() => setHasError(true)}
     />
   );
-}
+});
+
+// Memoized Card Component for high performance VirtualizedList rendering
+const CarouselCard = memo(function CarouselCard({ item, index, onPress }) {
+  const photoUrl =
+    item.photo ||
+    sportImages[item.type] ||
+    sportImages[item.sport] ||
+    sportImages.default;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={() => onPress(item, index)}
+      style={[
+        styles.slide,
+        { width: CARD_WIDTH, marginHorizontal: CARD_MARGIN },
+      ]}
+    >
+      <Card style={styles.card}>
+        <CardImage uri={photoUrl} />
+        {item.distance && (
+          <View style={styles.distanceFloatingBadge}>
+            <Text style={styles.distanceFloatingText}>📍 {item.distance}</Text>
+          </View>
+        )}
+        <Card.Content style={styles.cardContent}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.name || "Sports Facility"}
+            </Text>
+          </View>
+          <Text style={styles.description} numberOfLines={1}>
+            {item.vicinity || "No Address"}
+          </Text>
+          <View style={styles.bottomRow}>
+            <Text style={styles.rating}>⭐ {item.rating || "4.5"}</Text>
+            <Text style={styles.tapDetailsText}>Details & Maps →</Text>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  );
+});
 
 export default function MapCarousel({
   places = [],
@@ -68,76 +111,61 @@ export default function MapCarousel({
   const flatListRef = useRef(null);
   const activeIndexRef = useRef(0);
 
+  const handleScrollEnd = useCallback(
+    (event) => {
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const index = Math.round(offsetX / SNAP_INTERVAL);
+      if (index >= 0 && index < places.length) {
+        activeIndexRef.current = index;
+        if (onCarouselItemChange) {
+          onCarouselItemChange(places[index]);
+        }
+      }
+    },
+    [places, onCarouselItemChange],
+  );
+
+  const handleCardPress = useCallback(
+    (item, index) => {
+      activeIndexRef.current = index;
+      flatListRef.current?.scrollToOffset({
+        offset: index * SNAP_INTERVAL,
+        animated: true,
+      });
+      if (onCarouselItemChange) {
+        onCarouselItemChange(item);
+      }
+      if (onCardPress) {
+        onCardPress(item);
+      }
+    },
+    [onCarouselItemChange, onCardPress],
+  );
+
+  const renderCard = useCallback(
+    ({ item, index }) => (
+      <CarouselCard item={item} index={index} onPress={handleCardPress} />
+    ),
+    [handleCardPress],
+  );
+
+  const keyExtractor = useCallback(
+    (item, index) => (item.place_id ? String(item.place_id) : String(index)),
+    [],
+  );
+
+  const getItemLayout = useCallback(
+    (_, index) => ({
+      length: SNAP_INTERVAL,
+      offset: SNAP_INTERVAL * index,
+      index,
+    }),
+    [],
+  );
+
   if (!places || places.length === 0) {
     return null;
   }
-
-  const handleScrollEnd = (event) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / SNAP_INTERVAL);
-    if (index >= 0 && index < places.length) {
-      activeIndexRef.current = index;
-      if (onCarouselItemChange) {
-        onCarouselItemChange(places[index]);
-      }
-    }
-  };
-
-  const renderCard = ({ item, index }) => {
-    const photoUrl =
-      item.photo ||
-      sportImages[item.type] ||
-      sportImages[item.sport] ||
-      sportImages.default;
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => {
-          activeIndexRef.current = index;
-          flatListRef.current?.scrollToOffset({
-            offset: index * SNAP_INTERVAL,
-            animated: true,
-          });
-          if (onCarouselItemChange) {
-            onCarouselItemChange(item);
-          }
-          if (onCardPress) {
-            onCardPress(item);
-          }
-        }}
-        style={[
-          styles.slide,
-          { width: CARD_WIDTH, marginHorizontal: CARD_MARGIN },
-        ]}
-      >
-        <Card style={styles.card}>
-          <CardImage uri={photoUrl} item={item} />
-          {item.distance && (
-            <View style={styles.distanceFloatingBadge}>
-              <Text style={styles.distanceFloatingText}>
-                📍 {item.distance}
-              </Text>
-            </View>
-          )}
-          <Card.Content style={styles.cardContent}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={1}>
-                {item.name || "Sports Facility"}
-              </Text>
-            </View>
-            <Text style={styles.description} numberOfLines={1}>
-              {item.vicinity || "No Address"}
-            </Text>
-            <View style={styles.bottomRow}>
-              <Text style={styles.rating}>⭐ {item.rating || "4.5"}</Text>
-              <Text style={styles.tapDetailsText}>Details & Maps →</Text>
-            </View>
-          </Card.Content>
-        </Card>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.carouselContainer}>
@@ -145,9 +173,7 @@ export default function MapCarousel({
         ref={flatListRef}
         data={places}
         renderItem={renderCard}
-        keyExtractor={(item, index) =>
-          item.place_id ? String(item.place_id) : String(index)
-        }
+        keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={SNAP_INTERVAL}
@@ -157,6 +183,11 @@ export default function MapCarousel({
           paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2 - CARD_MARGIN,
         }}
         onMomentumScrollEnd={handleScrollEnd}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        getItemLayout={getItemLayout}
+        removeClippedSubviews={true}
       />
     </View>
   );
@@ -194,7 +225,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 48,
   },
-  
+
   cardContent: {
     paddingVertical: 10,
     paddingHorizontal: 12,

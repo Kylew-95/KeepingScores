@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView,
   FlatList,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
 import {
   Card,
@@ -28,34 +29,152 @@ const SPORT_ICONS = {
   Other: "🏆",
 };
 
+const MatchCardItem = React.memo(function MatchCardItem({ item, onDelete }) {
+  if (!item) return null;
+
+  const players = item.players || [];
+  const p1 = players[0]?.player1 || "Player 1";
+  const s1 = parseFloat(players[0]?.scores) || 0;
+  const p2 = players[1]?.player2 || "Player 2";
+  const s2 = parseFloat(players[1]?.scores) || 0;
+
+  const p1Won = s1 > s2;
+  const p2Won = s2 > s1;
+  const isDraw = s1 === s2;
+
+  const sportEmoji = SPORT_ICONS[item.activity] || "🏅";
+
+  return (
+    <Card style={styles.card}>
+      <Card.Content style={styles.cardContent}>
+        {/* Header: Location & Sport Badge */}
+        <View style={styles.headerRow}>
+          <View style={styles.locationContainer}>
+            <Text style={styles.locationTitle} numberOfLines={1}>
+              📍 {item.location || "Local Court"}
+            </Text>
+            <Text style={styles.dateTimeText}>
+              {item.date} {item.time ? `• ${item.time}` : ""}
+            </Text>
+          </View>
+
+          <View style={styles.sportBadge}>
+            <Text style={styles.sportBadgeText}>
+              {sportEmoji} {item.activity || "Match"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Match Score Banner */}
+        <View style={styles.scoreBanner}>
+          {/* Player 1 */}
+          <View style={styles.playerBox}>
+            <Avatar.Text
+              size={40}
+              label={p1.substring(0, 2).toUpperCase()}
+              style={[styles.avatar, p1Won && styles.winnerAvatar]}
+              labelStyle={{ fontWeight: "700", color: "white", fontSize: 14 }}
+            />
+            <Text
+              style={[styles.playerName, p1Won && styles.winnerText]}
+              numberOfLines={1}
+            >
+              {p1}
+            </Text>
+            <Text style={[styles.scoreNumber, p1Won && styles.winnerScore]}>
+              {s1}
+            </Text>
+          </View>
+
+          {/* Middle: VS & Round */}
+          <View style={styles.vsBox}>
+            <View style={styles.vsBadge}>
+              <Text style={styles.vsText}>VS</Text>
+            </View>
+            <Text style={styles.roundText}>Round {item.gameRound || "1"}</Text>
+          </View>
+
+          {/* Player 2 */}
+          <View style={styles.playerBox}>
+            <Avatar.Text
+              size={40}
+              label={p2.substring(0, 2).toUpperCase()}
+              style={[
+                styles.avatar,
+                styles.opponentAvatar,
+                p2Won && styles.winnerAvatar,
+              ]}
+              labelStyle={{ fontWeight: "700", color: "white", fontSize: 14 }}
+            />
+            <Text
+              style={[styles.playerName, p2Won && styles.winnerText]}
+              numberOfLines={1}
+            >
+              {p2}
+            </Text>
+            <Text style={[styles.scoreNumber, p2Won && styles.winnerScore]}>
+              {s2}
+            </Text>
+          </View>
+        </View>
+
+        {/* Footer: Result Label & Delete Action */}
+        <View style={styles.footerRow}>
+          <View style={styles.resultPill}>
+            <Text style={styles.resultPillText}>
+              {isDraw ? "🤝 Draw" : p1Won ? `🏆 ${p1} won` : `🏆 ${p2} won`}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => onDelete(item.id, p1, p2)}
+            activeOpacity={0.7}
+          >
+            <IconButton
+              icon="trash-can-outline"
+              size={18}
+              iconColor="#EF4444"
+              style={{ margin: 0 }}
+            />
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </Card.Content>
+    </Card>
+  );
+});
+
 export default function ScoresTab({
   scoresData: propScoresData,
   setScoresData: propSetScoresData,
 }) {
   const [localScoresData, setLocalScoresData] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(
     !propScoresData || propScoresData.length === 0,
   );
+  const [refreshing, setRefreshing] = useState(false);
 
   const scoresData = propScoresData || localScoresData;
   const setScoresData = propSetScoresData || setLocalScoresData;
 
-  async function fetchScores() {
+  const fetchScores = async () => {
     try {
-      let fetchedData = await supabase
+      const fetchedData = await supabase
         .from("ScoresData")
         .select("*")
         .order("id", { ascending: false });
+
       if (fetchedData.data) {
         setScoresData(fetchedData.data);
       }
-    } catch (error) {
-      console.error("Error fetching data:", error.message);
+    } catch (err) {
+      console.error("Error fetching scores in ScoresTab:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchScores();
@@ -64,156 +183,47 @@ export default function ScoresTab({
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchScores();
-    setRefreshing(false);
   };
 
-  const handleDeleteScore = (scoreId, p1, p2) => {
-    Alert.alert(
-      "Delete Match",
-      `Are you sure you want to delete this match record between ${p1} and ${p2}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from("ScoresData")
-                .delete()
-                .match({ id: scoreId });
+  const handleDeleteScore = useCallback(
+    (scoreId, p1Name, p2Name) => {
+      Alert.alert(
+        "Delete Score Record",
+        `Are you sure you want to delete the match between ${p1Name} and ${p2Name}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                const { error } = await supabase
+                  .from("ScoresData")
+                  .delete()
+                  .eq("id", scoreId);
 
-              if (error) {
-                Alert.alert("Error", error.message);
-              } else {
-                setScoresData(scoresData.filter((item) => item.id !== scoreId));
+                if (!error) {
+                  setScoresData((prev) =>
+                    (prev || []).filter((item) => item.id !== scoreId),
+                  );
+                }
+              } catch (err) {
+                console.error("Error deleting match:", err);
               }
-            } catch (err) {
-              console.error("Error deleting match:", err);
-            }
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [setScoresData],
+  );
 
-  const renderItem = ({ item }) => {
-    if (!item) return null;
+  const renderItem = useCallback(
+    ({ item }) => <MatchCardItem item={item} onDelete={handleDeleteScore} />,
+    [handleDeleteScore],
+  );
 
-    const players = item.players || [];
-    const p1 = players[0]?.player1 || "Player 1";
-    const s1 = parseFloat(players[0]?.scores) || 0;
-    const p2 = players[1]?.player2 || "Player 2";
-    const s2 = parseFloat(players[1]?.scores) || 0;
-
-    const p1Won = s1 > s2;
-    const p2Won = s2 > s1;
-    const isDraw = s1 === s2;
-
-    const sportEmoji = SPORT_ICONS[item.activity] || "🏅";
-
-    return (
-      <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          {/* Header: Location & Sport Badge */}
-          <View style={styles.headerRow}>
-            <View style={styles.locationContainer}>
-              <Text style={styles.locationTitle} numberOfLines={1}>
-                📍 {item.location || "Local Court"}
-              </Text>
-              <Text style={styles.dateTimeText}>
-                {item.date} {item.time ? `• ${item.time}` : ""}
-              </Text>
-            </View>
-
-            <View style={styles.sportBadge}>
-              <Text style={styles.sportBadgeText}>
-                {sportEmoji} {item.activity || "Match"}
-              </Text>
-            </View>
-          </View>
-
-          {/* Match Score Banner */}
-          <View style={styles.scoreBanner}>
-            {/* Player 1 */}
-            <View style={styles.playerBox}>
-              <Avatar.Text
-                size={40}
-                label={p1.substring(0, 2).toUpperCase()}
-                style={[styles.avatar, p1Won && styles.winnerAvatar]}
-                labelStyle={{ fontWeight: "700", color: "white", fontSize: 14 }}
-              />
-              <Text
-                style={[styles.playerName, p1Won && styles.winnerText]}
-                numberOfLines={1}
-              >
-                {p1}
-              </Text>
-              <Text style={[styles.scoreNumber, p1Won && styles.winnerScore]}>
-                {s1}
-              </Text>
-            </View>
-
-            {/* Middle: VS & Round */}
-            <View style={styles.vsBox}>
-              <View style={styles.vsBadge}>
-                <Text style={styles.vsText}>VS</Text>
-              </View>
-              <Text style={styles.roundText}>
-                Round {item.gameRound || "1"}
-              </Text>
-            </View>
-
-            {/* Player 2 */}
-            <View style={styles.playerBox}>
-              <Avatar.Text
-                size={40}
-                label={p2.substring(0, 2).toUpperCase()}
-                style={[
-                  styles.avatar,
-                  styles.opponentAvatar,
-                  p2Won && styles.winnerAvatar,
-                ]}
-                labelStyle={{ fontWeight: "700", color: "white", fontSize: 14 }}
-              />
-              <Text
-                style={[styles.playerName, p2Won && styles.winnerText]}
-                numberOfLines={1}
-              >
-                {p2}
-              </Text>
-              <Text style={[styles.scoreNumber, p2Won && styles.winnerScore]}>
-                {s2}
-              </Text>
-            </View>
-          </View>
-
-          {/* Footer: Result Label & Delete Action */}
-          <View style={styles.footerRow}>
-            <View style={styles.resultPill}>
-              <Text style={styles.resultPillText}>
-                {isDraw ? "🤝 Draw" : p1Won ? `🏆 ${p1} won` : `🏆 ${p2} won`}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => handleDeleteScore(item.id, p1, p2)}
-              activeOpacity={0.7}
-            >
-              <IconButton
-                icon="trash-can-outline"
-                size={18}
-                iconColor="#EF4444"
-                style={{ margin: 0 }}
-              />
-              <Text style={styles.deleteBtnText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </Card.Content>
-      </Card>
-    );
-  };
+  const keyExtractor = useCallback((item) => String(item.id), []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -234,8 +244,12 @@ export default function ScoresTab({
         <FlatList
           data={scoresData}
           renderItem={renderItem}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContent}
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS === "android"}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
