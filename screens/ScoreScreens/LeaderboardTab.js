@@ -59,8 +59,8 @@ export default function LeaderboardTab({
       let query = supabase
         .from("GlobalLeaderboard")
         .select("*")
-        .order("win_rate", { ascending: false })
         .order("wins", { ascending: false })
+        .order("win_streak", { ascending: false })
         .order("total_matches", { ascending: false });
 
       if (selectedSport && selectedSport !== "All") {
@@ -74,7 +74,6 @@ export default function LeaderboardTab({
       if (!error && data && data.length > 0) {
         setLeaderboard(data);
       } else {
-        // Fallback: aggregate from ScoresData
         const [scoresRes, profilesRes] = await Promise.all([
           supabase.from("ScoresData").select("*"),
           supabase.from("UserProfileData").select("*"),
@@ -111,6 +110,7 @@ export default function LeaderboardTab({
                 draws: 0,
                 total_matches: 0,
                 win_streak: 0,
+                current_streak: 0,
               };
             }
           });
@@ -120,17 +120,27 @@ export default function LeaderboardTab({
 
           if (s1 > s2) {
             stats[p1].wins += 1;
-            stats[p1].win_streak += 1;
+            stats[p1].current_streak = (stats[p1].current_streak || 0) + 1;
+            stats[p1].win_streak = Math.max(
+              stats[p1].win_streak,
+              stats[p1].current_streak,
+            );
             stats[p2].losses += 1;
-            stats[p2].win_streak = 0;
+            stats[p2].current_streak = 0;
           } else if (s2 > s1) {
             stats[p2].wins += 1;
-            stats[p2].win_streak += 1;
+            stats[p2].current_streak = (stats[p2].current_streak || 0) + 1;
+            stats[p2].win_streak = Math.max(
+              stats[p2].win_streak,
+              stats[p2].current_streak,
+            );
             stats[p1].losses += 1;
-            stats[p1].win_streak = 0;
+            stats[p1].current_streak = 0;
           } else {
             stats[p1].draws += 1;
             stats[p2].draws += 1;
+            stats[p1].current_streak = 0;
+            stats[p2].current_streak = 0;
           }
         });
 
@@ -152,8 +162,8 @@ export default function LeaderboardTab({
         });
 
         computedList.sort((a, b) => {
-          if (b.win_rate !== a.win_rate) return b.win_rate - a.win_rate;
           if (b.wins !== a.wins) return b.wins - a.wins;
+          if (b.win_streak !== a.win_streak) return b.win_streak - a.win_streak;
           return b.total_matches - a.total_matches;
         });
 
@@ -467,10 +477,11 @@ export default function LeaderboardTab({
                       {topThree[1].player_name}
                     </Text>
                     <Badge style={styles.podiumBadge}>
-                      {topThree[1].win_rate}%
+                      {topThree[1].wins} Wins
                     </Badge>
                     <Text style={styles.podiumStats}>
-                      {topThree[1].wins}W / {topThree[1].losses}L
+                      {topThree[1].wins}W / {topThree[1].losses}L • 🔥
+                      {topThree[1].win_streak || 0}
                     </Text>
                     {!checkIfSelf(topThree[1]) ? (
                       <TouchableOpacity
@@ -532,10 +543,11 @@ export default function LeaderboardTab({
                         { backgroundColor: "#FFD700", color: "#000" },
                       ]}
                     >
-                      {topThree[0].win_rate}%
+                      {topThree[0].wins} Wins
                     </Badge>
                     <Text style={styles.podiumStats}>
-                      {topThree[0].wins}W / {topThree[0].losses}L
+                      {topThree[0].wins}W / {topThree[0].losses}L • 🔥
+                      {topThree[0].win_streak || 0}
                     </Text>
                     {!checkIfSelf(topThree[0]) ? (
                       <TouchableOpacity
@@ -588,10 +600,11 @@ export default function LeaderboardTab({
                       {topThree[2].player_name}
                     </Text>
                     <Badge style={styles.podiumBadge}>
-                      {topThree[2].win_rate}%
+                      {topThree[2].wins} Wins
                     </Badge>
                     <Text style={styles.podiumStats}>
-                      {topThree[2].wins}W / {topThree[2].losses}L
+                      {topThree[2].wins}W / {topThree[2].losses}L • 🔥
+                      {topThree[2].win_streak || 0}
                     </Text>
                     {!checkIfSelf(topThree[2]) ? (
                       <TouchableOpacity
@@ -634,7 +647,7 @@ export default function LeaderboardTab({
                   📋 Global League Table ({selectedSport})
                 </Text>
                 <Text style={styles.tableSubtitle}>
-                  Ranked by Win Rate % and Match Wins
+                  Ranked by Match Wins & Highest Streak
                 </Text>
               </View>
 
@@ -652,9 +665,6 @@ export default function LeaderboardTab({
                   </DataTable.Title>
                   <DataTable.Title numeric style={styles.colStat}>
                     L
-                  </DataTable.Title>
-                  <DataTable.Title numeric style={styles.colWinRate}>
-                    Win%
                   </DataTable.Title>
                   <DataTable.Title numeric style={styles.colStreak}>
                     Strk
@@ -746,13 +756,6 @@ export default function LeaderboardTab({
                           <Text style={styles.lossCellText}>{item.losses}</Text>
                         </DataTable.Cell>
 
-                        {/* Win Rate % */}
-                        <DataTable.Cell numeric style={styles.colWinRate}>
-                          <Text style={styles.winRateCellText}>
-                            {item.win_rate}%
-                          </Text>
-                        </DataTable.Cell>
-
                         {/* Streak */}
                         <DataTable.Cell numeric style={styles.colStreak}>
                           <Text style={styles.streakCellText}>
@@ -834,8 +837,8 @@ export default function LeaderboardTab({
                           <Text style={styles.cardPlayerName} numberOfLines={1}>
                             {item.player_name}
                           </Text>
-                          <Text style={styles.cardWinRateText}>
-                            {item.win_rate}% Win Rate
+                          <Text style={styles.cardWinsBadgeText}>
+                            {item.wins} Wins
                           </Text>
                         </View>
 
@@ -861,7 +864,7 @@ export default function LeaderboardTab({
                             <Text style={styles.statValStreak}>
                               {item.win_streak > 0
                                 ? `🔥${item.win_streak}`
-                                : "—"}
+                                : "0"}
                             </Text>
                           </Text>
                         </View>
@@ -974,23 +977,26 @@ export default function LeaderboardTab({
                     </Text>
                   </View>
                   <View style={styles.modalStatBox}>
-                    <Text style={styles.modalStatLabel}>Win Rate</Text>
-                    <Text style={[styles.modalStatVal, { color: "#2193F0" }]}>
-                      {selectedPlayer.win_rate}%
-                    </Text>
-                  </View>
-                  <View style={styles.modalStatBox}>
                     <Text style={styles.modalStatLabel}>Draws</Text>
                     <Text style={styles.modalStatVal}>
                       {selectedPlayer.draws || 0}
                     </Text>
                   </View>
                   <View style={styles.modalStatBox}>
-                    <Text style={styles.modalStatLabel}>Streak</Text>
+                    <Text style={styles.modalStatLabel}>Best Streak</Text>
                     <Text style={[styles.modalStatVal, { color: "#EA580C" }]}>
                       {selectedPlayer.win_streak > 0
                         ? `🔥 ${selectedPlayer.win_streak}`
                         : "0"}
+                    </Text>
+                  </View>
+                  <View style={styles.modalStatBox}>
+                    <Text style={styles.modalStatLabel}>Global Rank</Text>
+                    <Text style={[styles.modalStatVal, { color: "#2193F0" }]}>
+                      #
+                      {leaderboard.findIndex(
+                        (p) => p.player_name === selectedPlayer.player_name,
+                      ) + 1 || 1}
                     </Text>
                   </View>
                 </View>
@@ -1139,27 +1145,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F9FF",
   },
   colRank: {
-    flex: 0.5,
+    flex: 0.6,
     justifyContent: "center",
   },
   colPlayer: {
-    flex: 2.2,
+    flex: 2.5,
     justifyContent: "flex-start",
   },
   colStat: {
-    flex: 0.65,
-    justifyContent: "center",
-  },
-  colWinRate: {
-    flex: 1.0,
+    flex: 0.8,
     justifyContent: "center",
   },
   colStreak: {
-    flex: 0.85,
+    flex: 1.1,
     justifyContent: "center",
   },
   colAction: {
-    flex: 1.4,
+    flex: 1.5,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1473,10 +1475,10 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     flex: 1,
   },
-  cardWinRateText: {
+  cardWinsBadgeText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2193F0",
+    color: "#16A34A",
   },
   cardStatsRow: {
     flexDirection: "row",
