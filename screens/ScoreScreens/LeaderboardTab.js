@@ -515,7 +515,9 @@ export default function LeaderboardTab({
                         </Text>
                         <Text style={styles.cardStat}>
                           W:{" "}
-                          <Text style={styles.statValWin}>{topThree[1].wins}</Text>
+                          <Text style={styles.statValWin}>
+                            {topThree[1].wins}
+                          </Text>
                         </Text>
                         <Text style={styles.cardStat}>
                           L:{" "}
@@ -571,7 +573,9 @@ export default function LeaderboardTab({
                         </Text>
                         <Text style={styles.cardStat}>
                           W:{" "}
-                          <Text style={styles.statValWin}>{topThree[0].wins}</Text>
+                          <Text style={styles.statValWin}>
+                            {topThree[0].wins}
+                          </Text>
                         </Text>
                         <Text style={styles.cardStat}>
                           L:{" "}
@@ -623,7 +627,9 @@ export default function LeaderboardTab({
                         </Text>
                         <Text style={styles.cardStat}>
                           W:{" "}
-                          <Text style={styles.statValWin}>{topThree[2].wins}</Text>
+                          <Text style={styles.statValWin}>
+                            {topThree[2].wins}
+                          </Text>
                         </Text>
                         <Text style={styles.cardStat}>
                           L:{" "}
@@ -700,8 +706,8 @@ export default function LeaderboardTab({
                             item.id
                               ? `row-${item.id}`
                               : item.userprofile_id
-                              ? `row-${item.userprofile_id}-${item.activity}`
-                              : `row-${item.player_name}-${item.activity}-${index}`
+                                ? `row-${item.userprofile_id}-${item.activity}`
+                                : `row-${item.player_name}-${item.activity}-${index}`
                           }
                           style={[
                             styles.tableRow,
@@ -835,8 +841,8 @@ export default function LeaderboardTab({
                       item.id
                         ? `card-${item.id}`
                         : item.userprofile_id
-                        ? `card-${item.userprofile_id}-${item.activity}`
-                        : `card-${item.player_name}-${item.activity}-${index}`
+                          ? `card-${item.userprofile_id}-${item.activity}`
+                          : `card-${item.player_name}-${item.activity}-${index}`
                     }
                     style={styles.playerCard}
                   >
@@ -1040,8 +1046,8 @@ export default function LeaderboardTab({
                         p.userprofile_id && selectedPlayer.userprofile_id
                           ? p.userprofile_id === selectedPlayer.userprofile_id
                           : p.id && selectedPlayer.id
-                          ? p.id === selectedPlayer.id
-                          : p.player_name === selectedPlayer.player_name,
+                            ? p.id === selectedPlayer.id
+                            : p.player_name === selectedPlayer.player_name,
                       ) + 1 || 1}
                     </Text>
                   </View>

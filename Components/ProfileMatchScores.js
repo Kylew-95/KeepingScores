@@ -167,7 +167,9 @@ export default function ProfileMatchScores({
           isBottomCentered && styles.triangleCardBottom,
         ]}
       >
-        <View style={[styles.cardOutcomeBadge, { backgroundColor: m.outcomeColor }]}>
+        <View
+          style={[styles.cardOutcomeBadge, { backgroundColor: m.outcomeColor }]}
+        >
           <Text style={styles.cardOutcomeText}>{m.outcome}</Text>
         </View>
 
@@ -227,7 +229,10 @@ export default function ProfileMatchScores({
               labelStyle={{ fontWeight: "bold", fontSize: 13 }}
             />
             <Text
-              style={[styles.fullPlayerName, p1Won && { color: "#10B981", fontWeight: "bold" }]}
+              style={[
+                styles.fullPlayerName,
+                p1Won && { color: "#10B981", fontWeight: "bold" },
+              ]}
               numberOfLines={1}
             >
               {m.p1}
@@ -252,7 +257,10 @@ export default function ProfileMatchScores({
               labelStyle={{ fontWeight: "bold", fontSize: 13 }}
             />
             <Text
-              style={[styles.fullPlayerName, p2Won && { color: "#10B981", fontWeight: "bold" }]}
+              style={[
+                styles.fullPlayerName,
+                p2Won && { color: "#10B981", fontWeight: "bold" },
+              ]}
               numberOfLines={1}
             >
               {m.p2}
@@ -268,7 +276,12 @@ export default function ProfileMatchScores({
             style={styles.deleteBtn}
             onPress={() => handleDeleteScore(item.id, m.p1, m.p2)}
           >
-            <IconButton icon="trash-can-outline" iconColor="#EF4444" size={18} style={{ margin: 0 }} />
+            <IconButton
+              icon="trash-can-outline"
+              iconColor="#EF4444"
+              size={18}
+              style={{ margin: 0 }}
+            />
             <Text style={styles.deleteBtnText}>Delete Record</Text>
           </TouchableOpacity>
         </View>
@@ -290,7 +303,9 @@ export default function ProfileMatchScores({
         <Text style={styles.sectionTitle}>Recent Matches</Text>
         {matches.length > 0 && (
           <TouchableOpacity onPress={() => setAllMatchesModalVisible(true)}>
-            <Text style={styles.viewAllText}>View All ({matches.length}) →</Text>
+            <Text style={styles.viewAllText}>
+              View All ({matches.length}) →
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -346,7 +361,12 @@ export default function ProfileMatchScores({
           <View style={styles.modalHeader}>
             <Text style={styles.modalHeaderTitle}>Match & Game History</Text>
             <TouchableOpacity onPress={() => setAllMatchesModalVisible(false)}>
-              <IconButton icon="close" size={24} iconColor="#0F172A" style={{ margin: 0 }} />
+              <IconButton
+                icon="close"
+                size={24}
+                iconColor="#0F172A"
+                style={{ margin: 0 }}
+              />
             </TouchableOpacity>
           </View>
 
