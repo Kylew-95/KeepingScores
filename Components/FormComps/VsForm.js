@@ -141,7 +141,9 @@ export function VsForm({
             list.push({
               name,
               type: p.osm_value || "sports_centre",
-              desc: [p.street, p.district || p.city].filter(Boolean).join(", ") || "Local Sports Facility",
+              desc:
+                [p.street, p.district || p.city].filter(Boolean).join(", ") ||
+                "Local Sports Facility",
             });
           }
         });
@@ -167,8 +169,9 @@ export function VsForm({
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [friends, setFriends] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
+  const [followingUsers, setFollowingUsers] = useState([]);
+  const [followersUsers, setFollowersUsers] = useState([]);
+  const [allPlayers, setAllPlayers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [customGuestName, setCustomGuestName] = useState("");
 
@@ -225,38 +228,124 @@ export function VsForm({
     setVenueResults([]);
   };
 
-  // Fetch followed friends and community users
+  // Fetch followed users, followers, and community players from database
   const loadOpponents = async () => {
     if (!currentUserId) return;
     setLoadingUsers(true);
     try {
-      // 1. Fetch all user profiles
-      const { data: profiles, error: profErr } = await supabase
-        .from("UserProfileData")
-        .select("*");
-      if (profErr) throw profErr;
+      const [profilesRes, leaderboardRes, followingRes, followersRes] = await Promise.all([
+        supabase.from("UserProfileData").select("*"),
+        supabase.from("GlobalLeaderboard").select("player_name, userprofile_id, avatar_image_url"),
+        supabase.from("UserFollows").select("id, following_id, following_name").eq("follower_id", currentUserId),
+        supabase.from("UserFollows").select("id, follower_id, following_name").eq("following_id", currentUserId),
+      ]);
 
-      const otherProfiles = (profiles || []).filter(
-        (p) => p.userprofile_id !== currentUserId,
-      );
-      setAllUsers(otherProfiles);
+      const profiles = profilesRes.data || [];
+      const leaderboard = leaderboardRes.data || [];
+      const followingsData = followingRes.data || [];
+      const followersData = followersRes.data || [];
 
-      // 2. Fetch following list
-      const { data: followings, error: folErr } = await supabase
-        .from("UserFollows")
-        .select("following_id")
-        .eq("follower_id", currentUserId);
+      // Create lookup maps by userprofile_id and by lowercase name
+      const profileById = new Map();
+      const profileByName = new Map();
 
-      if (folErr) throw folErr;
+      profiles.forEach((p) => {
+        if (p.userprofile_id) profileById.set(p.userprofile_id, p);
+        if (p.first_name) profileByName.set(p.first_name.trim().toLowerCase(), p);
+      });
 
-      const followedIds = new Set(
-        (followings || []).map((f) => f.following_id),
-      );
-      const followedFriends = otherProfiles.filter((p) =>
-        followedIds.has(p.userprofile_id),
-      );
-      setFriends(followedFriends);
-      // Opponent is not auto-selected so the user can always pick who they are playing
+      leaderboard.forEach((lb) => {
+        const nameKey = (lb.player_name || "").trim().toLowerCase();
+        if (lb.userprofile_id && !profileById.has(lb.userprofile_id)) {
+          profileById.set(lb.userprofile_id, {
+            userprofile_id: lb.userprofile_id,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+        if (nameKey && !profileByName.has(nameKey)) {
+          profileByName.set(nameKey, {
+            userprofile_id: lb.userprofile_id || `lb-${lb.player_name}`,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+      });
+
+      // 1. Build Following List (People Kyle is following)
+      const followedIdSet = new Set();
+      const followedNameSet = new Set();
+      const followingList = [];
+
+      followingsData.forEach((row) => {
+        if (row.following_id) followedIdSet.add(row.following_id);
+        if (row.following_name) followedNameSet.add(row.following_name.trim().toLowerCase());
+
+        let matched = null;
+        if (row.following_id && profileById.has(row.following_id)) {
+          matched = { ...profileById.get(row.following_id), followRowId: row.id };
+        } else if (row.following_name && profileByName.has(row.following_name.trim().toLowerCase())) {
+          matched = { ...profileByName.get(row.following_name.trim().toLowerCase()), followRowId: row.id };
+        } else {
+          matched = {
+            userprofile_id: row.following_id || `follow-name-${row.id}`,
+            first_name: row.following_name || "Player",
+            last_name: "",
+            avatar_image_url: null,
+            followRowId: row.id,
+          };
+        }
+
+        // Avoid adding self to following list
+        if (matched.userprofile_id !== currentUserId && matched.first_name?.toLowerCase() !== p1Name?.toLowerCase()) {
+          followingList.push(matched);
+        }
+      });
+
+      // 2. Build Followers List (People following Kyle)
+      const followersList = [];
+      followersData.forEach((row) => {
+        let matched = null;
+        if (row.follower_id && profileById.has(row.follower_id)) {
+          matched = { ...profileById.get(row.follower_id), followRowId: row.id };
+        } else {
+          matched = {
+            userprofile_id: row.follower_id || `follower-${row.id}`,
+            first_name: row.following_name || "Player",
+            last_name: "",
+            avatar_image_url: null,
+            followRowId: row.id,
+          };
+        }
+        if (matched.userprofile_id !== currentUserId && matched.first_name?.toLowerCase() !== p1Name?.toLowerCase()) {
+          followersList.push(matched);
+        }
+      });
+
+      // 3. Build All Players list (combining all registered profiles and leaderboard members)
+      const allPlayersMap = new Map();
+      profiles.forEach((p) => {
+        if (p.userprofile_id !== currentUserId) {
+          allPlayersMap.set(p.userprofile_id, p);
+        }
+      });
+      leaderboard.forEach((lb) => {
+        const id = lb.userprofile_id || `lb-${lb.player_name}`;
+        if (id !== currentUserId && !allPlayersMap.has(id) && lb.player_name?.toLowerCase() !== p1Name?.toLowerCase()) {
+          allPlayersMap.set(id, {
+            userprofile_id: id,
+            first_name: lb.player_name,
+            last_name: "",
+            avatar_image_url: lb.avatar_image_url,
+          });
+        }
+      });
+
+      setFollowingUsers(followingList);
+      setFollowersUsers(followersList);
+      setAllPlayers(Array.from(allPlayersMap.values()));
     } catch (err) {
       console.error("Error loading opponents:", err);
     } finally {
@@ -267,6 +356,12 @@ export function VsForm({
   useEffect(() => {
     loadOpponents();
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (modalVisible) {
+      loadOpponents();
+    }
+  }, [modalVisible]);
 
   const handleSelectOpponent = (user) => {
     setSelectedOpponent({
@@ -350,15 +445,47 @@ export function VsForm({
     }
   };
 
-  // Filtered lists for modal
-  const filterList = (list) => {
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase().trim();
-    return list.filter((u) => {
-      const full = `${u.first_name || ""} ${u.last_name || ""}`.toLowerCase();
-      return full.includes(q);
+  // Search and filter helpers for modal
+  const isSearching = searchQuery.trim().length > 0;
+  const cleanQuery = searchQuery.trim().toLowerCase();
+
+  // Filtered search across all community & followed players
+  const getSearchResults = () => {
+    if (!isSearching) return [];
+    const seenIds = new Set();
+    const results = [];
+
+    const followingIdSet = new Set(followingUsers.map((u) => u.userprofile_id));
+    const followersIdSet = new Set(followersUsers.map((u) => u.userprofile_id));
+
+    const pool = [...followingUsers, ...followersUsers, ...allPlayers];
+    pool.forEach((player) => {
+      if (!player) return;
+      const id = player.userprofile_id || player.first_name;
+      if (seenIds.has(id)) return;
+      seenIds.add(id);
+
+      const fullName = `${player.first_name || ""} ${player.last_name || ""}`.trim().toLowerCase();
+      if (fullName.includes(cleanQuery)) {
+        let relation = null;
+        if (followingIdSet.has(player.userprofile_id)) relation = "Following";
+        else if (followersIdSet.has(player.userprofile_id)) relation = "Follower";
+
+        results.push({ ...player, relation });
+      }
     });
+
+    return results;
   };
+
+  const searchResults = getSearchResults();
+
+  // Non-followed players for default listing
+  const followingIdSet = new Set(followingUsers.map((u) => u.userprofile_id));
+  const followersIdSet = new Set(followersUsers.map((u) => u.userprofile_id));
+  const otherPlayers = allPlayers.filter(
+    (p) => !followingIdSet.has(p.userprofile_id) && !followersIdSet.has(p.userprofile_id)
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -463,7 +590,10 @@ export function VsForm({
                 <Text
                   style={[
                     styles.playerNameText,
-                    !selectedOpponent && { color: "#2193F0", fontWeight: "800" },
+                    !selectedOpponent && {
+                      color: "#2193F0",
+                      fontWeight: "800",
+                    },
                   ]}
                   numberOfLines={1}
                 >
@@ -596,118 +726,247 @@ export function VsForm({
           </View>
 
           <Searchbar
-            placeholder="Search friend..."
+            placeholder="Search player by name..."
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}
             inputStyle={{ minHeight: 0 }}
           />
 
-          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
-            {/* Followed Friends Section */}
-            <Text style={styles.modalSectionHeading}>
-              ⭐ Your Friends ({friends.length})
-            </Text>
-            {friends.length === 0 ? (
-              <Text style={styles.emptyNote}>
-                You haven't followed any friends yet. Select a player below or
-                add a guest name.
-              </Text>
-            ) : (
-              filterList(friends).map((friend) => (
-                <TouchableOpacity
-                  key={friend.userprofile_id}
-                  style={styles.opponentRow}
-                  onPress={() => handleSelectOpponent(friend)}
-                >
-                  {friend.avatar_image_url ? (
-                    <Avatar.Image
-                      size={44}
-                      source={{ uri: friend.avatar_image_url }}
-                    />
-                  ) : (
-                    <Avatar.Text
-                      size={44}
-                      label={(friend.first_name || "F")
-                        .substring(0, 2)
-                        .toUpperCase()}
-                      style={{ backgroundColor: "#2193F0" }}
-                    />
-                  )}
-                  <View style={{ marginLeft: 12, flex: 1 }}>
-                    <Text style={styles.opponentRowName}>
-                      {friend.first_name} {friend.last_name || ""}
-                    </Text>
-                    <Text style={styles.friendBadge}>Friend</Text>
-                  </View>
-                  <Button mode="text" compact>
-                    Select
-                  </Button>
-                </TouchableOpacity>
-              ))
-            )}
-
-            {/* Other Community Players */}
-            <Text style={[styles.modalSectionHeading, { marginTop: 20 }]}>
-              👥 Other Players
-            </Text>
-            {filterList(
-              allUsers.filter(
-                (u) =>
-                  !friends.some((f) => f.userprofile_id === u.userprofile_id),
-              ),
-            ).map((user) => (
-              <TouchableOpacity
-                key={user.userprofile_id}
-                style={styles.opponentRow}
-                onPress={() => handleSelectOpponent(user)}
-              >
-                {user.avatar_image_url ? (
-                  <Avatar.Image
-                    size={44}
-                    source={{ uri: user.avatar_image_url }}
-                  />
-                ) : (
-                  <Avatar.Text
-                    size={44}
-                    label={(user.first_name || "P")
-                      .substring(0, 2)
-                      .toUpperCase()}
-                    style={{ backgroundColor: "#64748B" }}
-                  />
-                )}
-                <View style={{ marginLeft: 12, flex: 1 }}>
-                  <Text style={styles.opponentRowName}>
-                    {user.first_name} {user.last_name || ""}
-                  </Text>
-                </View>
-                <Button mode="text" compact>
-                  Select
-                </Button>
-              </TouchableOpacity>
-            ))}
-
-            {/* Custom Guest Name */}
-            <Text style={[styles.modalSectionHeading, { marginTop: 20 }]}>
-              👤 Guest Opponent (Not on app)
-            </Text>
-            <View style={styles.guestRow}>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter guest name..."
-                value={customGuestName}
-                onChangeText={setCustomGuestName}
-                style={{ flex: 1, backgroundColor: "white" }}
-                dense
+          <ScrollView
+            style={{ flex: 1, paddingHorizontal: 16 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {loadingUsers ? (
+              <ActivityIndicator
+                style={{ marginTop: 24 }}
+                color="#2193F0"
               />
-              <Button
-                mode="contained"
-                onPress={handleSelectGuest}
-                style={{ marginLeft: 8, backgroundColor: "#2193F0" }}
-              >
-                Add
-              </Button>
-            </View>
+            ) : isSearching ? (
+              <View>
+                <Text style={styles.modalSectionHeading}>
+                  🔍 Search Results ({searchResults.length})
+                </Text>
+                {searchResults.length === 0 ? (
+                  <View style={styles.noSearchBox}>
+                    <Text style={styles.emptyNote}>
+                      No players matching "{searchQuery}".
+                    </Text>
+                  </View>
+                ) : (
+                  searchResults.map((player) => (
+                    <TouchableOpacity
+                      key={player.userprofile_id}
+                      style={styles.opponentRow}
+                      onPress={() => handleSelectOpponent(player)}
+                    >
+                      {player.avatar_image_url ? (
+                        <Avatar.Image
+                          size={44}
+                          source={{ uri: player.avatar_image_url }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={44}
+                          label={(player.first_name || "P")
+                            .substring(0, 2)
+                            .toUpperCase()}
+                          style={{ backgroundColor: "#2193F0" }}
+                        />
+                      )}
+                      <View style={{ marginLeft: 12, flex: 1 }}>
+                        <Text style={styles.opponentRowName}>
+                          {player.first_name} {player.last_name || ""}
+                        </Text>
+                        {player.relation && (
+                          <Text
+                            style={
+                              player.relation === "Following"
+                                ? styles.followingBadge
+                                : styles.followerBadge
+                            }
+                          >
+                            {player.relation}
+                          </Text>
+                        )}
+                      </View>
+                      <Button mode="text" compact>
+                        Select
+                      </Button>
+                    </TouchableOpacity>
+                  ))
+                )}
+
+                {/* 1-tap Guest Player fallback */}
+                <View style={styles.quickGuestBox}>
+                  <Text style={styles.quickGuestPrompt}>
+                    Can't find who you're looking for?
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.quickGuestBtn}
+                    onPress={() => {
+                      setSelectedOpponent({
+                        name: searchQuery.trim(),
+                        avatarUrl: null,
+                        userId: null,
+                        isGuest: true,
+                      });
+                      setSearchQuery("");
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.quickGuestBtnText}>
+                      ➕ Add "{searchQuery.trim()}" as Guest Player
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View>
+                {/* People You're Following */}
+                <Text style={styles.modalSectionHeading}>
+                  📌 People You're Following ({followingUsers.length})
+                </Text>
+                {followingUsers.length === 0 ? (
+                  <Text style={styles.emptyNote}>
+                    You aren't following anyone yet. Search players or pick from below.
+                  </Text>
+                ) : (
+                  followingUsers.map((user) => (
+                    <TouchableOpacity
+                      key={user.userprofile_id}
+                      style={styles.opponentRow}
+                      onPress={() => handleSelectOpponent(user)}
+                    >
+                      {user.avatar_image_url ? (
+                        <Avatar.Image
+                          size={44}
+                          source={{ uri: user.avatar_image_url }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={44}
+                          label={(user.first_name || "P")
+                            .substring(0, 2)
+                            .toUpperCase()}
+                          style={{ backgroundColor: "#2193F0" }}
+                        />
+                      )}
+                      <View style={{ marginLeft: 12, flex: 1 }}>
+                        <Text style={styles.opponentRowName}>
+                          {user.first_name} {user.last_name || ""}
+                        </Text>
+                        <Text style={styles.followingBadge}>Following</Text>
+                      </View>
+                      <Button mode="text" compact>
+                        Select
+                      </Button>
+                    </TouchableOpacity>
+                  ))
+                )}
+
+                {/* People Following You (Only show if user has followers) */}
+                {followersUsers.length > 0 && (
+                  <>
+                    <Text style={[styles.modalSectionHeading, { marginTop: 20 }]}>
+                      👥 People Following You ({followersUsers.length})
+                    </Text>
+                    {followersUsers.map((user) => (
+                      <TouchableOpacity
+                        key={user.userprofile_id}
+                        style={styles.opponentRow}
+                        onPress={() => handleSelectOpponent(user)}
+                      >
+                        {user.avatar_image_url ? (
+                          <Avatar.Image
+                            size={44}
+                            source={{ uri: user.avatar_image_url }}
+                          />
+                        ) : (
+                          <Avatar.Text
+                            size={44}
+                            label={(user.first_name || "P")
+                              .substring(0, 2)
+                              .toUpperCase()}
+                            style={{ backgroundColor: "#8B5CF6" }}
+                          />
+                        )}
+                        <View style={{ marginLeft: 12, flex: 1 }}>
+                          <Text style={styles.opponentRowName}>
+                            {user.first_name} {user.last_name || ""}
+                          </Text>
+                          <Text style={styles.followerBadge}>Follower</Text>
+                        </View>
+                        <Button mode="text" compact>
+                          Select
+                        </Button>
+                      </TouchableOpacity>
+                    ))}
+                  </>
+                )}
+
+                {/* Other Community Players */}
+                {otherPlayers.length > 0 && (
+                  <>
+                    <Text style={[styles.modalSectionHeading, { marginTop: 20 }]}>
+                      🌐 Other Players
+                    </Text>
+                    {otherPlayers.map((user) => (
+                      <TouchableOpacity
+                        key={user.userprofile_id}
+                        style={styles.opponentRow}
+                        onPress={() => handleSelectOpponent(user)}
+                      >
+                        {user.avatar_image_url ? (
+                          <Avatar.Image
+                            size={44}
+                            source={{ uri: user.avatar_image_url }}
+                          />
+                        ) : (
+                          <Avatar.Text
+                            size={44}
+                            label={(user.first_name || "P")
+                              .substring(0, 2)
+                              .toUpperCase()}
+                            style={{ backgroundColor: "#64748B" }}
+                          />
+                        )}
+                        <View style={{ marginLeft: 12, flex: 1 }}>
+                          <Text style={styles.opponentRowName}>
+                            {user.first_name} {user.last_name || ""}
+                          </Text>
+                        </View>
+                        <Button mode="text" compact>
+                          Select
+                        </Button>
+                      </TouchableOpacity>
+                    ))}
+                  </>
+                )}
+
+                {/* Custom Guest Name */}
+                <Text style={[styles.modalSectionHeading, { marginTop: 20 }]}>
+                  👤 Guest Opponent (Not on app)
+                </Text>
+                <View style={styles.guestRow}>
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter guest name..."
+                    value={customGuestName}
+                    onChangeText={setCustomGuestName}
+                    style={{ flex: 1, backgroundColor: "white" }}
+                    dense
+                  />
+                  <Button
+                    mode="contained"
+                    onPress={handleSelectGuest}
+                    style={{ marginLeft: 8, backgroundColor: "#2193F0" }}
+                  >
+                    Add
+                  </Button>
+                </View>
+              </View>
+            )}
             <View style={{ height: 40 }} />
           </ScrollView>
         </SafeAreaView>
@@ -750,16 +1009,26 @@ export function VsForm({
                 onPress={() => setShowCustomVenueInput(!showCustomVenueInput)}
                 activeOpacity={0.7}
               >
-                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flex: 1,
+                  }}
+                >
                   <Text style={{ fontSize: 20, marginRight: 10 }}>➕</Text>
                   <View>
-                    <Text style={styles.otherVenueTitle}>Other (Custom Park or Venue)</Text>
+                    <Text style={styles.otherVenueTitle}>
+                      Other (Custom Park or Venue)
+                    </Text>
                     <Text style={styles.otherVenueSubtitle}>
                       Write your own place (e.g. park, court, school)
                     </Text>
                   </View>
                 </View>
-                <Text style={{ fontSize: 15, color: "#2193F0", fontWeight: "bold" }}>
+                <Text
+                  style={{ fontSize: 15, color: "#2193F0", fontWeight: "bold" }}
+                >
                   {showCustomVenueInput ? "▲" : "▼"}
                 </Text>
               </TouchableOpacity>
@@ -778,7 +1047,10 @@ export function VsForm({
                     mode="contained"
                     onPress={() => {
                       if (!customVenueInput.trim()) {
-                        Alert.alert("Required", "Please type a venue or park name.");
+                        Alert.alert(
+                          "Required",
+                          "Please type a venue or park name.",
+                        );
                         return;
                       }
                       handleSelectVenue(customVenueInput.trim());
@@ -847,38 +1119,44 @@ export function VsForm({
                   📍 Nearby Venues Around You ({currentAreaLabel})
                 </Text>
                 {loadingNearbyVenues ? (
-                  <ActivityIndicator size="small" color="#2193F0" style={{ marginVertical: 12 }} />
+                  <ActivityIndicator
+                    size="small"
+                    color="#2193F0"
+                    style={{ marginVertical: 12 }}
+                  />
                 ) : (
-                  (nearbyVenues.length > 0 ? nearbyVenues : POPULAR_VENUES).map((item, idx) => (
-                    <TouchableOpacity
-                      key={`${item.name}_${idx}`}
-                      style={styles.venueRow}
-                      onPress={() => handleSelectVenue(item.name)}
-                    >
-                      <View style={styles.venueIconCircle}>
-                        <Text style={{ fontSize: 18 }}>
-                          {item.type === "tennis"
-                            ? "🎾"
-                            : item.type === "badminton"
-                              ? "🏸"
-                              : item.type === "pitch"
-                                ? "⚽"
-                                : item.type === "gym"
-                                  ? "🏋️"
-                                  : "🏟️"}
-                        </Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.venueName} numberOfLines={1}>
-                          {item.name}
-                        </Text>
-                        <Text style={styles.venueDesc} numberOfLines={1}>
-                          {item.desc}
-                        </Text>
-                      </View>
-                      <Text style={styles.selectArrow}>→</Text>
-                    </TouchableOpacity>
-                  ))
+                  (nearbyVenues.length > 0 ? nearbyVenues : POPULAR_VENUES).map(
+                    (item, idx) => (
+                      <TouchableOpacity
+                        key={`${item.name}_${idx}`}
+                        style={styles.venueRow}
+                        onPress={() => handleSelectVenue(item.name)}
+                      >
+                        <View style={styles.venueIconCircle}>
+                          <Text style={{ fontSize: 18 }}>
+                            {item.type === "tennis"
+                              ? "🎾"
+                              : item.type === "badminton"
+                                ? "🏸"
+                                : item.type === "pitch"
+                                  ? "⚽"
+                                  : item.type === "gym"
+                                    ? "🏋️"
+                                    : "🏟️"}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.venueName} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          <Text style={styles.venueDesc} numberOfLines={1}>
+                            {item.desc}
+                          </Text>
+                        </View>
+                        <Text style={styles.selectArrow}>→</Text>
+                      </TouchableOpacity>
+                    ),
+                  )
                 )}
               </>
             )}
@@ -1125,11 +1403,57 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#0F172A",
   },
-  friendBadge: {
+  followingBadge: {
     fontSize: 11,
-    color: "#16A34A",
-    fontWeight: "600",
-    marginTop: 2,
+    color: "#2563EB",
+    fontWeight: "700",
+    backgroundColor: "#EFF6FF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginTop: 3,
+  },
+  followerBadge: {
+    fontSize: 11,
+    color: "#7C3AED",
+    fontWeight: "700",
+    backgroundColor: "#F5F3FF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginTop: 3,
+  },
+  noSearchBox: {
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  quickGuestBox: {
+    marginTop: 18,
+    padding: 16,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+  },
+  quickGuestPrompt: {
+    fontSize: 13,
+    color: "#64748B",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  quickGuestBtn: {
+    backgroundColor: "#2193F0",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  quickGuestBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   guestRow: {
     flexDirection: "row",
