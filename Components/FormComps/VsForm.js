@@ -128,36 +128,7 @@ export function VsForm({
       const url = `https://photon.komoot.io/api/?q=sports+leisure+centre+gym&lat=${lat}&lon=${lon}&limit=15`;
       const resp = await fetch(url, {
         headers: { "User-Agent": "KeepingScoresApp/1.0" },
-        otherVenueCard: {
-    backgroundColor: "#F0F9FF",
-    borderWidth: 1.5,
-    borderColor: "#BAE6FD",
-    borderRadius: 14,
-    marginVertical: 10,
-    padding: 12,
-  },
-  otherVenueHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  otherVenueTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0369A1",
-  },
-  otherVenueSubtitle: {
-    fontSize: 12,
-    color: "#0284C7",
-    marginTop: 2,
-  },
-  otherVenueInputWrapper: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E0F2FE",
-  },
-});
+      });
       if (resp.ok) {
         const data = await resp.json();
         const seen = new Set();
@@ -285,15 +256,7 @@ export function VsForm({
         followedIds.has(p.userprofile_id),
       );
       setFriends(followedFriends);
-
-      // Default to first friend if not selected yet
-      if (!selectedOpponent && followedFriends.length > 0) {
-        setSelectedOpponent({
-          name: followedFriends[0].first_name || "Friend",
-          avatarUrl: followedFriends[0].avatar_image_url,
-          userId: followedFriends[0].userprofile_id,
-        });
-      }
+      // Opponent is not auto-selected so the user can always pick who they are playing
     } catch (err) {
       console.error("Error loading opponents:", err);
     } finally {
@@ -369,9 +332,10 @@ export function VsForm({
         `${p1Name} ${p1Score} - ${p2Score} ${selectedOpponent.name} has been recorded.`,
       );
 
-      // Reset scores for next entry
+      // Reset scores and opponent for next entry
       setP1Score(0);
       setP2Score(0);
+      setSelectedOpponent(null);
 
       if (onSaveSuccess) {
         onSaveSuccess();
@@ -477,7 +441,7 @@ export function VsForm({
               <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={styles.opponentSelectBtn}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
                 {selectedOpponent?.avatarUrl ? (
                   <Avatar.Image
@@ -496,14 +460,14 @@ export function VsForm({
                     <Text style={styles.plusSign}>+</Text>
                   </View>
                 )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setModalVisible(true)}
-                style={{ alignItems: "center" }}
-              >
-                <Text style={styles.playerNameText} numberOfLines={1}>
-                  {selectedOpponent ? selectedOpponent.name : "Select"}
+                <Text
+                  style={[
+                    styles.playerNameText,
+                    !selectedOpponent && { color: "#2193F0", fontWeight: "800" },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {selectedOpponent ? selectedOpponent.name : "Pick Player"}
                 </Text>
                 <Text style={styles.changeLabel}>
                   {selectedOpponent ? "Tap to change ▾" : "Tap to pick ▾"}
