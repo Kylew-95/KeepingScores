@@ -497,332 +497,451 @@ export default function LeaderboardTab({
         ) : (
           <>
             {/* Top 3 Podium (Always shown on cards view or when searching) */}
-          {viewMode === "cards" && topThree.length > 0 && (
-            <View style={styles.podiumContainer}>
-              <Text style={styles.podiumHeading}>🏆 Global Standings</Text>
-              <View style={styles.podiumRow}>
-                {topThree[1] && (
-                  <View style={[styles.podiumCard, { marginTop: 20 }]}>
-                    <Text style={styles.medalEmoji}>🥈</Text>
-                    {topThree[1].avatar_image_url ? (
-                      <Avatar.Image
-                        size={52}
-                        source={{ uri: topThree[1].avatar_image_url }}
-                      />
-                    ) : (
-                      <Avatar.Text
-                        size={52}
-                        label={topThree[1].player_name
-                          .substring(0, 2)
-                          .toUpperCase()}
-                        style={{ backgroundColor: "#94A3B8" }}
-                      />
-                    )}
-                    <Text style={styles.podiumName} numberOfLines={1}>
-                      {topThree[1].player_name}
-                    </Text>
-                    <Badge style={styles.podiumBadge}>
-                      {topThree[1].wins} Wins
-                    </Badge>
-                    <Text style={styles.podiumStats}>
-                      {topThree[1].wins}W / {topThree[1].losses}L • 🔥
-                      {topThree[1].win_streak || 0}
-                    </Text>
-                    {!checkIfSelf(topThree[1]) ? (
-                      <TouchableOpacity
-                        style={[
-                          styles.podiumFollowBtn,
-                          checkIfFollowing(topThree[1])
-                            ? styles.podiumFollowingBtn
-                            : styles.podiumNotFollowingBtn,
-                        ]}
-                        onPress={() => toggleFollowPlayer(topThree[1])}
-                        activeOpacity={0.7}
-                      >
-                        <Text
+            {viewMode === "cards" && topThree.length > 0 && (
+              <View style={styles.podiumContainer}>
+                <Text style={styles.podiumHeading}>🏆 Global Standings</Text>
+                <View style={styles.podiumRow}>
+                  {topThree[1] && (
+                    <View style={[styles.podiumCard, { marginTop: 20 }]}>
+                      <Text style={styles.medalEmoji}>🥈</Text>
+                      {topThree[1].avatar_image_url ? (
+                        <Avatar.Image
+                          size={52}
+                          source={{ uri: topThree[1].avatar_image_url }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={52}
+                          label={topThree[1].player_name
+                            .substring(0, 2)
+                            .toUpperCase()}
+                          style={{ backgroundColor: "#94A3B8" }}
+                        />
+                      )}
+                      <Text style={styles.podiumName} numberOfLines={1}>
+                        {topThree[1].player_name}
+                      </Text>
+                      <Badge style={styles.podiumBadge}>
+                        {topThree[1].wins} Wins
+                      </Badge>
+                      <Text style={styles.podiumStats}>
+                        {topThree[1].wins}W / {topThree[1].losses}L • 🔥
+                        {topThree[1].win_streak || 0}
+                      </Text>
+                      {!checkIfSelf(topThree[1]) ? (
+                        <TouchableOpacity
                           style={[
-                            styles.podiumFollowBtnText,
+                            styles.podiumFollowBtn,
                             checkIfFollowing(topThree[1])
-                              ? styles.podiumFollowingBtnText
-                              : styles.podiumNotFollowingBtnText,
+                              ? styles.podiumFollowingBtn
+                              : styles.podiumNotFollowingBtn,
                           ]}
+                          onPress={() => toggleFollowPlayer(topThree[1])}
+                          activeOpacity={0.7}
                         >
-                          {checkIfFollowing(topThree[1])
-                            ? "✓ Following"
-                            : "+ Follow"}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Badge style={styles.podiumSelfBadge}>You</Badge>
-                    )}
-                  </View>
-                )}
-
-                {topThree[0] && (
-                  <View style={[styles.podiumCard, styles.goldCard]}>
-                    <Text style={styles.medalEmoji}>👑 🥇</Text>
-                    {topThree[0].avatar_image_url ? (
-                      <Avatar.Image
-                        size={64}
-                        source={{ uri: topThree[0].avatar_image_url }}
-                        style={{ borderWidth: 2, borderColor: "#FFD700" }}
-                      />
-                    ) : (
-                      <Avatar.Text
-                        size={64}
-                        label={topThree[0].player_name
-                          .substring(0, 2)
-                          .toUpperCase()}
-                        style={{ backgroundColor: "#FFD700" }}
-                      />
-                    )}
-                    <Text
-                      style={[styles.podiumName, { fontWeight: "bold" }]}
-                      numberOfLines={1}
-                    >
-                      {topThree[0].player_name}
-                    </Text>
-                    <Badge
-                      style={[
-                        styles.podiumBadge,
-                        { backgroundColor: "#FFD700", color: "#000" },
-                      ]}
-                    >
-                      {topThree[0].wins} Wins
-                    </Badge>
-                    <Text style={styles.podiumStats}>
-                      {topThree[0].wins}W / {topThree[0].losses}L • 🔥
-                      {topThree[0].win_streak || 0}
-                    </Text>
-                    {!checkIfSelf(topThree[0]) ? (
-                      <TouchableOpacity
-                        style={[
-                          styles.podiumFollowBtn,
-                          checkIfFollowing(topThree[0])
-                            ? styles.podiumFollowingBtn
-                            : styles.podiumNotFollowingBtn,
-                        ]}
-                        onPress={() => toggleFollowPlayer(topThree[0])}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.podiumFollowBtnText,
-                            checkIfFollowing(topThree[0])
-                              ? styles.podiumFollowingBtnText
-                              : styles.podiumNotFollowingBtnText,
-                          ]}
-                        >
-                          {checkIfFollowing(topThree[0])
-                            ? "✓ Following"
-                            : "+ Follow"}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Badge style={styles.podiumSelfBadge}>You</Badge>
-                    )}
-                  </View>
-                )}
-
-                {topThree[2] && (
-                  <View style={[styles.podiumCard, { marginTop: 30 }]}>
-                    <Text style={styles.medalEmoji}>🥉</Text>
-                    {topThree[2].avatar_image_url ? (
-                      <Avatar.Image
-                        size={48}
-                        source={{ uri: topThree[2].avatar_image_url }}
-                      />
-                    ) : (
-                      <Avatar.Text
-                        size={48}
-                        label={topThree[2].player_name
-                          .substring(0, 2)
-                          .toUpperCase()}
-                        style={{ backgroundColor: "#CD7F32" }}
-                      />
-                    )}
-                    <Text style={styles.podiumName} numberOfLines={1}>
-                      {topThree[2].player_name}
-                    </Text>
-                    <Badge style={styles.podiumBadge}>
-                      {topThree[2].wins} Wins
-                    </Badge>
-                    <Text style={styles.podiumStats}>
-                      {topThree[2].wins}W / {topThree[2].losses}L • 🔥
-                      {topThree[2].win_streak || 0}
-                    </Text>
-                    {!checkIfSelf(topThree[2]) ? (
-                      <TouchableOpacity
-                        style={[
-                          styles.podiumFollowBtn,
-                          checkIfFollowing(topThree[2])
-                            ? styles.podiumFollowingBtn
-                            : styles.podiumNotFollowingBtn,
-                        ]}
-                        onPress={() => toggleFollowPlayer(topThree[2])}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.podiumFollowBtnText,
-                            checkIfFollowing(topThree[2])
-                              ? styles.podiumFollowingBtnText
-                              : styles.podiumNotFollowingBtnText,
-                          ]}
-                        >
-                          {checkIfFollowing(topThree[2])
-                            ? "✓ Following"
-                            : "+ Follow"}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Badge style={styles.podiumSelfBadge}>You</Badge>
-                    )}
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-
-          {/* TABLE VIEW */}
-          {viewMode === "table" ? (
-            <Card style={styles.tableCard}>
-              <View style={styles.tableCardHeader}>
-                <Text style={styles.tableTitle}>
-                  📋 Global League Table ({selectedSport})
-                </Text>
-                <Text style={styles.tableSubtitle}>
-                  Ranked by Match Wins & Highest Streak
-                </Text>
-              </View>
-
-              <DataTable>
-                <DataTable.Header style={styles.tableHeader}>
-                  <DataTable.Title style={styles.colRank}>#</DataTable.Title>
-                  <DataTable.Title style={styles.colPlayer}>
-                    Player
-                  </DataTable.Title>
-                  <DataTable.Title numeric style={styles.colStat}>
-                    P
-                  </DataTable.Title>
-                  <DataTable.Title numeric style={styles.colStat}>
-                    W
-                  </DataTable.Title>
-                  <DataTable.Title numeric style={styles.colStat}>
-                    L
-                  </DataTable.Title>
-                  <DataTable.Title numeric style={styles.colStreak}>
-                    Strk
-                  </DataTable.Title>
-                  <DataTable.Title style={styles.colAction}>
-                    Follow
-                  </DataTable.Title>
-                </DataTable.Header>
-
-                {filteredList.length === 0 ? (
-                  <View style={styles.emptyTable}>
-                    <Text style={{ color: "gray", fontSize: 14 }}>
-                      No player records found.
-                    </Text>
-                  </View>
-                ) : (
-                  filteredList.map((item, index) => {
-                    const isTopThree = index < 3;
-                    const isEven = index % 2 === 0;
-                    return (
-                      <DataTable.Row
-                        key={item.player_name}
-                        style={[
-                          styles.tableRow,
-                          isEven ? styles.rowEven : styles.rowOdd,
-                          isTopThree && styles.topThreeRow,
-                        ]}
-                      >
-                        {/* Rank */}
-                        <DataTable.Cell style={styles.colRank}>
                           <Text
                             style={[
-                              styles.rankBadgeText,
-                              isTopThree && styles.rankTopText,
+                              styles.podiumFollowBtnText,
+                              checkIfFollowing(topThree[1])
+                                ? styles.podiumFollowingBtnText
+                                : styles.podiumNotFollowingBtnText,
                             ]}
                           >
-                            {getMedalOrRank(index)}
+                            {checkIfFollowing(topThree[1])
+                              ? "✓ Following"
+                              : "+ Follow"}
                           </Text>
-                        </DataTable.Cell>
+                        </TouchableOpacity>
+                      ) : (
+                        <Badge style={styles.podiumSelfBadge}>You</Badge>
+                      )}
+                    </View>
+                  )}
 
-                        {/* Player (Avatar + Name) */}
-                        <DataTable.Cell style={styles.colPlayer}>
-                          <TouchableOpacity
-                            style={styles.playerCellRow}
-                            delayPressIn={100}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                              setSelectedPlayer(item);
-                              setPlayerModalVisible(true);
-                            }}
+                  {topThree[0] && (
+                    <View style={[styles.podiumCard, styles.goldCard]}>
+                      <Text style={styles.medalEmoji}>👑 🥇</Text>
+                      {topThree[0].avatar_image_url ? (
+                        <Avatar.Image
+                          size={64}
+                          source={{ uri: topThree[0].avatar_image_url }}
+                          style={{ borderWidth: 2, borderColor: "#FFD700" }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={64}
+                          label={topThree[0].player_name
+                            .substring(0, 2)
+                            .toUpperCase()}
+                          style={{ backgroundColor: "#FFD700" }}
+                        />
+                      )}
+                      <Text
+                        style={[styles.podiumName, { fontWeight: "bold" }]}
+                        numberOfLines={1}
+                      >
+                        {topThree[0].player_name}
+                      </Text>
+                      <Badge
+                        style={[
+                          styles.podiumBadge,
+                          { backgroundColor: "#FFD700", color: "#000" },
+                        ]}
+                      >
+                        {topThree[0].wins} Wins
+                      </Badge>
+                      <Text style={styles.podiumStats}>
+                        {topThree[0].wins}W / {topThree[0].losses}L • 🔥
+                        {topThree[0].win_streak || 0}
+                      </Text>
+                      {!checkIfSelf(topThree[0]) ? (
+                        <TouchableOpacity
+                          style={[
+                            styles.podiumFollowBtn,
+                            checkIfFollowing(topThree[0])
+                              ? styles.podiumFollowingBtn
+                              : styles.podiumNotFollowingBtn,
+                          ]}
+                          onPress={() => toggleFollowPlayer(topThree[0])}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.podiumFollowBtnText,
+                              checkIfFollowing(topThree[0])
+                                ? styles.podiumFollowingBtnText
+                                : styles.podiumNotFollowingBtnText,
+                            ]}
                           >
-                            {item.avatar_image_url ? (
-                              <Avatar.Image
-                                size={28}
-                                source={{ uri: item.avatar_image_url }}
-                              />
-                            ) : (
-                              <Avatar.Text
-                                size={28}
-                                label={item.player_name
-                                  .substring(0, 1)
-                                  .toUpperCase()}
-                                style={{ backgroundColor: "#2193F0" }}
-                                labelStyle={{ fontSize: 12, color: "white" }}
-                              />
-                            )}
+                            {checkIfFollowing(topThree[0])
+                              ? "✓ Following"
+                              : "+ Follow"}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <Badge style={styles.podiumSelfBadge}>You</Badge>
+                      )}
+                    </View>
+                  )}
+
+                  {topThree[2] && (
+                    <View style={[styles.podiumCard, { marginTop: 30 }]}>
+                      <Text style={styles.medalEmoji}>🥉</Text>
+                      {topThree[2].avatar_image_url ? (
+                        <Avatar.Image
+                          size={48}
+                          source={{ uri: topThree[2].avatar_image_url }}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          size={48}
+                          label={topThree[2].player_name
+                            .substring(0, 2)
+                            .toUpperCase()}
+                          style={{ backgroundColor: "#CD7F32" }}
+                        />
+                      )}
+                      <Text style={styles.podiumName} numberOfLines={1}>
+                        {topThree[2].player_name}
+                      </Text>
+                      <Badge style={styles.podiumBadge}>
+                        {topThree[2].wins} Wins
+                      </Badge>
+                      <Text style={styles.podiumStats}>
+                        {topThree[2].wins}W / {topThree[2].losses}L • 🔥
+                        {topThree[2].win_streak || 0}
+                      </Text>
+                      {!checkIfSelf(topThree[2]) ? (
+                        <TouchableOpacity
+                          style={[
+                            styles.podiumFollowBtn,
+                            checkIfFollowing(topThree[2])
+                              ? styles.podiumFollowingBtn
+                              : styles.podiumNotFollowingBtn,
+                          ]}
+                          onPress={() => toggleFollowPlayer(topThree[2])}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.podiumFollowBtnText,
+                              checkIfFollowing(topThree[2])
+                                ? styles.podiumFollowingBtnText
+                                : styles.podiumNotFollowingBtnText,
+                            ]}
+                          >
+                            {checkIfFollowing(topThree[2])
+                              ? "✓ Following"
+                              : "+ Follow"}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <Badge style={styles.podiumSelfBadge}>You</Badge>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* TABLE VIEW */}
+            {viewMode === "table" ? (
+              <Card style={styles.tableCard}>
+                <View style={styles.tableCardHeader}>
+                  <Text style={styles.tableTitle}>
+                    📋 Global League Table ({selectedSport})
+                  </Text>
+                  <Text style={styles.tableSubtitle}>
+                    Ranked by Match Wins & Highest Streak
+                  </Text>
+                </View>
+
+                <DataTable>
+                  <DataTable.Header style={styles.tableHeader}>
+                    <DataTable.Title style={styles.colRank}>#</DataTable.Title>
+                    <DataTable.Title style={styles.colPlayer}>
+                      Player
+                    </DataTable.Title>
+                    <DataTable.Title numeric style={styles.colStat}>
+                      P
+                    </DataTable.Title>
+                    <DataTable.Title numeric style={styles.colStat}>
+                      W
+                    </DataTable.Title>
+                    <DataTable.Title numeric style={styles.colStat}>
+                      L
+                    </DataTable.Title>
+                    <DataTable.Title numeric style={styles.colStreak}>
+                      Strk
+                    </DataTable.Title>
+                    <DataTable.Title style={styles.colAction}>
+                      Follow
+                    </DataTable.Title>
+                  </DataTable.Header>
+
+                  {filteredList.length === 0 ? (
+                    <View style={styles.emptyTable}>
+                      <Text style={{ color: "gray", fontSize: 14 }}>
+                        No player records found.
+                      </Text>
+                    </View>
+                  ) : (
+                    filteredList.map((item, index) => {
+                      const isTopThree = index < 3;
+                      const isEven = index % 2 === 0;
+                      return (
+                        <DataTable.Row
+                          key={item.player_name}
+                          style={[
+                            styles.tableRow,
+                            isEven ? styles.rowEven : styles.rowOdd,
+                            isTopThree && styles.topThreeRow,
+                          ]}
+                        >
+                          {/* Rank */}
+                          <DataTable.Cell style={styles.colRank}>
                             <Text
                               style={[
-                                styles.playerCellName,
-                                isTopThree && { fontWeight: "700" },
+                                styles.rankBadgeText,
+                                isTopThree && styles.rankTopText,
                               ]}
+                            >
+                              {getMedalOrRank(index)}
+                            </Text>
+                          </DataTable.Cell>
+
+                          {/* Player (Avatar + Name) */}
+                          <DataTable.Cell style={styles.colPlayer}>
+                            <TouchableOpacity
+                              style={styles.playerCellRow}
+                              delayPressIn={100}
+                              activeOpacity={0.7}
+                              onPress={() => {
+                                setSelectedPlayer(item);
+                                setPlayerModalVisible(true);
+                              }}
+                            >
+                              {item.avatar_image_url ? (
+                                <Avatar.Image
+                                  size={28}
+                                  source={{ uri: item.avatar_image_url }}
+                                />
+                              ) : (
+                                <Avatar.Text
+                                  size={28}
+                                  label={item.player_name
+                                    .substring(0, 1)
+                                    .toUpperCase()}
+                                  style={{ backgroundColor: "#2193F0" }}
+                                  labelStyle={{ fontSize: 12, color: "white" }}
+                                />
+                              )}
+                              <Text
+                                style={[
+                                  styles.playerCellName,
+                                  isTopThree && { fontWeight: "700" },
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {item.player_name}
+                              </Text>
+                            </TouchableOpacity>
+                          </DataTable.Cell>
+
+                          {/* Played */}
+                          <DataTable.Cell numeric style={styles.colStat}>
+                            <Text style={styles.statCellText}>
+                              {item.total_matches}
+                            </Text>
+                          </DataTable.Cell>
+
+                          {/* Wins */}
+                          <DataTable.Cell numeric style={styles.colStat}>
+                            <Text style={styles.winCellText}>{item.wins}</Text>
+                          </DataTable.Cell>
+
+                          {/* Losses */}
+                          <DataTable.Cell numeric style={styles.colStat}>
+                            <Text style={styles.lossCellText}>
+                              {item.losses}
+                            </Text>
+                          </DataTable.Cell>
+
+                          {/* Streak */}
+                          <DataTable.Cell numeric style={styles.colStreak}>
+                            <Text style={styles.streakCellText}>
+                              {item.win_streak > 0
+                                ? `🔥${item.win_streak}`
+                                : "—"}
+                            </Text>
+                          </DataTable.Cell>
+
+                          {/* Follow Action */}
+                          <DataTable.Cell style={styles.colAction}>
+                            {checkIfSelf(item) ? (
+                              <Badge style={styles.selfBadge}>You</Badge>
+                            ) : (
+                              <TouchableOpacity
+                                style={[
+                                  styles.tableFollowBtn,
+                                  checkIfFollowing(item)
+                                    ? styles.tableFollowingBtn
+                                    : styles.tableNotFollowingBtn,
+                                ]}
+                                onPress={(e) => {
+                                  e.stopPropagation?.();
+                                  toggleFollowPlayer(item);
+                                }}
+                                activeOpacity={0.7}
+                              >
+                                <Text
+                                  style={[
+                                    styles.tableFollowBtnText,
+                                    checkIfFollowing(item)
+                                      ? styles.tableFollowingBtnText
+                                      : styles.tableNotFollowingBtnText,
+                                  ]}
+                                >
+                                  {checkIfFollowing(item)
+                                    ? "Following"
+                                    : "+ Follow"}
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </DataTable.Cell>
+                        </DataTable.Row>
+                      );
+                    })
+                  )}
+                </DataTable>
+              </Card>
+            ) : (
+              /* CARDS VIEW */
+              <View style={{ marginTop: 8 }}>
+                {filteredList.map((item, index) => (
+                  <Card key={item.player_name} style={styles.playerCard}>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      delayPressIn={100}
+                      onPress={() => {
+                        setSelectedPlayer(item);
+                        setPlayerModalVisible(true);
+                      }}
+                    >
+                      <View style={styles.cardRow}>
+                        <View style={styles.cardRankCircle}>
+                          <Text style={styles.cardRankText}>
+                            {getMedalOrRank(index)}
+                          </Text>
+                        </View>
+
+                        {item.avatar_image_url ? (
+                          <Avatar.Image
+                            size={46}
+                            source={{ uri: item.avatar_image_url }}
+                          />
+                        ) : (
+                          <Avatar.Text
+                            size={46}
+                            label={item.player_name
+                              .substring(0, 2)
+                              .toUpperCase()}
+                            style={{ backgroundColor: "#2193F0" }}
+                          />
+                        )}
+
+                        <View style={styles.cardInfo}>
+                          <View style={styles.cardNameRow}>
+                            <Text
+                              style={styles.cardPlayerName}
                               numberOfLines={1}
                             >
                               {item.player_name}
                             </Text>
-                          </TouchableOpacity>
-                        </DataTable.Cell>
+                            <Text style={styles.cardWinsBadgeText}>
+                              {item.wins} Wins
+                            </Text>
+                          </View>
 
-                        {/* Played */}
-                        <DataTable.Cell numeric style={styles.colStat}>
-                          <Text style={styles.statCellText}>
-                            {item.total_matches}
-                          </Text>
-                        </DataTable.Cell>
+                          <View style={styles.cardStatsRow}>
+                            <Text style={styles.cardStat}>
+                              P:{" "}
+                              <Text style={styles.statVal}>
+                                {item.total_matches}
+                              </Text>
+                            </Text>
+                            <Text style={styles.cardStat}>
+                              W:{" "}
+                              <Text style={styles.statValWin}>{item.wins}</Text>
+                            </Text>
+                            <Text style={styles.cardStat}>
+                              L:{" "}
+                              <Text style={styles.statValLoss}>
+                                {item.losses}
+                              </Text>
+                            </Text>
+                            <Text style={styles.cardStat}>
+                              Streak:{" "}
+                              <Text style={styles.statValStreak}>
+                                {item.win_streak > 0
+                                  ? `🔥${item.win_streak}`
+                                  : "0"}
+                              </Text>
+                            </Text>
+                          </View>
+                        </View>
 
-                        {/* Wins */}
-                        <DataTable.Cell numeric style={styles.colStat}>
-                          <Text style={styles.winCellText}>{item.wins}</Text>
-                        </DataTable.Cell>
-
-                        {/* Losses */}
-                        <DataTable.Cell numeric style={styles.colStat}>
-                          <Text style={styles.lossCellText}>{item.losses}</Text>
-                        </DataTable.Cell>
-
-                        {/* Streak */}
-                        <DataTable.Cell numeric style={styles.colStreak}>
-                          <Text style={styles.streakCellText}>
-                            {item.win_streak > 0 ? `🔥${item.win_streak}` : "—"}
-                          </Text>
-                        </DataTable.Cell>
-
-                        {/* Follow Action */}
-                        <DataTable.Cell style={styles.colAction}>
+                        {/* Follow Button on Card */}
+                        <View style={styles.cardActionWrapper}>
                           {checkIfSelf(item) ? (
                             <Badge style={styles.selfBadge}>You</Badge>
                           ) : (
                             <TouchableOpacity
                               style={[
-                                styles.tableFollowBtn,
+                                styles.cardFollowBtn,
                                 checkIfFollowing(item)
-                                  ? styles.tableFollowingBtn
-                                  : styles.tableNotFollowingBtn,
+                                  ? styles.cardFollowingBtn
+                                  : styles.cardNotFollowingBtn,
                               ]}
                               onPress={(e) => {
                                 e.stopPropagation?.();
@@ -832,137 +951,27 @@ export default function LeaderboardTab({
                             >
                               <Text
                                 style={[
-                                  styles.tableFollowBtnText,
+                                  styles.cardFollowBtnText,
                                   checkIfFollowing(item)
-                                    ? styles.tableFollowingBtnText
-                                    : styles.tableNotFollowingBtnText,
+                                    ? styles.cardFollowingBtnText
+                                    : styles.cardNotFollowingBtnText,
                                 ]}
                               >
                                 {checkIfFollowing(item)
-                                  ? "Following"
+                                  ? "✓ Following"
                                   : "+ Follow"}
                               </Text>
                             </TouchableOpacity>
                           )}
-                        </DataTable.Cell>
-                      </DataTable.Row>
-                    );
-                  })
-                )}
-              </DataTable>
-            </Card>
-          ) : (
-            /* CARDS VIEW */
-            <View style={{ marginTop: 8 }}>
-              {filteredList.map((item, index) => (
-                <Card key={item.player_name} style={styles.playerCard}>
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    delayPressIn={100}
-                    onPress={() => {
-                      setSelectedPlayer(item);
-                      setPlayerModalVisible(true);
-                    }}
-                  >
-                    <View style={styles.cardRow}>
-                      <View style={styles.cardRankCircle}>
-                        <Text style={styles.cardRankText}>
-                          {getMedalOrRank(index)}
-                        </Text>
-                      </View>
-
-                      {item.avatar_image_url ? (
-                        <Avatar.Image
-                          size={46}
-                          source={{ uri: item.avatar_image_url }}
-                        />
-                      ) : (
-                        <Avatar.Text
-                          size={46}
-                          label={item.player_name.substring(0, 2).toUpperCase()}
-                          style={{ backgroundColor: "#2193F0" }}
-                        />
-                      )}
-
-                      <View style={styles.cardInfo}>
-                        <View style={styles.cardNameRow}>
-                          <Text style={styles.cardPlayerName} numberOfLines={1}>
-                            {item.player_name}
-                          </Text>
-                          <Text style={styles.cardWinsBadgeText}>
-                            {item.wins} Wins
-                          </Text>
-                        </View>
-
-                        <View style={styles.cardStatsRow}>
-                          <Text style={styles.cardStat}>
-                            P:{" "}
-                            <Text style={styles.statVal}>
-                              {item.total_matches}
-                            </Text>
-                          </Text>
-                          <Text style={styles.cardStat}>
-                            W:{" "}
-                            <Text style={styles.statValWin}>{item.wins}</Text>
-                          </Text>
-                          <Text style={styles.cardStat}>
-                            L:{" "}
-                            <Text style={styles.statValLoss}>
-                              {item.losses}
-                            </Text>
-                          </Text>
-                          <Text style={styles.cardStat}>
-                            Streak:{" "}
-                            <Text style={styles.statValStreak}>
-                              {item.win_streak > 0
-                                ? `🔥${item.win_streak}`
-                                : "0"}
-                            </Text>
-                          </Text>
                         </View>
                       </View>
-
-                      {/* Follow Button on Card */}
-                      <View style={styles.cardActionWrapper}>
-                        {checkIfSelf(item) ? (
-                          <Badge style={styles.selfBadge}>You</Badge>
-                        ) : (
-                          <TouchableOpacity
-                            style={[
-                              styles.cardFollowBtn,
-                              checkIfFollowing(item)
-                                ? styles.cardFollowingBtn
-                                : styles.cardNotFollowingBtn,
-                            ]}
-                            onPress={(e) => {
-                              e.stopPropagation?.();
-                              toggleFollowPlayer(item);
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            <Text
-                              style={[
-                                styles.cardFollowBtnText,
-                                checkIfFollowing(item)
-                                  ? styles.cardFollowingBtnText
-                                  : styles.cardNotFollowingBtnText,
-                              ]}
-                            >
-                              {checkIfFollowing(item)
-                                ? "✓ Following"
-                                : "+ Follow"}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </Card>
-              ))}
-            </View>
-          )}
-        </>
-      )}
+                    </TouchableOpacity>
+                  </Card>
+                ))}
+              </View>
+            )}
+          </>
+        )}
       </ScrollView>
 
       {/* Player Detail & Follow Modal */}
