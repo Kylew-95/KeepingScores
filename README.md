@@ -33,19 +33,27 @@ As we age, maintaining physical health and a vibrant social circle becomes cruci
     <tr>
       <td align="center" width="25%">
         <b>📍 Explore Local Venues</b><br/><br/>
-        <img src="./assets/screenshots/01_map_explore.png" alt="Explore Map" width="220" style="border-radius: 12px;" />
+        <a href="./assets/screenshots/01_map_explore.png">
+          <img src="./assets/screenshots/01_map_explore.png" alt="Explore Map" width="220" style="border-radius: 12px;" />
+        </a>
       </td>
       <td align="center" width="25%">
         <b>👤 Profile & History</b><br/><br/>
-        <img src="./assets/screenshots/02_profile_activity.png" alt="Profile Screen" width="220" style="border-radius: 12px;" />
+        <a href="./assets/screenshots/02_user_profile_screen.png">
+          <img src="./assets/screenshots/02_user_profile_screen.png" alt="Profile Screen" width="220" style="border-radius: 12px;" />
+        </a>
       </td>
       <td align="center" width="25%">
         <b>🏆 Global Standings</b><br/><br/>
-        <img src="./assets/screenshots/03_leaderboard.png" alt="Leaderboard" width="220" style="border-radius: 12px;" />
+        <a href="./assets/screenshots/03_leaderboard.png">
+          <img src="./assets/screenshots/03_leaderboard.png" alt="Leaderboard" width="220" style="border-radius: 12px;" />
+        </a>
       </td>
       <td align="center" width="25%">
         <b>⚡ Match Center</b><br/><br/>
-        <img src="./assets/screenshots/04_match_center.png" alt="Match Center" width="220" style="border-radius: 12px;" />
+        <a href="./assets/screenshots/04_match_center.png">
+          <img src="./assets/screenshots/04_match_center.png" alt="Match Center" width="220" style="border-radius: 12px;" />
+        </a>
       </td>
     </tr>
   </table>
