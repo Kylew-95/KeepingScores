@@ -273,21 +273,6 @@ export default function LeaderboardTab({
     ) {
       return true;
     }
-    const nameKey = (item.player_name || item.first_name || "")
-      .trim()
-      .toLowerCase();
-    const myName = (currentUserName || profileData?.first_name || "")
-      .trim()
-      .toLowerCase();
-    // Only fall back to name check if neither has a UUID
-    if (
-      !item.userprofile_id &&
-      !currentUserId &&
-      myName &&
-      nameKey === myName
-    ) {
-      return true;
-    }
     return false;
   };
 
@@ -521,38 +506,33 @@ export default function LeaderboardTab({
                       <Text style={styles.podiumName} numberOfLines={1}>
                         {topThree[1].player_name}
                       </Text>
-                      <Badge style={styles.podiumBadge}>
-                        {topThree[1].wins} Wins
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[1].wins}W / {topThree[1].losses}L • 🔥
-                        {topThree[1].win_streak || 0}
-                      </Text>
-                      {!checkIfSelf(topThree[1]) ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.podiumFollowBtn,
-                            checkIfFollowing(topThree[1])
-                              ? styles.podiumFollowingBtn
-                              : styles.podiumNotFollowingBtn,
-                          ]}
-                          onPress={() => toggleFollowPlayer(topThree[1])}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.podiumFollowBtnText,
-                              checkIfFollowing(topThree[1])
-                                ? styles.podiumFollowingBtnText
-                                : styles.podiumNotFollowingBtnText,
-                            ]}
-                          >
-                            {checkIfFollowing(topThree[1])
-                              ? "✓ Following"
-                              : "+ Follow"}
+                      <View style={styles.podiumStatsRow}>
+                        <Text style={styles.cardStat}>
+                          P:{" "}
+                          <Text style={styles.statVal}>
+                            {topThree[1].total_matches}
                           </Text>
-                        </TouchableOpacity>
-                      ) : (
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          W:{" "}
+                          <Text style={styles.statValWin}>{topThree[1].wins}</Text>
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          L:{" "}
+                          <Text style={styles.statValLoss}>
+                            {topThree[1].losses}
+                          </Text>
+                        </Text>
+                      </View>
+                      <Text style={[styles.cardStat, { marginTop: 2 }]}>
+                        Streak:{" "}
+                        <Text style={styles.statValStreak}>
+                          {topThree[1].win_streak > 0
+                            ? `🔥${topThree[1].win_streak}`
+                            : "0"}
+                        </Text>
+                      </Text>
+                      {checkIfSelf(topThree[1]) && (
                         <Badge style={styles.podiumSelfBadge}>You</Badge>
                       )}
                     </View>
@@ -582,43 +562,33 @@ export default function LeaderboardTab({
                       >
                         {topThree[0].player_name}
                       </Text>
-                      <Badge
-                        style={[
-                          styles.podiumBadge,
-                          { backgroundColor: "#FFD700", color: "#000" },
-                        ]}
-                      >
-                        {topThree[0].wins} Wins
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[0].wins}W / {topThree[0].losses}L • 🔥
-                        {topThree[0].win_streak || 0}
-                      </Text>
-                      {!checkIfSelf(topThree[0]) ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.podiumFollowBtn,
-                            checkIfFollowing(topThree[0])
-                              ? styles.podiumFollowingBtn
-                              : styles.podiumNotFollowingBtn,
-                          ]}
-                          onPress={() => toggleFollowPlayer(topThree[0])}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.podiumFollowBtnText,
-                              checkIfFollowing(topThree[0])
-                                ? styles.podiumFollowingBtnText
-                                : styles.podiumNotFollowingBtnText,
-                            ]}
-                          >
-                            {checkIfFollowing(topThree[0])
-                              ? "✓ Following"
-                              : "+ Follow"}
+                      <View style={styles.podiumStatsRow}>
+                        <Text style={styles.cardStat}>
+                          P:{" "}
+                          <Text style={styles.statVal}>
+                            {topThree[0].total_matches}
                           </Text>
-                        </TouchableOpacity>
-                      ) : (
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          W:{" "}
+                          <Text style={styles.statValWin}>{topThree[0].wins}</Text>
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          L:{" "}
+                          <Text style={styles.statValLoss}>
+                            {topThree[0].losses}
+                          </Text>
+                        </Text>
+                      </View>
+                      <Text style={[styles.cardStat, { marginTop: 2 }]}>
+                        Streak:{" "}
+                        <Text style={styles.statValStreak}>
+                          {topThree[0].win_streak > 0
+                            ? `🔥${topThree[0].win_streak}`
+                            : "0"}
+                        </Text>
+                      </Text>
+                      {checkIfSelf(topThree[0]) && (
                         <Badge style={styles.podiumSelfBadge}>You</Badge>
                       )}
                     </View>
@@ -644,38 +614,33 @@ export default function LeaderboardTab({
                       <Text style={styles.podiumName} numberOfLines={1}>
                         {topThree[2].player_name}
                       </Text>
-                      <Badge style={styles.podiumBadge}>
-                        {topThree[2].wins} Wins
-                      </Badge>
-                      <Text style={styles.podiumStats}>
-                        {topThree[2].wins}W / {topThree[2].losses}L • 🔥
-                        {topThree[2].win_streak || 0}
-                      </Text>
-                      {!checkIfSelf(topThree[2]) ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.podiumFollowBtn,
-                            checkIfFollowing(topThree[2])
-                              ? styles.podiumFollowingBtn
-                              : styles.podiumNotFollowingBtn,
-                          ]}
-                          onPress={() => toggleFollowPlayer(topThree[2])}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.podiumFollowBtnText,
-                              checkIfFollowing(topThree[2])
-                                ? styles.podiumFollowingBtnText
-                                : styles.podiumNotFollowingBtnText,
-                            ]}
-                          >
-                            {checkIfFollowing(topThree[2])
-                              ? "✓ Following"
-                              : "+ Follow"}
+                      <View style={styles.podiumStatsRow}>
+                        <Text style={styles.cardStat}>
+                          P:{" "}
+                          <Text style={styles.statVal}>
+                            {topThree[2].total_matches}
                           </Text>
-                        </TouchableOpacity>
-                      ) : (
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          W:{" "}
+                          <Text style={styles.statValWin}>{topThree[2].wins}</Text>
+                        </Text>
+                        <Text style={styles.cardStat}>
+                          L:{" "}
+                          <Text style={styles.statValLoss}>
+                            {topThree[2].losses}
+                          </Text>
+                        </Text>
+                      </View>
+                      <Text style={[styles.cardStat, { marginTop: 2 }]}>
+                        Streak:{" "}
+                        <Text style={styles.statValStreak}>
+                          {topThree[2].win_streak > 0
+                            ? `🔥${topThree[2].win_streak}`
+                            : "0"}
+                        </Text>
+                      </Text>
+                      {checkIfSelf(topThree[2]) && (
                         <Badge style={styles.podiumSelfBadge}>You</Badge>
                       )}
                     </View>
@@ -731,7 +696,13 @@ export default function LeaderboardTab({
                       const isEven = index % 2 === 0;
                       return (
                         <DataTable.Row
-                          key={item.player_name}
+                          key={
+                            item.id
+                              ? `row-${item.id}`
+                              : item.userprofile_id
+                              ? `row-${item.userprofile_id}-${item.activity}`
+                              : `row-${item.player_name}-${item.activity}-${index}`
+                          }
                           style={[
                             styles.tableRow,
                             isEven ? styles.rowEven : styles.rowOdd,
@@ -859,7 +830,16 @@ export default function LeaderboardTab({
               /* CARDS VIEW */
               <View style={{ marginTop: 8 }}>
                 {filteredList.map((item, index) => (
-                  <Card key={item.player_name} style={styles.playerCard}>
+                  <Card
+                    key={
+                      item.id
+                        ? `card-${item.id}`
+                        : item.userprofile_id
+                        ? `card-${item.userprofile_id}-${item.activity}`
+                        : `card-${item.player_name}-${item.activity}-${index}`
+                    }
+                    style={styles.playerCard}
+                  >
                     <TouchableOpacity
                       activeOpacity={0.85}
                       delayPressIn={100}
@@ -1056,8 +1036,12 @@ export default function LeaderboardTab({
                     <Text style={styles.modalStatLabel}>Global Rank</Text>
                     <Text style={[styles.modalStatVal, { color: "#2193F0" }]}>
                       #
-                      {leaderboard.findIndex(
-                        (p) => p.player_name === selectedPlayer.player_name,
+                      {leaderboard.findIndex((p) =>
+                        p.userprofile_id && selectedPlayer.userprofile_id
+                          ? p.userprofile_id === selectedPlayer.userprofile_id
+                          : p.id && selectedPlayer.id
+                          ? p.id === selectedPlayer.id
+                          : p.player_name === selectedPlayer.player_name,
                       ) + 1 || 1}
                     </Text>
                   </View>
@@ -1485,16 +1469,12 @@ const styles = StyleSheet.create({
     color: "#1E293B",
     marginTop: 6,
   },
-  podiumBadge: {
-    backgroundColor: "#2193F0",
+  podiumStatsRow: {
+    flexDirection: "row",
+    gap: 6,
     marginTop: 4,
-    fontWeight: "700",
-    fontSize: 11,
-  },
-  podiumStats: {
-    fontSize: 11,
-    color: "#64748B",
-    marginTop: 2,
+    justifyContent: "center",
+    alignItems: "center",
   },
   playerCard: {
     marginHorizontal: 16,

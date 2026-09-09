@@ -46,18 +46,20 @@ export default function ProfileMatchScores({
       if (data) {
         const myName = (profileData?.first_name || "").trim().toLowerCase();
         const myMatches = data.filter((s) => {
-          const p1 = (s.players?.[0]?.player1 || "").trim().toLowerCase();
-          const p2 = (s.players?.[1]?.player2 || "").trim().toLowerCase();
-          return (
-            (myName && (p1 === myName || p2 === myName)) ||
-            (currentUserId && s.user_id === currentUserId)
-          );
+          if (currentUserId && (s.scores_id || s.user_id)) {
+            return s.scores_id === currentUserId || s.user_id === currentUserId;
+          }
+          if (!currentUserId && myName) {
+            const p1 = (s.players?.[0]?.player1 || "").trim().toLowerCase();
+            const p2 = (s.players?.[1]?.player2 || "").trim().toLowerCase();
+            return p1 === myName || p2 === myName;
+          }
+          return false;
         });
 
-        const displayMatches = myMatches.length > 0 ? myMatches : data;
-        setMatches(displayMatches);
+        setMatches(myMatches);
         if (onScoresCountChange) {
-          onScoresCountChange(displayMatches.length);
+          onScoresCountChange(myMatches.length);
         }
       }
     } catch (err) {

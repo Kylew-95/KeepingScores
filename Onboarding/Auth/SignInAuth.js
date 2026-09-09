@@ -42,6 +42,9 @@ export default function SignInAuth({
         options: {
           redirectTo: redirectUrl,
           skipBrowserRedirect: true,
+          queryParams: {
+            prompt: "select_account",
+          },
         },
       });
 

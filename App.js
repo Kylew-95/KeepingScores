@@ -8,8 +8,13 @@ import { supabase } from "./SupabaseConfig/SupabaseClient";
 import SignUp from "./Onboarding/Auth/SignUpAuth";
 import Settings from "./screens/Settings";
 import Account from "./screens/SettingsScreens/Account";
-import RawVsForm, { VsForm as NamedVsForm } from "./Components/FormComps/VsForm";
-const VsForm = typeof RawVsForm === "function" ? RawVsForm : (RawVsForm?.default || NamedVsForm);
+import RawVsForm, {
+  VsForm as NamedVsForm,
+} from "./Components/FormComps/VsForm";
+const VsForm =
+  typeof RawVsForm === "function"
+    ? RawVsForm
+    : RawVsForm?.default || NamedVsForm;
 import StartHomePage from "./Onboarding/StartHomePage";
 import { LogBox, Linking } from "react-native";
 LogBox.ignoreLogs(["Warning: ..."]); // Ignore log notification by message
@@ -208,6 +213,7 @@ export default function App() {
               profileData={profileData}
               setProfileData={setProfileData}
               session={session}
+              setSession={setSession}
             />
           )}
         </Stack.Screen>

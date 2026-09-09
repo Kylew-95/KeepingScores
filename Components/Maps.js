@@ -421,6 +421,10 @@ export default function Maps({
 
   // Modals state
   const [areaModalVisible, setAreaModalVisible] = useState(false);
+  const [areaSearchInput, setAreaSearchInput] = useState("");
+  const [areaSearchResults, setAreaSearchResults] = useState([]);
+  const [isSearchingArea, setIsSearchingArea] = useState(false);
+  const areaSearchTimeoutRef = useRef(null);
   const [venueDetailModalVisible, setVenueDetailModalVisible] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState(null);
 
@@ -804,6 +808,135 @@ export default function Maps({
     );
   };
 
+  const searchAreaLocations = async (query) => {
+    const q = query.trim();
+    if (!q || q.length < 2) {
+      setAreaSearchResults([]);
+      setIsSearchingArea(false);
+      return;
+    }
+
+    setIsSearchingArea(true);
+    try {
+      const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(
+        q,
+      )}&lat=51.5074&lon=-0.1278&limit=8`;
+      const resp = await fetch(photonUrl, {
+        headers: { "User-Agent": "KeepingScoresApp/1.0" },
+      });
+
+      const results = [];
+      const seen = new Set();
+
+      if (resp.ok) {
+        const data = await resp.json();
+        (data.features || []).forEach((f) => {
+          const p = f.properties || {};
+          const coords = f.geometry?.coordinates;
+          if (coords && coords.length === 2 && p.name) {
+            const lon = coords[0];
+            const lat = coords[1];
+            const details = [
+              p.city || p.district,
+              p.postcode,
+              p.state || p.country,
+            ]
+              .filter(Boolean)
+              .filter((v, idx, arr) => arr.indexOf(v) === idx)
+              .join(", ");
+
+            const key = `${p.name.toLowerCase()}_${lat.toFixed(3)}_${lon.toFixed(3)}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              results.push({
+                name: p.name,
+                subtitle: details,
+                lat,
+                lon,
+              });
+            }
+          }
+        });
+      }
+
+      if (results.length === 0) {
+        try {
+          const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gb&q=${encodeURIComponent(
+            q,
+          )}&limit=6`;
+          const nomResp = await fetch(nomUrl, {
+            headers: { "User-Agent": "KeepingScoresApp/1.0" },
+          });
+          if (nomResp.ok) {
+            const nomData = await nomResp.json();
+            (nomData || []).forEach((item) => {
+              const lat = parseFloat(item.lat);
+              const lon = parseFloat(item.lon);
+              const name = item.display_name.split(",")[0];
+              const key = `${name.toLowerCase()}_${lat.toFixed(3)}_${lon.toFixed(3)}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                results.push({
+                  name,
+                  subtitle: item.display_name
+                    .split(",")
+                    .slice(1, 3)
+                    .join(", ")
+                    .trim(),
+                  lat,
+                  lon,
+                });
+              }
+            });
+          }
+        } catch (nomErr) {
+          console.log("Nominatim fallback notice:", nomErr);
+        }
+      }
+
+      setAreaSearchResults(results);
+    } catch (err) {
+      console.log("Area search error:", err);
+    } finally {
+      setIsSearchingArea(false);
+    }
+  };
+
+  const handleAreaSearchChange = (text) => {
+    setAreaSearchInput(text);
+    if (areaSearchTimeoutRef.current) {
+      clearTimeout(areaSearchTimeoutRef.current);
+    }
+    if (!text.trim()) {
+      setAreaSearchResults([]);
+      setIsSearchingArea(false);
+      return;
+    }
+    areaSearchTimeoutRef.current = setTimeout(() => {
+      searchAreaLocations(text);
+    }, 250);
+  };
+
+  const handleSelectAreaResult = (item) => {
+    const lat = item.lat;
+    const lon = item.lon;
+    setMapRegion({ latitude: lat, longitude: lon });
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`
+        flyToLocation(${lat}, ${lon}, 13.5);
+        true;
+      `);
+    }
+    const label = item.subtitle
+      ? `📍 ${item.name}, ${item.subtitle.split(",")[0]}`
+      : `📍 ${item.name}`;
+    setCurrentLocationName(label);
+    setAreaModalVisible(false);
+    setAreaSearchInput("");
+    setAreaSearchResults([]);
+    Keyboard.dismiss();
+  };
+
   const handleSelectArea = (area) => {
     setMapRegion({ latitude: area.lat, longitude: area.lon });
     if (webViewRef.current) {
@@ -814,6 +947,8 @@ export default function Maps({
     }
     setCurrentLocationName(`📍 ${area.name}`);
     setAreaModalVisible(false);
+    setAreaSearchInput("");
+    setAreaSearchResults([]);
   };
 
   const handleCarouselItemChange = (selectedPlace) => {
@@ -994,17 +1129,32 @@ export default function Maps({
         visible={areaModalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setAreaModalVisible(false)}
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setAreaModalVisible(false);
+        }}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setAreaModalVisible(false)}
+          onPress={() => {
+            Keyboard.dismiss();
+            setAreaModalVisible(false);
+          }}
         >
-          <View style={styles.areaModalBox}>
+          <TouchableOpacity
+            style={styles.areaModalBox}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation?.()}
+          >
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Choose London Area</Text>
-              <TouchableOpacity onPress={() => setAreaModalVisible(false)}>
+              <Text style={styles.modalTitle}>📍 Change Location</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setAreaModalVisible(false);
+                }}
+              >
                 <IconButton
                   icon="close"
                   iconColor="#94A3B8"
@@ -1014,24 +1164,115 @@ export default function Maps({
               </TouchableOpacity>
             </View>
             <Text style={styles.modalSubtitle}>
-              Instantly view sports facilities, pitches and gyms around:
+              Type your area, town or postcode to jump to that location:
             </Text>
 
-            {POPULAR_AREAS.map((area) => (
-              <TouchableOpacity
-                key={area.name}
-                style={styles.areaItem}
-                onPress={() => handleSelectArea(area)}
-              >
-                <Text style={styles.areaEmoji}>📍</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.areaName}>{area.name}</Text>
-                  <Text style={styles.areaDesc}>{area.desc}</Text>
+            {/* Location Search Bar */}
+            <Searchbar
+              placeholder="e.g. Mitcham, Clapham, Harrow..."
+              onChangeText={handleAreaSearchChange}
+              value={areaSearchInput}
+              loading={isSearchingArea}
+              style={styles.areaSearchInput}
+              inputStyle={{ color: "white", fontSize: 14 }}
+              iconColor="#2193F0"
+              placeholderTextColor="#8fa3ad"
+            />
+
+            {/* GPS shortcut button */}
+            <TouchableOpacity
+              style={styles.useGpsBtn}
+              onPress={() => {
+                locateUser();
+                setAreaModalVisible(false);
+                setAreaSearchInput("");
+                setAreaSearchResults([]);
+              }}
+              activeOpacity={0.7}
+            >
+              <IconButton
+                icon="crosshairs-gps"
+                iconColor="#2193F0"
+                size={18}
+                style={{ margin: 0, marginRight: 6 }}
+              />
+              <Text style={styles.useGpsBtnText}>
+                Use My Current GPS Location
+              </Text>
+            </TouchableOpacity>
+
+            {/* Results or Quick Suggestions */}
+            <ScrollView
+              style={{ maxHeight: 260, marginTop: 8 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {isSearchingArea ? (
+                <View style={{ paddingVertical: 20, alignItems: "center" }}>
+                  <ActivityIndicator size="small" color="#2193F0" />
+                  <Text
+                    style={{ color: "#94A3B8", marginTop: 8, fontSize: 12 }}
+                  >
+                    Finding locations...
+                  </Text>
                 </View>
-                <Text style={styles.areaArrow}>&rarr;</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              ) : areaSearchResults.length > 0 ? (
+                areaSearchResults.map((item, idx) => (
+                  <TouchableOpacity
+                    key={`${item.name}_${idx}`}
+                    style={styles.areaItem}
+                    onPress={() => handleSelectAreaResult(item)}
+                  >
+                    <Text style={styles.areaEmoji}>📍</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.areaName}>{item.name}</Text>
+                      {item.subtitle ? (
+                        <Text style={styles.areaDesc} numberOfLines={1}>
+                          {item.subtitle}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Text style={styles.areaArrow}>&rarr;</Text>
+                  </TouchableOpacity>
+                ))
+              ) : areaSearchInput.trim().length >= 2 ? (
+                <View style={{ paddingVertical: 20, alignItems: "center" }}>
+                  <Text style={{ color: "#94A3B8", fontSize: 13 }}>
+                    No matching locations found for "{areaSearchInput}"
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text
+                    style={{
+                      color: "#64748B",
+                      fontSize: 11,
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                      marginTop: 4,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Popular Areas
+                  </Text>
+                  {POPULAR_AREAS.map((area) => (
+                    <TouchableOpacity
+                      key={area.name}
+                      style={styles.areaItem}
+                      onPress={() => handleSelectArea(area)}
+                    >
+                      <Text style={styles.areaEmoji}>📍</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.areaName}>{area.name}</Text>
+                        <Text style={styles.areaDesc}>{area.desc}</Text>
+                      </View>
+                      <Text style={styles.areaArrow}>&rarr;</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </ScrollView>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1233,9 +1474,36 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     width: "100%",
-    maxWidth: 380,
+    maxWidth: 400,
+    maxHeight: Dimensions.get("window").height * 0.82,
     borderWidth: 1,
     borderColor: "#2193F0",
+  },
+  areaSearchInput: {
+    backgroundColor: "#0A2533",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#1E3A4A",
+    elevation: 0,
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  useGpsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0A2533",
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 6,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#2193F0",
+  },
+  useGpsBtnText: {
+    color: "#38BDF8",
+    fontSize: 13,
+    fontWeight: "bold",
   },
   modalHeaderRow: {
     flexDirection: "row",
