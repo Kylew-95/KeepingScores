@@ -251,7 +251,28 @@ export default function ScoresTab({
           windowSize={7}
           removeClippedSubviews={Platform.OS === "android"}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#2193F0"]}
+              tintColor="#2193F0"
+              progressViewOffset={10}
+            />
+          }
+          ListHeaderComponent={
+            <View style={styles.headerBar}>
+              <Text style={styles.headerTitleText}>Recent Matches</Text>
+              <TouchableOpacity
+                style={styles.refreshBadgeBtn}
+                onPress={onRefresh}
+                disabled={refreshing}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.refreshBadgeBtnText}>
+                  {refreshing ? "Refreshing..." : "🔄 Refresh"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           }
         />
       )}
@@ -267,6 +288,31 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+  },
+  headerBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  headerTitleText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  refreshBadgeBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+  },
+  refreshBadgeBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2193F0",
   },
   center: {
     flex: 1,

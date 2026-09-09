@@ -422,15 +422,35 @@ export default function LeaderboardTab({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Search & Toggle Row */}
+      {/* Search & Refresh Row */}
       <View style={styles.topControls}>
-        <Searchbar
-          placeholder="Search player..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          inputStyle={{ minHeight: 0 }}
-        />
+        <View style={styles.searchRow}>
+          <Searchbar
+            placeholder="Search player..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+            inputStyle={{ minHeight: 0 }}
+          />
+          <TouchableOpacity
+            style={[styles.refreshBtn, refreshing && styles.refreshBtnActive]}
+            onPress={onRefresh}
+            disabled={refreshing}
+            activeOpacity={0.7}
+            accessibilityLabel="Refresh Leaderboard"
+          >
+            {refreshing ? (
+              <ActivityIndicator size="small" color="#2193F0" />
+            ) : (
+              <IconButton
+                icon="refresh"
+                size={22}
+                iconColor="#2193F0"
+                style={{ margin: 0 }}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
         <View style={styles.viewToggleWrapper}>
           <SegmentedButtons
             value={viewMode}
@@ -481,8 +501,16 @@ export default function LeaderboardTab({
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#2193F0"]}
+              tintColor="#2193F0"
+              progressViewOffset={10}
+            />
           }
+          alwaysBounceVertical={true}
+          bounces={true}
           contentContainerStyle={{ paddingBottom: 40 }}
         >
           {/* Top 3 Podium (Always shown on cards view or when searching) */}
@@ -677,12 +705,24 @@ export default function LeaderboardTab({
           {viewMode === "table" ? (
             <Card style={styles.tableCard}>
               <View style={styles.tableCardHeader}>
-                <Text style={styles.tableTitle}>
-                  📋 Global League Table ({selectedSport})
-                </Text>
-                <Text style={styles.tableSubtitle}>
-                  Ranked by Match Wins & Highest Streak
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.tableTitle}>
+                    📋 Global League Table ({selectedSport})
+                  </Text>
+                  <Text style={styles.tableSubtitle}>
+                    Ranked by Match Wins & Highest Streak
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.headerRefreshBadge}
+                  onPress={onRefresh}
+                  disabled={refreshing}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.headerRefreshText}>
+                    {refreshing ? "Updating..." : "🔄 Refresh"}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               <DataTable>
@@ -1095,11 +1135,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   searchbar: {
+    flex: 1,
     backgroundColor: "#FFFFFF",
     elevation: 1,
     borderRadius: 12,
     height: 44,
+  },
+  refreshBtn: {
+    width: 44,
+    height: 44,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    elevation: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  refreshBtnActive: {
+    backgroundColor: "#F0F9FF",
+    borderColor: "#BAE6FD",
+  },
+  headerRefreshBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    marginLeft: 8,
+  },
+  headerRefreshText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2193F0",
   },
   viewToggleWrapper: {
     marginTop: 8,
