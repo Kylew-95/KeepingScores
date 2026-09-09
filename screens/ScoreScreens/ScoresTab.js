@@ -259,21 +259,6 @@ export default function ScoresTab({
               progressViewOffset={10}
             />
           }
-          ListHeaderComponent={
-            <View style={styles.headerBar}>
-              <Text style={styles.headerTitleText}>Recent Matches</Text>
-              <TouchableOpacity
-                style={styles.refreshBadgeBtn}
-                onPress={onRefresh}
-                disabled={refreshing}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.refreshBadgeBtnText}>
-                  {refreshing ? "Refreshing..." : "🔄 Refresh"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          }
         />
       )}
     </SafeAreaView>
@@ -289,31 +274,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  headerBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  headerTitleText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  refreshBadgeBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "#EFF6FF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-  },
-  refreshBadgeBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#2193F0",
-  },
+
   center: {
     flex: 1,
     justifyContent: "center",

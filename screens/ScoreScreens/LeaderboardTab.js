@@ -422,9 +422,23 @@ export default function LeaderboardTab({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Search & Refresh Row */}
-      <View style={styles.topControls}>
-        <View style={styles.searchRow}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#2193F0"]}
+            tintColor="#2193F0"
+            progressViewOffset={Platform.OS === "android" ? 10 : 0}
+          />
+        }
+        alwaysBounceVertical={true}
+        bounces={true}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* Search & Toggle Controls */}
+        <View style={styles.topControls}>
           <Searchbar
             placeholder="Search player..."
             onChangeText={setSearchQuery}
@@ -432,88 +446,57 @@ export default function LeaderboardTab({
             style={styles.searchbar}
             inputStyle={{ minHeight: 0 }}
           />
-          <TouchableOpacity
-            style={[styles.refreshBtn, refreshing && styles.refreshBtnActive]}
-            onPress={onRefresh}
-            disabled={refreshing}
-            activeOpacity={0.7}
-            accessibilityLabel="Refresh Leaderboard"
-          >
-            {refreshing ? (
-              <ActivityIndicator size="small" color="#2193F0" />
-            ) : (
-              <IconButton
-                icon="refresh"
-                size={22}
-                iconColor="#2193F0"
-                style={{ margin: 0 }}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-        <View style={styles.viewToggleWrapper}>
-          <SegmentedButtons
-            value={viewMode}
-            onValueChange={setViewMode}
-            buttons={[
-              { value: "table", label: "Table", icon: "table" },
-              { value: "cards", label: "Cards", icon: "cards-outline" },
-            ]}
-            style={styles.toggleSegment}
-          />
-        </View>
-      </View>
-
-      {/* Sports Filter Chips */}
-      <View style={{ height: 44, marginVertical: 4 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipScroll}
-        >
-          {availableSports.map((sport) => (
-            <Chip
-              key={sport}
-              selected={selectedSport === sport}
-              onPress={() => setSelectedSport(sport)}
-              style={[
-                styles.chip,
-                selectedSport === sport && styles.selectedChip,
+          <View style={styles.viewToggleWrapper}>
+            <SegmentedButtons
+              value={viewMode}
+              onValueChange={setViewMode}
+              buttons={[
+                { value: "table", label: "Table", icon: "table" },
+                { value: "cards", label: "Cards", icon: "cards-outline" },
               ]}
-              textStyle={[
-                styles.chipText,
-                selectedSport === sport && styles.selectedChipText,
-              ]}
-            >
-              {sport}
-            </Chip>
-          ))}
-        </ScrollView>
-      </View>
-
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#2193F0" />
-          <Text style={{ marginTop: 12, color: "#64748B" }}>
-            Loading Global Leaderboard...
-          </Text>
-        </View>
-      ) : (
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={["#2193F0"]}
-              tintColor="#2193F0"
-              progressViewOffset={10}
+              style={styles.toggleSegment}
             />
-          }
-          alwaysBounceVertical={true}
-          bounces={true}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        >
-          {/* Top 3 Podium (Always shown on cards view or when searching) */}
+          </View>
+        </View>
+
+        {/* Sports Filter Chips */}
+        <View style={{ height: 44, marginVertical: 4 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipScroll}
+            nestedScrollEnabled={true}
+          >
+            {availableSports.map((sport) => (
+              <Chip
+                key={sport}
+                selected={selectedSport === sport}
+                onPress={() => setSelectedSport(sport)}
+                style={[
+                  styles.chip,
+                  selectedSport === sport && styles.selectedChip,
+                ]}
+                textStyle={[
+                  styles.chipText,
+                  selectedSport === sport && styles.selectedChipText,
+                ]}
+              >
+                {sport}
+              </Chip>
+            ))}
+          </ScrollView>
+        </View>
+
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#2193F0" />
+            <Text style={{ marginTop: 12, color: "#64748B" }}>
+              Loading Global Leaderboard...
+            </Text>
+          </View>
+        ) : (
+          <>
+            {/* Top 3 Podium (Always shown on cards view or when searching) */}
           {viewMode === "cards" && topThree.length > 0 && (
             <View style={styles.podiumContainer}>
               <Text style={styles.podiumHeading}>🏆 Global Standings</Text>
@@ -705,24 +688,12 @@ export default function LeaderboardTab({
           {viewMode === "table" ? (
             <Card style={styles.tableCard}>
               <View style={styles.tableCardHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.tableTitle}>
-                    📋 Global League Table ({selectedSport})
-                  </Text>
-                  <Text style={styles.tableSubtitle}>
-                    Ranked by Match Wins & Highest Streak
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.headerRefreshBadge}
-                  onPress={onRefresh}
-                  disabled={refreshing}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.headerRefreshText}>
-                    {refreshing ? "Updating..." : "🔄 Refresh"}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.tableTitle}>
+                  📋 Global League Table ({selectedSport})
+                </Text>
+                <Text style={styles.tableSubtitle}>
+                  Ranked by Match Wins & Highest Streak
+                </Text>
               </View>
 
               <DataTable>
@@ -766,10 +737,6 @@ export default function LeaderboardTab({
                           isEven ? styles.rowEven : styles.rowOdd,
                           isTopThree && styles.topThreeRow,
                         ]}
-                        onPress={() => {
-                          setSelectedPlayer(item);
-                          setPlayerModalVisible(true);
-                        }}
                       >
                         {/* Rank */}
                         <DataTable.Cell style={styles.colRank}>
@@ -785,7 +752,15 @@ export default function LeaderboardTab({
 
                         {/* Player (Avatar + Name) */}
                         <DataTable.Cell style={styles.colPlayer}>
-                          <View style={styles.playerCellRow}>
+                          <TouchableOpacity
+                            style={styles.playerCellRow}
+                            delayPressIn={100}
+                            activeOpacity={0.7}
+                            onPress={() => {
+                              setSelectedPlayer(item);
+                              setPlayerModalVisible(true);
+                            }}
+                          >
                             {item.avatar_image_url ? (
                               <Avatar.Image
                                 size={28}
@@ -810,7 +785,7 @@ export default function LeaderboardTab({
                             >
                               {item.player_name}
                             </Text>
-                          </View>
+                          </TouchableOpacity>
                         </DataTable.Cell>
 
                         {/* Played */}
@@ -883,6 +858,7 @@ export default function LeaderboardTab({
                 <Card key={item.player_name} style={styles.playerCard}>
                   <TouchableOpacity
                     activeOpacity={0.85}
+                    delayPressIn={100}
                     onPress={() => {
                       setSelectedPlayer(item);
                       setPlayerModalVisible(true);
@@ -985,8 +961,9 @@ export default function LeaderboardTab({
               ))}
             </View>
           )}
-        </ScrollView>
+        </>
       )}
+      </ScrollView>
 
       {/* Player Detail & Follow Modal */}
       <Modal
@@ -1135,46 +1112,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
   searchbar: {
-    flex: 1,
     backgroundColor: "#FFFFFF",
     elevation: 1,
     borderRadius: 12,
     height: 44,
-  },
-  refreshBtn: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    elevation: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  refreshBtnActive: {
-    backgroundColor: "#F0F9FF",
-    borderColor: "#BAE6FD",
-  },
-  headerRefreshBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#EFF6FF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    marginLeft: 8,
-  },
-  headerRefreshText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#2193F0",
   },
   viewToggleWrapper: {
     marginTop: 8,

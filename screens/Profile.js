@@ -152,41 +152,19 @@ export default function Profile({
               <Text style={styles.editHeaderText}>Edit Header</Text>
             </TouchableOpacity>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              {/* Quick Refresh Profile Button */}
-              <TouchableOpacity
-                onPress={onRefresh}
-                disabled={refreshing}
-                style={styles.threeDotsBadge}
-                activeOpacity={0.8}
-                accessibilityLabel="Refresh Profile"
-              >
-                {refreshing ? (
-                  <ActivityIndicator size={14} color="#FFFFFF" />
-                ) : (
-                  <IconButton
-                    icon="refresh"
-                    iconColor="#FFFFFF"
-                    size={16}
-                    style={{ margin: 0 }}
-                  />
-                )}
-              </TouchableOpacity>
-
-              {/* 3 Dots Button (Opens Account) */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Account")}
-                style={styles.threeDotsBadge}
-                activeOpacity={0.8}
-              >
-                <Avatar.Image
-                  style={{ backgroundColor: "transparent" }}
-                  size={22}
-                  source={require("../Images/3Dots.png")}
-                  tintColor="white"
-                />
-              </TouchableOpacity>
-            </View>
+            {/* 3 Dots Button (Opens Account) */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Account")}
+              style={styles.threeDotsBadge}
+              activeOpacity={0.8}
+            >
+              <Avatar.Image
+                style={{ backgroundColor: "transparent" }}
+                size={22}
+                source={require("../Images/3Dots.png")}
+                tintColor="white"
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Flawless Centered Profile Avatar Ring (no offset, no white crescent) */}
