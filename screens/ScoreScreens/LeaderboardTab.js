@@ -37,7 +37,7 @@ export default function LeaderboardTab({
   const [refreshing, setRefreshing] = useState(false);
   const [selectedSport, setSelectedSport] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState("table"); // 'table' | 'cards'
+  const [viewMode, setViewMode] = useState("cards"); // 'cards' | 'table'
   const [availableSports, setAvailableSports] = useState(["All"]);
 
   // Follow state
@@ -451,8 +451,8 @@ export default function LeaderboardTab({
               value={viewMode}
               onValueChange={setViewMode}
               buttons={[
-                { value: "table", label: "Table", icon: "table" },
                 { value: "cards", label: "Cards", icon: "cards-outline" },
+                { value: "table", label: "Table", icon: "table" },
               ]}
               style={styles.toggleSegment}
             />
