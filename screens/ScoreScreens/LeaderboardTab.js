@@ -48,8 +48,10 @@ export default function LeaderboardTab({
     profileData?.first_name || "",
   );
   const [followingIds, setFollowingIds] = useState(new Set());
-  const [followingNames, setFollowingNames] = useState(new Set());
-  const [userProfilesMap, setUserProfilesMap] = useState({});
+  const [unlinkedFollowingNames, setUnlinkedFollowingNames] = useState(
+    new Set(),
+  );
+  const [followRowsMap, setFollowRowsMap] = useState(new Map());
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [playerModalVisible, setPlayerModalVisible] = useState(false);
 
@@ -203,38 +205,31 @@ export default function LeaderboardTab({
     if (!uid) return;
 
     try {
-      const { data: follows } = await supabase
+      const { data: follows, error: folErr } = await supabase
         .from("UserFollows")
-        .select("following_id, following_name")
+        .select("id, following_id, following_name")
         .eq("follower_id", uid);
+
+      if (folErr) throw folErr;
 
       if (follows) {
         const idSet = new Set();
-        const nameSet = new Set();
+        const unlinkedNameSet = new Set();
+        const rowMap = new Map();
+
         follows.forEach((f) => {
-          if (f.following_id) idSet.add(f.following_id);
-          if (f.following_name)
-            nameSet.add(f.following_name.trim().toLowerCase());
+          if (f.following_id) {
+            idSet.add(f.following_id);
+            rowMap.set(f.following_id, f.id);
+          } else if (f.following_name) {
+            const key = f.following_name.trim().toLowerCase();
+            unlinkedNameSet.add(key);
+            rowMap.set(`name-${key}`, f.id);
+          }
         });
         setFollowingIds(idSet);
-        setFollowingNames(nameSet);
-      }
-
-      const { data: profiles } = await supabase
-        .from("UserProfileData")
-        .select("userprofile_id, first_name, last_name, avatar_image_url");
-
-      if (profiles) {
-        const map = {};
-        profiles.forEach((p) => {
-          if (p.first_name) {
-            map[p.first_name.trim().toLowerCase()] = p;
-          }
-          if (p.userprofile_id) {
-            map[p.userprofile_id] = p;
-          }
-        });
-        setUserProfilesMap(map);
+        setUnlinkedFollowingNames(unlinkedNameSet);
+        setFollowRowsMap(rowMap);
       }
     } catch (err) {
       console.log("Error loading follows in Leaderboard:", err);
@@ -257,29 +252,42 @@ export default function LeaderboardTab({
 
   const checkIfFollowing = (item) => {
     if (!item) return false;
-    const nameKey = (item.player_name || "").trim().toLowerCase();
-    if (followingNames.has(nameKey)) return true;
-    if (item.userprofile_id && followingIds.has(item.userprofile_id))
-      return true;
-    const mapped = userProfilesMap[nameKey];
-    if (mapped?.userprofile_id && followingIds.has(mapped.userprofile_id))
-      return true;
-    return false;
+    // 1. If player has a registered userprofile_id, match STRICTLY by userprofile_id!
+    // Never match by first name if userprofile_id exists, so two users with the same name never collide!
+    if (item.userprofile_id) {
+      return followingIds.has(item.userprofile_id);
+    }
+    // 2. Only unlinked leaderboard players (no userprofile_id) check unlinkedFollowingNames
+    const nameKey = (item.player_name || item.first_name || "")
+      .trim()
+      .toLowerCase();
+    return unlinkedFollowingNames.has(nameKey);
   };
 
   const checkIfSelf = (item) => {
     if (!item) return false;
-    const nameKey = (item.player_name || "").trim().toLowerCase();
-    const myName = (currentUserName || profileData?.first_name || "")
-      .trim()
-      .toLowerCase();
-    if (myName && nameKey === myName) return true;
     if (
       currentUserId &&
       item.userprofile_id &&
       item.userprofile_id === currentUserId
-    )
+    ) {
       return true;
+    }
+    const nameKey = (item.player_name || item.first_name || "")
+      .trim()
+      .toLowerCase();
+    const myName = (currentUserName || profileData?.first_name || "")
+      .trim()
+      .toLowerCase();
+    // Only fall back to name check if neither has a UUID
+    if (
+      !item.userprofile_id &&
+      !currentUserId &&
+      myName &&
+      nameKey === myName
+    ) {
+      return true;
+    }
     return false;
   };
 
@@ -302,21 +310,13 @@ export default function LeaderboardTab({
     }
 
     const isFollowing = checkIfFollowing(item);
-    const nameKey = item.player_name.trim().toLowerCase();
-    const targetUid =
-      item.userprofile_id || userProfilesMap[nameKey]?.userprofile_id || null;
+    const targetUid = item.userprofile_id || null;
+    const nameKey = (item.player_name || item.first_name || "")
+      .trim()
+      .toLowerCase();
+    const playerName = (item.player_name || item.first_name || "Player").trim();
 
     // Optimistic state update
-    setFollowingNames((prev) => {
-      const next = new Set(prev);
-      if (isFollowing) {
-        next.delete(nameKey);
-      } else {
-        next.add(nameKey);
-      }
-      return next;
-    });
-
     if (targetUid) {
       setFollowingIds((prev) => {
         const next = new Set(prev);
@@ -327,10 +327,29 @@ export default function LeaderboardTab({
         }
         return next;
       });
+    } else {
+      setUnlinkedFollowingNames((prev) => {
+        const next = new Set(prev);
+        if (isFollowing) {
+          next.delete(nameKey);
+        } else {
+          next.add(nameKey);
+        }
+        return next;
+      });
     }
 
     try {
       if (isFollowing) {
+        // UNFOLLOW
+        const exactRowId = targetUid
+          ? followRowsMap.get(targetUid)
+          : followRowsMap.get(`name-${nameKey}`);
+
+        if (exactRowId) {
+          await supabase.from("UserFollows").delete().eq("id", exactRowId);
+        }
+
         if (targetUid) {
           await supabase
             .from("UserFollows")
@@ -342,17 +361,32 @@ export default function LeaderboardTab({
             .from("UserFollows")
             .delete()
             .eq("follower_id", uid)
-            .ilike("following_name", item.player_name.trim());
+            .ilike("following_name", playerName);
         }
       } else {
-        await supabase.from("UserFollows").insert({
-          follower_id: uid,
-          following_id: targetUid,
-          following_name: item.player_name.trim(),
-        });
+        // FOLLOW
+        const { data: inserted, error } = await supabase
+          .from("UserFollows")
+          .insert({
+            follower_id: uid,
+            following_id: targetUid,
+            following_name: playerName,
+          })
+          .select();
+
+        if (error) throw error;
+        if (inserted && inserted[0]) {
+          setFollowRowsMap((prev) => {
+            const next = new Map(prev);
+            if (targetUid) next.set(targetUid, inserted[0].id);
+            else next.set(`name-${nameKey}`, inserted[0].id);
+            return next;
+          });
+        }
       }
     } catch (err) {
-      console.error("Error updating follow:", err);
+      console.error("Error updating follow in Leaderboard:", err);
+    } finally {
       loadFollows();
     }
   };
@@ -789,7 +823,9 @@ export default function LeaderboardTab({
                                     : styles.tableNotFollowingBtnText,
                                 ]}
                               >
-                                {checkIfFollowing(item) ? "✓" : "+ Follow"}
+                                {checkIfFollowing(item)
+                                  ? "Following"
+                                  : "+ Follow"}
                               </Text>
                             </TouchableOpacity>
                           )}

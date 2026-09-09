@@ -87,19 +87,22 @@ export default function FriendsListModal({
         }
       });
 
-      // 2. Build Following List (all 5+ people followed by user)
+      // 2. Build Following List
       const followedIdSet = new Set();
       const followedNameSet = new Set();
       const followingList = [];
 
       followingsData.forEach((row) => {
         if (row.following_id) followedIdSet.add(row.following_id);
-        if (row.following_name) followedNameSet.add(row.following_name.trim().toLowerCase());
+        // Only add to followedNameSet if it is an unlinked follow (no following_id)
+        if (row.following_name && !row.following_id) {
+          followedNameSet.add(row.following_name.trim().toLowerCase());
+        }
 
         let matched = null;
         if (row.following_id && profileById.has(row.following_id)) {
           matched = { ...profileById.get(row.following_id), followRowId: row.id };
-        } else if (row.following_name && profileByName.has(row.following_name.trim().toLowerCase())) {
+        } else if (!row.following_id && row.following_name && profileByName.has(row.following_name.trim().toLowerCase())) {
           matched = { ...profileByName.get(row.following_name.trim().toLowerCase()), followRowId: row.id };
         } else {
           matched = {
@@ -182,22 +185,30 @@ export default function FriendsListModal({
     const handleToggleFollow = async (userItem) => {
     const targetUserId = typeof userItem === "object" ? userItem.userprofile_id : userItem;
     const targetName = typeof userItem === "object" ? userItem.first_name : null;
-    const followRowId = typeof userItem === "object" ? userItem.followRowId : null;
+    let followRowId = typeof userItem === "object" ? userItem.followRowId : null;
 
-    const isCurrentlyFollowing =
-      followingIds.has(targetUserId) ||
-      following.some(
-        (f) =>
-          f.userprofile_id === targetUserId ||
-          (targetName && f.first_name?.toLowerCase() === targetName?.toLowerCase())
-      );
+    // Look up followRowId from following list if not present
+    if (!followRowId && targetUserId) {
+      const found = following.find((f) => f.userprofile_id === targetUserId);
+      if (found?.followRowId) followRowId = found.followRowId;
+    }
+
+    const isRealUser = targetUserId && !String(targetUserId).startsWith("follow-name-") && !String(targetUserId).startsWith("lb-");
+    const isCurrentlyFollowing = isRealUser
+      ? followingIds.has(targetUserId) || following.some((f) => f.userprofile_id === targetUserId)
+      : following.some(
+          (f) =>
+            f.followRowId === followRowId ||
+            (targetName && f.first_name?.toLowerCase() === targetName?.toLowerCase() && !f.following_id)
+        );
 
     try {
       if (isCurrentlyFollowing) {
         // Unfollow
         if (followRowId) {
           await supabase.from("UserFollows").delete().eq("id", followRowId);
-        } else if (targetUserId && !String(targetUserId).startsWith("follow-name-") && !String(targetUserId).startsWith("lb-")) {
+        }
+        if (isRealUser) {
           await supabase
             .from("UserFollows")
             .delete()
@@ -214,7 +225,7 @@ export default function FriendsListModal({
         // Follow
         const insertPayload = {
           follower_id: currentUserId,
-          following_id: targetUserId && !String(targetUserId).startsWith("follow-name-") && !String(targetUserId).startsWith("lb-") ? targetUserId : null,
+          following_id: isRealUser ? targetUserId : null,
           following_name: targetName || "Friend",
         };
         await supabase.from("UserFollows").insert(insertPayload);
@@ -253,13 +264,14 @@ export default function FriendsListModal({
   };
 
   const renderUserItem = ({ item }) => {
-    const isFollowing =
-      followingIds.has(item.userprofile_id) ||
-      following.some(
-        (f) =>
-          f.userprofile_id === item.userprofile_id ||
-          (item.first_name && f.first_name?.toLowerCase() === item.first_name?.toLowerCase())
-      );
+    const isRealUser = item.userprofile_id && !String(item.userprofile_id).startsWith("follow-name-") && !String(item.userprofile_id).startsWith("lb-");
+    const isFollowing = isRealUser
+      ? followingIds.has(item.userprofile_id) || following.some((f) => f.userprofile_id === item.userprofile_id)
+      : following.some(
+          (f) =>
+            f.followRowId === item.followRowId ||
+            (item.first_name && f.first_name?.toLowerCase() === item.first_name?.toLowerCase() && !f.following_id)
+        );
     const fullName =
       `${item.first_name || ""} ${item.last_name || ""}`.trim() || "Player";
 
